@@ -47,12 +47,15 @@ export function SectionTitle({ children, kicker }: { children: ReactNode; kicker
 
 export function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload || !payload.length) return null;
+  // BarChart provides `label` (the X-axis value); PieChart doesn't, so fall
+  // back to the payload entry's own name (the slice's category).
+  const heading = label ?? payload[0]?.name;
   return (
     <div style={{
       background: T.surface, border: `1px solid ${T.border}`, padding: '8px 12px',
       fontFamily: fonts.body, fontSize: 13,
     }}>
-      <div style={{ color: T.inkMuted, marginBottom: 2 }}>{label}</div>
+      <div style={{ color: T.inkMuted, marginBottom: 2 }}>{heading}</div>
       {payload.map((p, i) => (
         <div key={i} style={{ color: p.color, fontFamily: fonts.mono }}>
           {fmt(p.value as number)}/mo
