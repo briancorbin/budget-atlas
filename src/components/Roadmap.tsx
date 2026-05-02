@@ -476,7 +476,7 @@ function Footer({ onBack }: { onBack: () => void }) {
       >
         Have an idea worth adding? Open an issue on{' '}
         <a
-          href="https://github.com/briancorbin/budget-atlas/issues"
+          href="https://github.com/TheBudgetAtlas/thebudgetatlas/issues"
           target="_blank"
           rel="noreferrer"
           style={{

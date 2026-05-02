@@ -1,6 +1,6 @@
 # Contributing to The Budget Atlas
 
-Thanks for considering a contribution. The Budget Atlas is a free, donation-supported public-good project — a deliberately editorial tool for understanding how Americans actually live on what they earn. Contributions from anyone are welcome: data updates, new cities, bug fixes, accessibility improvements, documentation, or new features from the [roadmap](https://github.com/briancorbin/budget-atlas/issues).
+Thanks for considering a contribution. The Budget Atlas is a free, donation-supported public-good project — a deliberately editorial tool for understanding how Americans actually live on what they earn. Contributions from anyone are welcome: data updates, new cities, bug fixes, accessibility improvements, documentation, or new features from the [roadmap](https://github.com/TheBudgetAtlas/thebudgetatlas/issues).
 
 ## Ground rules
 

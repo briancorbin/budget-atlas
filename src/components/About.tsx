@@ -2,7 +2,7 @@ import { theme as T, fonts } from '@/theme';
 import { navigate } from '@/lib/nav';
 import { SectionTitle } from './ui';
 
-const GITHUB_URL = 'https://github.com/briancorbin/budget-atlas';
+const GITHUB_URL = 'https://github.com/TheBudgetAtlas/thebudgetatlas';
 const CONTACT_EMAIL = 'brian@thebudgetatlas.com';
 
 export function About({ onBack }: { onBack: () => void }) {
