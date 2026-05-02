@@ -344,7 +344,19 @@ function Footer({ onBack }: { onBack: () => void }) {
         marginTop: 24, fontSize: 11, color: T.inkMuted, letterSpacing: '0.18em',
         textTransform: 'uppercase', fontFamily: fonts.body,
       }}>
-        Have an idea worth adding? Open an issue on the repo.
+        Have an idea worth adding? Open an issue on{' '}
+        <a
+          href="https://github.com/briancorbin/budget-atlas/issues"
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            color: T.accent, textDecoration: 'none', fontWeight: 600,
+            borderBottom: `1px solid ${T.border}`, paddingBottom: 1,
+          }}
+        >
+          the repo
+        </a>
+        .
       </div>
     </div>
   );
