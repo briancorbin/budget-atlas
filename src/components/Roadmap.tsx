@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { theme as T, fonts } from '@/theme';
 import { ROADMAP, SHIPPED, type RoadmapItem, type RoadmapStatus } from '@/data/roadmap';
 import { SectionTitle } from './ui';
@@ -185,20 +186,54 @@ function ShippedList() {
   const all = [...shippedRoadmap, ...SHIPPED]
     .sort((a, b) => (b.shippedAt ?? '').localeCompare(a.shippedAt ?? ''));
 
+  const stripRef = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ left: false, right: true });
+
+  useEffect(() => {
+    const el = stripRef.current;
+    if (!el) return;
+    const update = () => {
+      const left = el.scrollLeft > 1;
+      const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+      setEdges({ left, right });
+    };
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    return () => {
+      el.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
+  // Build a mask that only fades the side(s) the user can still scroll toward.
+  // No fade at all when the strip fits / hasn't been scrolled.
+  const stops: string[] = [];
+  if (edges.left) stops.push('transparent 0%', 'black 8%');
+  else stops.push('black 0%');
+  if (edges.right) stops.push('black 92%', 'transparent 100%');
+  else stops.push('black 100%');
+  const mask = `linear-gradient(to right, ${stops.join(', ')})`;
+
+  const kickerSuffix = edges.right || edges.left ? ' · scroll →' : '';
+
   return (
     <div style={{ marginBottom: 48 }}>
-      <SectionTitle kicker={`Shipped · ${all.length} milestones · scroll →`}>
+      <SectionTitle kicker={`Shipped · ${all.length} milestones${kickerSuffix}`}>
         Already in the model
       </SectionTitle>
-      <div style={{
-        display: 'flex', gap: 12,
-        overflowX: 'auto',
-        paddingBottom: 12,
-        scrollSnapType: 'x mandatory',
-        // hint that there's more to the right with a soft fade
-        maskImage: 'linear-gradient(to right, black 0%, black 92%, transparent 100%)',
-        WebkitMaskImage: 'linear-gradient(to right, black 0%, black 92%, transparent 100%)',
-      }}>
+      <div
+        ref={stripRef}
+        style={{
+          display: 'flex', gap: 12,
+          overflowX: 'auto',
+          paddingBottom: 12,
+          scrollSnapType: 'x mandatory',
+          maskImage: mask,
+          WebkitMaskImage: mask,
+          transition: 'mask-image 0.2s, -webkit-mask-image 0.2s',
+        }}
+      >
         {all.map((item, i) => (
           <div key={i} style={{
             flexShrink: 0,
