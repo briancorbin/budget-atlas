@@ -1,5 +1,5 @@
 import { theme as T, fonts } from '@/theme';
-import { navigate } from '@/App';
+import { navigate } from '@/lib/nav';
 import { SectionTitle } from './ui';
 
 const GITHUB_URL = 'https://github.com/briancorbin/budget-atlas';

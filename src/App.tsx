@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BudgetExplorer } from '@/components/BudgetExplorer';
 import { Roadmap } from '@/components/Roadmap';
 import { About } from '@/components/About';
+import { NAV_EVENT, navigate } from '@/lib/nav';
 
 type Route = 'atlas' | 'roadmap' | 'about';
 
@@ -10,17 +11,6 @@ function routeFromPath(pathname: string): Route {
   if (trimmed === 'roadmap') return 'roadmap';
   if (trimmed === 'about') return 'about';
   return 'atlas';
-}
-
-const NAV_EVENT = 'app:navigate';
-
-/**
- * Programmatic navigation — used by in-app links to change route without a
- * full page reload. Call this instead of setting `window.location`.
- */
-export function navigate(path: string) {
-  window.history.pushState({}, '', path);
-  window.dispatchEvent(new Event(NAV_EVENT));
 }
 
 export default function App() {

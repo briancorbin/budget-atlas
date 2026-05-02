@@ -13,7 +13,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "yarn typecheck && yarn lint && yarn format:check"
+    "verify": "yarn typecheck && yarn lint && yarn format:check"
   },
   "dependencies": {
     "react": "^18.3.1",

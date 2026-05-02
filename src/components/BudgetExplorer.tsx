@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { FilingStatus, Lifestyle } from '@/types';
 import { theme as T } from '@/theme';
 import { computeBudget } from '@/lib/budget';
@@ -57,31 +57,41 @@ export function BudgetExplorer() {
   // tighter threshold). "Claimed" means actively receiving — stale intent
   // shouldn't linger as a misleading "✓ Claimed" badge while the budget
   // calc silently refuses to apply it.
-  useEffect(() => {
-    if (claimedBenefits.size === 0) return;
-    const preBenefitHealthcare =
-      result.expenses.Healthcare +
-      (result.benefitsApplied['Medicaid'] ?? 0) +
-      (result.benefitsApplied['CHIP'] ?? 0);
-    const inputs = {
-      grossIncome: result.grossIncome,
-      householdSize: result.householdSize,
-      state: result.cityData.state,
-      adults: result.adults,
-      kids: result.householdSize - result.adults,
-      monthlyHealthcareCost: preBenefitHealthcare,
-      monthlyHealthcareSingle: result.cityData.healthSingle,
-    };
-    const next = new Set(claimedBenefits);
-    let changed = false;
-    for (const id of claimedBenefits) {
-      if (!checkBenefit(id as BenefitId, inputs).eligible) {
-        next.delete(id);
-        changed = true;
+  //
+  // Implemented with the "adjust state during render" pattern (gated on a
+  // previous-result comparison) instead of a useEffect that calls setState.
+  // Effects that synchronously setState cause cascading renders; React
+  // optimizes the gated-during-render path by discarding the first render
+  // and re-running with the corrected state — same end-user behavior, no
+  // extra commit. See https://react.dev/learn/you-might-not-need-an-effect
+  const [prevResult, setPrevResult] = useState(result);
+  if (result !== prevResult) {
+    setPrevResult(result);
+    if (claimedBenefits.size > 0) {
+      const preBenefitHealthcare =
+        result.expenses.Healthcare +
+        (result.benefitsApplied['Medicaid'] ?? 0) +
+        (result.benefitsApplied['CHIP'] ?? 0);
+      const inputs = {
+        grossIncome: result.grossIncome,
+        householdSize: result.householdSize,
+        state: result.cityData.state,
+        adults: result.adults,
+        kids: result.householdSize - result.adults,
+        monthlyHealthcareCost: preBenefitHealthcare,
+        monthlyHealthcareSingle: result.cityData.healthSingle,
+      };
+      const next = new Set(claimedBenefits);
+      let changed = false;
+      for (const id of claimedBenefits) {
+        if (!checkBenefit(id as BenefitId, inputs).eligible) {
+          next.delete(id);
+          changed = true;
+        }
       }
+      if (changed) setClaimedBenefits(next);
     }
-    if (changed) setClaimedBenefits(next);
-  }, [result, claimedBenefits]);
+  }
 
   const inputState: InputsState = {
     scenarioId,

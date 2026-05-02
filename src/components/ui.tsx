@@ -229,10 +229,19 @@ export function SearchableSelect<T extends string>({
           (o) => o.label.toLowerCase().includes(q) || (o.hint?.toLowerCase().includes(q) ?? false),
         );
 
-  // Reset highlight when the filtered set changes; keep it in bounds.
-  useEffect(() => {
+  // Reset highlight to the top when the filter query changes or the popover
+  // opens/closes. Done with the "adjust state during render" pattern instead
+  // of a useEffect that calls setState — the latter causes a cascading
+  // render. React optimizes this path: it discards the first render and
+  // re-runs with the corrected state.
+  // See https://react.dev/learn/you-might-not-need-an-effect
+  const [prevQ, setPrevQ] = useState(q);
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevQ !== q || prevOpen !== open) {
+    setPrevQ(q);
+    setPrevOpen(open);
     setActiveIdx(0);
-  }, [q, open]);
+  }
 
   // Click-outside / Escape: same pattern as CiteGroup.
   useEffect(() => {
