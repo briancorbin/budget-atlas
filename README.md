@@ -143,6 +143,12 @@ City-level numbers are approximate medians, rounded to the nearest $50–$100 fo
 
 These would all be reasonable additions. See `lib/budget.ts` for where they'd plug in.
 
+## Funding & transparency
+
+The Budget Atlas is a free, donation-supported public-good project. Every dollar in and out is logged in the public [funding ledger](./funding/ledger.md), starting with the first $0 free-tier hosting bill. A polished funding dashboard ([roadmap #21](https://github.com/TheBudgetAtlas/thebudgetatlas/issues)) will eventually render from the same file.
+
+Fiscal sponsorship application is pending with Open Collective / Open Source Collective.
+
 ## Contributing
 
 Contributions welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) for project conventions (the citation requirement, the data/lib/components layer split, tax-math gotchas, recipes for adding cities or tax years).
