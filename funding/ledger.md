@@ -7,7 +7,7 @@ This file is the ground truth. The eventual [funding transparency dashboard](htt
 ## Principles
 
 - **Every penny.** Recurring infrastructure ($0 free tiers included), one-time purchases, donations in, grants out. If money or a money-equivalent moved, it's logged.
-- **Receipts retained.** PDFs/screenshots stored privately; the ledger links to or names the source. On request, any line item's underlying receipt can be produced.
+- **Receipts retained and public.** Every line item links to its source receipt in a [public Google Drive folder](https://drive.google.com/drive/folders/1o2v9qGYvITBPA-V7RfSQ7OmeZyylfqTC?usp=drive_link) (anyone with the link, viewer access). Once Open Collective is approved, receipts will additionally live on each public expense page there.
 - **Pre-fiscal-sponsor expenses tracked too.** Items currently paid out of pocket by the maintainer (Brian Corbin) are flagged `Reimbursable: Y` and may be submitted to the fiscal sponsor (Open Collective / OSC, application pending) for reimbursement out of donated funds once approved. Items flagged `Reimbursable: N` are personal contributions and will not be reclaimed.
 - **No retroactive edits.** Mistakes are corrected by appending a correction row, not by rewriting history. Git log is part of the audit trail.
 
@@ -23,11 +23,10 @@ This file is the ground truth. The eventual [funding transparency dashboard](htt
 
 ## Expenses
 
-| Date       | Vendor          | Description                                 | Category       |   Amount (USD) | Reimbursable | Receipt   |
-| ---------- | --------------- | ------------------------------------------- | -------------- | -------------: | :----------: | --------- |
-| 2026-05-02 | GitHub          | `TheBudgetAtlas` org — Team plan            | Tooling        | _TBD (~$4/mo)_ |      Y       | _pending_ |
-| 2026-05-02 | Cloudflare      | Workers/Pages, DNS for `thebudgetatlas.com` | Infrastructure |   _TBD (~$10)_ |      Y       | _pending_ |
-| _TBD_      | _TBD registrar_ | `thebudgetatlas.com` domain registration    | Infrastructure |          _TBD_ |      Y       | _pending_ |
+| Date       | Vendor     | Description                                              | Category       | Amount (USD) | Reimbursable | Receipt                                                                                          |
+| ---------- | ---------- | -------------------------------------------------------- | -------------- | -----------: | :----------: | ------------------------------------------------------------------------------------------------ |
+| 2026-05-02 | GitHub     | `TheBudgetAtlas` org — Team plan, month 1                | Tooling        |        $4.00 |      Y       | [Drive](https://drive.google.com/drive/folders/1o2v9qGYvITBPA-V7RfSQ7OmeZyylfqTC?usp=drive_link) |
+| 2026-05-02 | Cloudflare | `thebudgetatlas.com` domain registration (1 yr, at-cost) | Infrastructure |       $10.46 |      Y       | [Drive](https://drive.google.com/drive/folders/1o2v9qGYvITBPA-V7RfSQ7OmeZyylfqTC?usp=drive_link) |
 
 _Recurring monthly costs (GitHub org, etc.) get a new row each billing cycle so the ledger reads as a true cash-flow record, not a forecast._
 
@@ -51,7 +50,7 @@ _Will be auto-computed by the funding dashboard. Manually reconciled here at mon
 
 - **Inflows to date:** $0.00
 - **Outflows to date (paid from project funds):** $0.00
-- **Outflows to date (paid personally, reimbursable):** $TBD
+- **Outflows to date (paid personally, reimbursable):** $14.46
 - **Outflows to date (paid personally, non-reimbursable):** $0.00
 
 Last reconciled: _2026-05-02 (initial)_
