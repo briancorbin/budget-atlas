@@ -25,6 +25,16 @@ export function Masthead() {
         }}>
           <span>An interactive examination</span>
           <a
+            href="/about"
+            onClick={(e) => { e.preventDefault(); navigate('/about'); }}
+            style={{
+              color: T.accent, textDecoration: 'none', fontWeight: 600,
+              borderBottom: `1px solid ${T.border}`, paddingBottom: 1,
+            }}
+          >
+            About →
+          </a>
+          <a
             href="/roadmap"
             onClick={(e) => { e.preventDefault(); navigate('/roadmap'); }}
             style={{
