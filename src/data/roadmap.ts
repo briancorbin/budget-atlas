@@ -52,11 +52,11 @@ export const ROADMAP: readonly RoadmapItem[] = [
   },
   {
     id: 3,
-    title: 'Per-child ages',
+    title: 'Expanded child options',
     category: 'Household detail',
     status: 'planned',
     summary:
-      'Optional expand from the 0–4 kids slider into per-child ages. Childcare cost varies massively by age (infant care often ~2× preschool), and the Child Tax Credit cuts off at 17 — both are currently averaged out.',
+      'Today every kid is the same averaged-out kid. Expand from the 0–4 slider into per-child detail so the model reflects what actually drives household cost. Per-child age (infant care often ~2× preschool, Child Tax Credit cuts off at 17, school-age kids drop daycare but pick up after-school care). School type — public (free, but with supplies/activity fees), private K–12 (median ~$13K/yr nationally, much higher in metro privates), parochial (often $5–10K), or homeschool (curriculum + lost-income cost of a parent staying home). Activities and extracurriculars (sports leagues, music lessons, summer camps — easily $2–5K/kid/yr at the moderate tier). Special needs / therapies as an optional line. College savings (529 contributions) as a separate optional bucket. Keep the simple slider as the default; expand on demand.',
   },
   {
     id: 4,
@@ -179,6 +179,14 @@ export const ROADMAP: readonly RoadmapItem[] = [
     status: 'planned',
     summary:
       'Today citations live inline next to the values that use them, plus a rotating footer block, plus a Sources section in the README. That works for "where did this number come from" but not for "show me everything this site is built on." Build a dedicated /sources page that pulls every Source constant in the codebase into one organized reference: grouped by type (federal tax, state tax, SNAP, Medicaid, CHIP, cost of living, minimum wage, etc.), with a state-by-state breakdown for the per-jurisdiction sources. Each entry shows the agency, the URL, what it covers, and last-checked date. Goal: make the editorial credibility legible — anyone landing on the site can see the whole bibliography in one place, the way a real reference work would have one.',
+  },
+  {
+    id: 20,
+    title: 'Income types taxed differently',
+    category: 'Tax modeling',
+    status: 'planned',
+    summary:
+      'Today every dollar of input income is treated as W-2 wages — federal brackets, state brackets, full FICA. Plenty of real income gets taxed very differently and the model currently can\'t represent any of it. (a) **Social Security benefits** — up to 85% federally taxable based on "combined income," and many states exempt SS entirely (or partially: CT, MN, MO, NM, RI, UT, VT, WV phase out). (b) **Pension / traditional 401(k) / traditional IRA distributions** — ordinary income federally, no FICA, and several states exempt retirement income up to a cap (PA exempts entirely after 59½; IL exempts qualified plans; GA up to $65K over 65; etc.). (c) **Roth IRA / Roth 401(k) qualified withdrawals** — federally and state tax-free. (d) **Long-term capital gains & qualified dividends** — 0/15/20% federal preferred rates (with NIIT 3.8% above thresholds), state usually ordinary (but WA has a 7% LTCG tax above $270K, and a few states exempt). (e) **Interest income** — ordinary federal + state. (f) **Municipal bond interest** — federal-exempt; in-state munis usually state-exempt too. (g) **Unemployment insurance** — federally taxable, state-varied (CA/NJ/PA/VA/MT exempt). (h) **Disability income** — SSDI partially taxable like SS; private LTD depends on who paid premiums. (i) **Rental income** (Schedule E, passive) and **self-employment income** (Schedule C, full SE tax of 15.3%) — both very different from W-2. Likely ship as an "Other income" expand under the primary income input: pick a type, enter an amount, and the model routes it through the right rules. Big surface area; could be done in waves (SS + retirement first, then capital gains, then SE, etc.).',
   },
   {
     id: 13,
