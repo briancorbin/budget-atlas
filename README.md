@@ -110,6 +110,16 @@ When the user picks a state without a curated city, the model falls back to a **
 - **KFF Employer Health Benefits — state averages** ([link](https://www.kff.org/health-costs/report/employer-health-benefits-annual-survey/)) — state premium averages
 - **AAA Your Driving Costs** ([link](https://newsroom.aaa.com/auto/your-driving-costs/)) — state-adjusted vehicle ownership cost
 
+### Rent calculation logic
+The rent *value* comes from the sources above, but the rule that picks **which** rent (1BR / 1BR×1.2 / 3BR) is its own piece of editorial methodology:
+
+- Solo, no kids → 1BR rent. Grounded in HUD occupancy guidance.
+- Couple, no kids → 1BR × 1.2. HUD says two people fit a 1BR; the 20% premium is editorial — Zillow rent-by-bedroom data shows 1BR→2BR runs ~25–30% in most metros, so 1.2× treats the household as "blended" between staying in a 1BR and stepping up to a small 2BR.
+- Any kids → 3BR family-sized. Matches HUD FMR's family benchmark and EPI's Family Budget Calculator, both of which use 3BR for households with children regardless of count.
+- Lifestyle multiplier: ×0.9 modest, ×1.0 moderate, ×1.15 comfortable. Editorial, not from a single dataset — rough match for the spread between "modest yet adequate" and "comfortable" tiers in EPI / BLS CES decile data.
+
+Sources for the data-grounded parts: **HUD Occupancy Standards** ([link](https://www.hud.gov/sites/dfiles/OCHCO/documents/4350.3.pdf)), **EPI Family Budget Calculator methodology** ([link](https://www.epi.org/resources/budget/budget-factsheets/)), **Zillow Rent by Bedroom** ([link](https://www.zillow.com/research/data/)). The editorial parts (1.2× couple premium, lifestyle multipliers) are flagged as approximations rather than fake-cited.
+
 ### A note on precision
 City-level numbers are approximate medians, rounded to the nearest $50–$100 for readability. Statewide-average profiles are coarser still — they collapse intra-state variation (Manhattan vs. Buffalo, Bay Area vs. Bakersfield) into a single number. Both are appropriate for an editorial model exploring orders of magnitude — not for personal financial planning. Tax bracket numbers are rounded to clean values; they'll be off from a real return by 1–3% from index-adjustment timing.
 

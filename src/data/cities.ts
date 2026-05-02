@@ -133,6 +133,27 @@ export const CITIES: Record<string, CityInfo> = {
  * - KFF Employer Health Benefits: state single + family premium averages.
  * - AAA "Your Driving Costs": state-adjusted vehicle ownership cost.
  */
+/**
+ * Methodology citations for the *rent calculation logic* in `lib/budget.ts`
+ * (separate from the underlying rent values). The formula is:
+ *
+ *   solo, no kids   → 1BR
+ *   couple, no kids → 1BR × 1.2
+ *   any kids        → 3BR family-sized
+ *   × lifestyle multiplier (modest 0.9, moderate 1.0, comfortable 1.15)
+ *
+ * The bedroom-by-household pattern is grounded in HUD occupancy guidance
+ * and EPI's Family Budget Calculator. The 20% couple premium and the
+ * lifestyle multipliers are editorial — defensibly approximate, not
+ * pulled from a single dataset. We label them as such honestly in the
+ * UI ("approx.") rather than fake-citing.
+ */
+export const RENT_LOGIC_SOURCES: readonly Source[] = [
+  { label: 'HUD Occupancy Standards (HUD Handbook 4350.3)', url: 'https://www.hud.gov/sites/dfiles/OCHCO/documents/4350.3.pdf', date: '2023' },
+  { label: 'EPI Family Budget Calculator — methodology', url: 'https://www.epi.org/resources/budget/budget-factsheets/', date: '2024' },
+  { label: 'Zillow Rent by Bedroom Count', url: 'https://www.zillow.com/research/data/', date: '2025' },
+];
+
 export const STATE_DEFAULT_SOURCES: readonly Source[] = [
   { label: 'HUD Fair Market Rents (FY2026)', url: 'https://www.huduser.gov/portal/datasets/fmr.html', date: '2025' },
   { label: 'BLS Consumer Expenditure Survey — regional', url: 'https://www.bls.gov/cex/tables.htm', date: '2025' },

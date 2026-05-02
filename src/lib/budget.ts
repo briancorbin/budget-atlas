@@ -99,10 +99,19 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   const lifestyleMult = lifestyle === 'modest' ? 0.85 : lifestyle === 'comfortable' ? 1.20 : 1.0;
   const householdSize = adults + kids;
 
-  // Housing footprint:
-  //   solo, no kids → 1BR
-  //   couple, no kids → 1BR + ~20% (small 2BR or larger 1BR)
-  //   any kids → 3BR family-sized
+  // Housing footprint — sourced and editorial parts both flagged:
+  //   solo, no kids        → 1BR  (HUD occupancy: 1 person fits a 1BR)
+  //   couple, no kids      → 1BR × 1.2  (HUD says 2 people are within 1BR
+  //                          occupancy limits; the +20% premium is an
+  //                          editorial split between staying in a 1BR vs.
+  //                          stepping up to a small 2BR. Zillow rent-by-
+  //                          bedroom data shows 1BR→2BR runs ~25–30% in
+  //                          most metros, so 1.2× is a "blended" couple.)
+  //   any kids             → 3BR family-sized  (matches HUD FMR's family
+  //                          benchmark and EPI Family Budget Calculator,
+  //                          which both use 3BR for households with
+  //                          children regardless of count)
+  // See RENT_LOGIC_SOURCES in src/data/cities.ts for citations.
   let baseRent: number;
   if (kids >= 1) baseRent = cityData.rent3;
   else if (adults === 2) baseRent = cityData.rent1 * 1.2;

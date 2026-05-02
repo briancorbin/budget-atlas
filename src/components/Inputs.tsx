@@ -1,10 +1,10 @@
 import type { FilingStatus, Lifestyle, StateCode } from '@/types';
 import { theme as T, fonts } from '@/theme';
 import { fmt, fmtPct } from '@/lib/format';
-import { CITIES, getCityData, stateSlug } from '@/data/cities';
+import { CITIES, RENT_LOGIC_SOURCES, getCityData, stateSlug } from '@/data/cities';
 import { STATES, bracketRange } from '@/data/states';
 import { SCENARIOS } from '@/data/scenarios';
-import { SearchableSelect, SectionTitle, type SearchableOption } from './ui';
+import { CiteGroup, SearchableSelect, SectionTitle, type SearchableOption } from './ui';
 
 export interface InputsState {
   scenarioId: string;
@@ -241,12 +241,12 @@ export function CustomizePanel(s: InputsState) {
               // Adults is driven by the partner toggle, not filing status.
               const twoAdults = s.twoIncome;
               if (s.kids >= 1) {
-                return <>3BR rent (family): {fmt(currentCity.rent3)}/mo</>;
+                return <>3BR rent (family): {fmt(currentCity.rent3)}/mo<CiteGroup sources={RENT_LOGIC_SOURCES} /></>;
               }
               if (twoAdults) {
-                return <>1BR rent (couple, +20%): {fmt(Math.round(currentCity.rent1 * 1.2))}/mo</>;
+                return <>1BR rent (couple, +20%): {fmt(Math.round(currentCity.rent1 * 1.2))}/mo<CiteGroup sources={RENT_LOGIC_SOURCES} /></>;
               }
-              return <>1BR rent: {fmt(currentCity.rent1)}/mo</>;
+              return <>1BR rent: {fmt(currentCity.rent1)}/mo<CiteGroup sources={RENT_LOGIC_SOURCES} /></>;
             })()}
             {currentCity.kind === 'statewide' && (
               <span style={{ color: T.accent, marginLeft: 8 }}>· statewide approx.</span>
