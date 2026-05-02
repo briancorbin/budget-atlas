@@ -19,31 +19,33 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
         {/* Pie */}
         <div style={{
           background: T.surface, border: `1px solid ${T.border}`,
-          padding: 20, position: 'relative',
+          padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <ResponsiveContainer width="100%" height={320}>
-            <PieChart>
-              <Pie
-                data={entries.map(([name, value]) => ({ name, value }))}
-                dataKey="value" nameKey="name" cx="50%" cy="50%"
-                innerRadius={60} outerRadius={120} paddingAngle={2}>
-                {entries.map((_, i) => (
-                  <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]}
-                    stroke={T.surface} strokeWidth={2} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div style={{
-            position: 'absolute', top: '50%', left: '50%',
-            transform: 'translate(-50%, -50%)', pointerEvents: 'none', textAlign: 'center',
-          }}>
-            <div style={{ fontSize: 11, color: T.inkMuted, letterSpacing: '0.1em' }}>
-              TOTAL / MO
-            </div>
-            <div style={{ fontFamily: fonts.mono, fontSize: 24, color: T.ink, marginTop: 4 }}>
-              {fmt(result.totalExpenses)}
+          <div style={{ position: 'relative', width: '100%', height: 320 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={entries.map(([name, value]) => ({ name, value }))}
+                  dataKey="value" nameKey="name" cx="50%" cy="50%"
+                  innerRadius={60} outerRadius={120} paddingAngle={2}>
+                  {entries.map((_, i) => (
+                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]}
+                      stroke={T.surface} strokeWidth={2} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div style={{
+              position: 'absolute', top: '50%', left: '50%',
+              transform: 'translate(-50%, -50%)', pointerEvents: 'none', textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 11, color: T.inkMuted, letterSpacing: '0.1em' }}>
+                TOTAL / MO
+              </div>
+              <div style={{ fontFamily: fonts.mono, fontSize: 24, color: T.ink, marginTop: 4 }}>
+                {fmt(result.totalExpenses)}
+              </div>
             </div>
           </div>
         </div>
