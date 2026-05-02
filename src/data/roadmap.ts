@@ -84,11 +84,11 @@ export const ROADMAP: readonly RoadmapItem[] = [
   },
   {
     id: 7,
-    title: 'Married Filing Separately',
+    title: 'Filing-status comparison (MFJ vs MFS vs Single vs HoH)',
     category: 'Tax modeling',
     status: 'planned',
     summary:
-      'Today filing status is single, married (always MFJ), or head of household. MFS has its own brackets, ~half the standard deduction, and disqualifies EITC entirely. Rare to be the right choice but the teaching moment is showing why.',
+      'Today filing status is single, married (always MFJ), or head of household. Two pieces here: (1) add Married Filing Separately as a real filing status with its own brackets, ~half the standard deduction, EITC disqualification, and tighter credit phase-outs. (2) Build a side-by-side comparison view that shows the same household run through every applicable filing status — Single vs MFJ vs MFS for couples, Single vs HoH for single parents — with the dollar delta on each row. Plus surface the qualifying-person and "considered unmarried" rules for HoH (often misunderstood: cost-of-keeping-up-home > 50%, qualifying child or relative living with you more than half the year, etc.) so users see when HoH is actually available.',
   },
   {
     id: 8,
