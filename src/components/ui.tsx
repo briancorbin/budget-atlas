@@ -5,7 +5,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from 'react';
-import type { TooltipProps } from 'recharts';
+import type { TooltipContentProps } from 'recharts';
 import type { Source } from '@/types';
 import { theme as T, fonts } from '@/theme';
 import { fmt } from '@/lib/format';
@@ -480,7 +480,7 @@ export function SectionTitle({ children, kicker }: { children: ReactNode; kicker
   );
 }
 
-export function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
+export function CustomTooltip({ active, payload, label }: TooltipContentProps) {
   if (!active || !payload || !payload.length) return null;
   // BarChart provides `label` (the X-axis value); PieChart doesn't, so fall
   // back to the payload entry's own name (the slice's category).

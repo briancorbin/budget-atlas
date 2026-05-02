@@ -53,7 +53,7 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                     />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={CustomTooltip} />
               </PieChart>
             </ResponsiveContainer>
             <div

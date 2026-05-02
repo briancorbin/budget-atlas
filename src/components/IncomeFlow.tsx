@@ -68,7 +68,7 @@ export function IncomeFlow({ result }: { result: BudgetResult }) {
               tickLine={false}
               tickFormatter={(v) => '$' + (v / 1000).toFixed(0) + 'k'}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.03)' }} />
+            <Tooltip content={CustomTooltip} cursor={{ fill: 'rgba(0,0,0,0.03)' }} />
             <Bar dataKey="value" radius={[2, 2, 0, 0]}>
               {data.map((entry, i) => (
                 <Cell key={i} fill={fillFor(entry.kind)} />
@@ -76,7 +76,7 @@ export function IncomeFlow({ result }: { result: BudgetResult }) {
               <LabelList
                 dataKey="value"
                 position="top"
-                formatter={(v: number) => fmt(v)}
+                formatter={(v) => fmt(v as number)}
                 style={{ fontSize: 11, fontFamily: fonts.mono, fill: T.inkSoft }}
               />
             </Bar>
