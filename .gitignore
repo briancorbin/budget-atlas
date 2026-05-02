@@ -50,6 +50,9 @@ pnpm-debug.log*
 # OS
 Thumbs.db
 
+# Wrangler local state
+.wrangler/
+
 # Claude Code local settings & scratch
 .claude/settings.local.json
 .claude/scheduled_tasks.lock

@@ -5,7 +5,6 @@ build
 
 # Generated icon and OG card PNGs (binary, not formattable)
 public/*.png
-public/_redirects
 
 # Lockfiles
 yarn.lock
