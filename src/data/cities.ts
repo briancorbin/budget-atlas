@@ -74,7 +74,7 @@ export const CITIES: Record<string, CityInfo> = {
     childcareInfant: 1500, childcarePreschool: 1200, healthSingle: 400, healthFamily: 1280,
   },
   cmh: {
-    name: 'Columbus, OH', state: 'OH', tier: 'Lower', localTax: 0.025,
+    name: 'Columbus', state: 'OH', tier: 'Lower', localTax: 0.025,
     rent1: 1300, rent3: 2000, groceries: 380, utilities: 160, transit: 62, carCost: 850,
     childcareInfant: 1300, childcarePreschool: 1050, healthSingle: 390, healthFamily: 1250,
   },
@@ -89,7 +89,7 @@ export const CITIES: Record<string, CityInfo> = {
     childcareInfant: 1100, childcarePreschool: 900, healthSingle: 390, healthFamily: 1230,
   },
   jxn: {
-    name: 'Jackson, MS', state: 'MS', tier: 'Lower', localTax: 0,
+    name: 'Jackson', state: 'MS', tier: 'Lower', localTax: 0,
     rent1: 950, rent3: 1500, groceries: 360, utilities: 180, transit: 0, carCost: 800,
     childcareInfant: 950, childcarePreschool: 800, healthSingle: 390, healthFamily: 1220,
   },
