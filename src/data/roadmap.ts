@@ -173,6 +173,14 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Surface community resources for the selected location: food banks, shelters, free clinics, diaper banks, utility-assistance programs, legal aid, workforce centers. Seeded from public directories (211, FoodPantries.org, HUD shelter lists) and expandable as a community-driven layer where users can submit additions for their city. Shows alongside benefits so a household sees both the formal safety net and the local one.',
   },
   {
+    id: 19,
+    title: 'Dedicated sources page',
+    category: 'UX & navigation',
+    status: 'planned',
+    summary:
+      'Today citations live inline next to the values that use them, plus a rotating footer block, plus a Sources section in the README. That works for "where did this number come from" but not for "show me everything this site is built on." Build a dedicated /sources page that pulls every Source constant in the codebase into one organized reference: grouped by type (federal tax, state tax, SNAP, Medicaid, CHIP, cost of living, minimum wage, etc.), with a state-by-state breakdown for the per-jurisdiction sources. Each entry shows the agency, the URL, what it covers, and last-checked date. Goal: make the editorial credibility legible — anyone landing on the site can see the whole bibliography in one place, the way a real reference work would have one.',
+  },
+  {
     id: 13,
     title: 'Homeownership / mortgage',
     category: 'Cost of living',
