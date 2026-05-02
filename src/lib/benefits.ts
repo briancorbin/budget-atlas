@@ -45,12 +45,18 @@ export interface BenefitInputs {
   grossIncome: number;
   householdSize: number;
   state: StateCode;
+  /** Number of adults (1 or 2). Used to size the adult-only healthcare
+   *  baseline when estimating CHIP's kids-only coverage value. */
+  adults: number;
   /** Number of children in the household (0–4+). Drives parent vs. childless
    *  adult logic for non-expansion Medicaid, and CHIP applicability. */
   kids: number;
   /** Current modeled healthcare expense, monthly. Used to estimate Medicaid
    *  / CHIP benefit value (the dollars eliminated when the program covers). */
   monthlyHealthcareCost: number;
+  /** Adult-only (single-coverage) baseline healthcare cost, monthly. Used to
+   *  isolate the kids' share of family healthcare for CHIP estimates. */
+  monthlyHealthcareSingle: number;
 }
 
 // ── SNAP ────────────────────────────────────────────────────────────────
@@ -171,12 +177,21 @@ export function checkMedicaid({
 
 /**
  * CHIP eligibility. Per-state income limit (typically 200%–400% FPL).
- * Only relevant when there are children in the household. Estimated
- * benefit is a rough share of family healthcare attributable to the kids
- * (40% of family healthcare cost — a back-of-envelope split).
+ * Only relevant when there are children in the household. Benefit value
+ * is the kids' share of the family premium — the marginal cost of adding
+ * children to an adult-only plan:
+ *
+ *   1 adult + kids   →  family premium − single-coverage premium
+ *   2 adults + kids  →  family premium − (2 × single-coverage premium)
+ *                       (we don't model an explicit two-adult plan rate;
+ *                        2× single is a reasonable approximation)
+ *
+ * Real CHIP often charges small premiums above ~150% FPL (varies by state);
+ * we treat coverage as fully replacing the kids' share for simplicity.
  */
 export function checkChip({
-  grossIncome, householdSize, state, kids, monthlyHealthcareCost,
+  grossIncome, householdSize, state, adults, kids, monthlyHealthcareCost,
+  monthlyHealthcareSingle,
 }: BenefitInputs): BenefitEligibility {
   const limit = STATE_CHIP_LIMIT_FPL[state];
   const limitPct = Math.round(limit * 100);
@@ -202,8 +217,10 @@ export function checkChip({
     };
   }
 
-  // Rough estimate: kids' share is ~40% of family healthcare expense.
-  const kidsShare = monthlyHealthcareCost * 0.4;
+  const adultBaseline = adults === 2
+    ? 2 * monthlyHealthcareSingle
+    : monthlyHealthcareSingle;
+  const kidsShare = Math.max(0, monthlyHealthcareCost - adultBaseline);
   return {
     eligible: true,
     monthlyBenefit: Math.round(kidsShare),

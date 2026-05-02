@@ -56,8 +56,10 @@ export function BudgetExplorer() {
       grossIncome: result.grossIncome,
       householdSize: result.householdSize,
       state: result.cityData.state,
+      adults: result.adults,
       kids: result.householdSize - result.adults,
       monthlyHealthcareCost: preBenefitHealthcare,
+      monthlyHealthcareSingle: result.cityData.healthSingle,
     };
     const next = new Set(claimedBenefits);
     let changed = false;

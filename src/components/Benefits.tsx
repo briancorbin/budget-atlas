@@ -3,8 +3,8 @@ import { theme as T, fonts } from '@/theme';
 import { fmt } from '@/lib/format';
 import { checkBenefit, type BenefitEligibility, type BenefitId, type BenefitInputs } from '@/lib/benefits';
 import {
-  CHIP_SOURCE, CHIP_STATE_THRESHOLDS_SOURCE,
-  MEDICAID_SOURCE, MEDICAID_EXPANSION_SOURCE,
+  CHIP_SOURCE, CHIP_STATE_THRESHOLDS_SOURCE, chipStateSource,
+  MEDICAID_SOURCE, MEDICAID_EXPANSION_SOURCE, medicaidStateSource,
   SNAP_SOURCE, snapStateSource,
 } from '@/data/benefits';
 import { POVERTY_SOURCE } from '@/data/poverty';
@@ -38,13 +38,15 @@ const BENEFIT_META: readonly BenefitMeta[] = [
     blurb: 'Free or near-free health coverage for low-income households. Eligibility depends on whether your state expanded Medicaid under the ACA.',
     appliesTo: 'Zeros out the healthcare line.',
     source: [MEDICAID_SOURCE, MEDICAID_EXPANSION_SOURCE],
+    stateSource: inputs => medicaidStateSource(inputs.state),
   },
   {
     id: 'chip',
     name: 'CHIP',
     blurb: 'Low-cost health coverage for children in families above the Medicaid limit. State-set income threshold, typically 200%–400% FPL.',
-    appliesTo: "Reduces the kids' share of healthcare (~40% of family premium).",
+    appliesTo: "Reduces the kids' share of healthcare.",
     source: [CHIP_SOURCE, CHIP_STATE_THRESHOLDS_SOURCE],
+    stateSource: inputs => chipStateSource(inputs.state),
   },
 ];
 
@@ -71,8 +73,10 @@ export function Benefits({
     grossIncome: result.grossIncome,
     householdSize: result.householdSize,
     state: result.cityData.state,
+    adults: result.adults,
     kids: result.householdSize - result.adults,
     monthlyHealthcareCost: preBenefitHealthcare,
+    monthlyHealthcareSingle: result.cityData.healthSingle,
   };
 
   const evaluate = (id: BenefitId): BenefitEligibility => checkBenefit(id, inputs);

@@ -138,8 +138,10 @@ export function computeBudget(input: BudgetInput): BudgetResult {
     grossIncome: totalIncome,
     householdSize,
     state: cityData.state,
+    adults,
     kids,
     monthlyHealthcareCost: healthcare,
+    monthlyHealthcareSingle: cityData.healthSingle,
   };
 
   if (claimedBenefits?.has('snap')) {
