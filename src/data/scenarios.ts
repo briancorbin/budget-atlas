@@ -136,7 +136,7 @@ export const SCENARIOS: Scenario[] = [
     city: 'atl',
     kids: 1,
     lifestyle: 'moderate',
-    takeaway: 'EITC phase-out hikes the effective rate on the second income',
+    takeaway: 'Two-earner middle — marriage-neutral, full $2K CTC, past EITC',
   },
   {
     id: 'exec_nyc',
