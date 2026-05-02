@@ -28,6 +28,12 @@ export interface BenefitEligibility {
   reason?: string;
   /** Estimated monthly benefit when claimed (in dollars/month). */
   monthlyBenefit: number;
+  /**
+   * State-policy context that's relevant whether or not the household is
+   * eligible — e.g. "AZ raises this to 165% via Broad-Based Categorical
+   * Eligibility". Surfaced as a small editorial note in the benefit card.
+   */
+  policyNote?: string;
 }
 
 export interface BenefitInputs {
@@ -63,17 +69,19 @@ export function checkSnap({ grossIncome, householdSize, state }: BenefitInputs):
   }
 
   const limitFpl = snapIncomeLimitFpl(state);
+  const limitPct = Math.round(limitFpl * 100);
+  const limitDollars = Math.round(fpl(householdSize) * limitFpl);
+  const policyNote = limitFpl > SNAP_GROSS_INCOME_LIMIT_FPL_FEDERAL
+    ? `${state} raises the gross-income limit to ${limitPct}% of FPL (≈ $${limitDollars.toLocaleString()}/yr for a household of ${householdSize}) via Broad-Based Categorical Eligibility.`
+    : `${state} uses the 130% federal floor (≈ $${limitDollars.toLocaleString()}/yr for a household of ${householdSize}); no BBCE expansion adopted.`;
+
   const ratio = fplPct(grossIncome, householdSize);
   if (ratio > limitFpl) {
-    const limitDollars = Math.round(fpl(householdSize) * limitFpl);
-    const limitPct = Math.round(limitFpl * 100);
-    const policyNote = limitFpl > SNAP_GROSS_INCOME_LIMIT_FPL_FEDERAL
-      ? `${state} raises this to ${limitPct}% via Broad-Based Categorical Eligibility`
-      : `${state} uses the 130% federal floor`;
     return {
       eligible: false,
-      reason: `Income exceeds ${limitPct}% of the federal poverty level (~$${limitDollars.toLocaleString()}/yr for a household of ${householdSize}). ${policyNote}.`,
+      reason: `Income exceeds ${limitPct}% of the federal poverty level (~$${limitDollars.toLocaleString()}/yr for a household of ${householdSize}).`,
       monthlyBenefit: 0,
+      policyNote,
     };
   }
 
@@ -83,5 +91,5 @@ export function checkSnap({ grossIncome, householdSize, state }: BenefitInputs):
   const max = snapMaxBenefit(householdSize);
   const benefit = Math.max(0, Math.round(max - 0.30 * netMonthly));
 
-  return { eligible: true, monthlyBenefit: benefit };
+  return { eligible: true, monthlyBenefit: benefit, policyNote };
 }

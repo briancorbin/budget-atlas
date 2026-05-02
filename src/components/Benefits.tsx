@@ -167,6 +167,18 @@ function Card({ meta, sources, eligibility, claimed, onToggle }: {
           {eligibility.reason}
         </div>
       )}
+
+      {eligibility.policyNote && (
+        <div style={{
+          marginTop: 10, paddingTop: 10,
+          borderTop: `1px dashed ${claimed ? T.inkSoft : T.border}`,
+          fontSize: 11, lineHeight: 1.5,
+          color: claimed ? T.bgAlt : T.inkSoft,
+          fontStyle: 'italic',
+        }}>
+          {eligibility.policyNote}
+        </div>
+      )}
     </div>
   );
 }
