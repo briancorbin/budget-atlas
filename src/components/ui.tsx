@@ -26,22 +26,26 @@ export function Cite({ source }: { source: Source | readonly Source[] }) {
           title={s.date ? `${s.label} (${s.date})` : s.label}
           aria-label={`Source: ${s.label}`}
           style={{
-            display: 'inline-block',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             fontSize: '0.62em',
             fontFamily: fonts.body,
             fontWeight: 700,
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             color: T.accent,
-            padding: '2px 5px',
+            padding: '3px 6px 2px',
             margin: '0 4px',
             border: `1px solid ${T.accent}`,
             borderRadius: 2,
             textDecoration: 'none',
-            verticalAlign: '0.2em',
+            verticalAlign: 'middle',
             lineHeight: 1,
             cursor: 'pointer',
             whiteSpace: 'nowrap',
+            position: 'relative',
+            top: '-0.1em',
           }}
         >src ↗</a>
       ))}
