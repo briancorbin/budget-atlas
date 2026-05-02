@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "description": "An interactive examination of how Americans live on what they earn — across cities, tax regimes, and household configurations.",
+  "packageManager": "yarn@4.9.1",
   "scripts": {
     "start": "vite",
     "build": "tsc -b && vite build",

@@ -1,10 +1,21 @@
 # Dependencies
 node_modules/
 
-# This project uses Yarn classic — yarn.lock is the source of truth.
+# This project uses Yarn — yarn.lock is the source of truth.
 # Keep npm's lockfile out so CF Pages (and anyone running `npm install`)
 # doesn't generate a parallel, drifting lockfile.
 package-lock.json
+
+# Yarn 4 internals (per https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored):
+# install-state, cache, and unplugged are local-only. We use Corepack
+# (packageManager field in package.json) rather than vendoring Yarn into
+# .yarn/releases, so the entire .yarn/ tree is local-only here.
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
 
 # Build output
 dist/
