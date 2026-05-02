@@ -8,7 +8,7 @@ import {
   SNAP_SOURCE, snapStateSource,
 } from '@/data/benefits';
 import { POVERTY_SOURCE } from '@/data/poverty';
-import { Cite, SectionTitle } from './ui';
+import { Cite, CiteGroup, SectionTitle } from './ui';
 
 interface BenefitMeta {
   id: BenefitId;
@@ -168,8 +168,12 @@ function Card({ meta, sources, eligibility, claimed, onToggle }: {
         display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
         marginBottom: 4, gap: 8,
       }}>
-        <div style={{ fontFamily: fonts.display, fontSize: 18, fontWeight: 500 }}>
-          {meta.name}<Cite source={sources} />
+        <div style={{
+          fontFamily: fonts.display, fontSize: 18, fontWeight: 500,
+          display: 'inline-flex', alignItems: 'center', gap: 6, lineHeight: 1.1,
+        }}>
+          <span>{meta.name}</span>
+          <CiteGroup sources={sources} />
         </div>
         <EligibilityBadge eligible={eligible} claimed={claimed} />
       </div>
