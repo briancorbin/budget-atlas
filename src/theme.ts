@@ -10,9 +10,9 @@ export const theme = {
   inkSoft: '#5A4F42',
   inkMuted: '#85786A',
   border: '#D6CBB1',
-  accent: '#A6261C',     // editorial red
-  positive: '#2D5016',   // forest green
-  warning: '#B8742B',    // burnt orange
+  accent: '#A6261C', // editorial red
+  positive: '#2D5016', // forest green
+  warning: '#B8742B', // burnt orange
   surface: '#FBF8EF',
 } as const;
 
@@ -24,6 +24,13 @@ export const fonts = {
 
 /** Categorical palette for expense charts. */
 export const PIE_COLORS = [
-  '#A6261C', '#2D5016', '#B8742B', '#3E5A7A', '#7A4E2A',
-  '#5C5C2D', '#8A4A6E', '#3A6E6E', '#85786A',
+  '#A6261C',
+  '#2D5016',
+  '#B8742B',
+  '#3E5A7A',
+  '#7A4E2A',
+  '#5C5C2D',
+  '#8A4A6E',
+  '#3A6E6E',
+  '#85786A',
 ] as const;

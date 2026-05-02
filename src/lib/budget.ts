@@ -17,7 +17,16 @@ import { checkChip, checkMedicaid, checkSnap } from '@/lib/benefits';
  * wage base cap.
  */
 export function computeBudget(input: BudgetInput): BudgetResult {
-  const { incomeA, incomeB = 0, hasPartner = false, filing, city, kids, lifestyle, claimedBenefits } = input;
+  const {
+    incomeA,
+    incomeB = 0,
+    hasPartner = false,
+    filing,
+    city,
+    kids,
+    lifestyle,
+    claimedBenefits,
+  } = input;
   const cityData = getCityData(city);
   const stateData = STATES[cityData.state];
   const totalIncome = incomeA + incomeB;
@@ -67,8 +76,9 @@ export function computeBudget(input: BudgetInput): BudgetResult {
 
     const stateTaxableA = Math.max(0, incomeA - stateData.stdDeduction[filing]);
     const stateTaxableB = Math.max(0, incomeB - stateData.stdDeduction.single);
-    stateTax = progressiveTax(stateTaxableA, stateData.brackets[filing])
-             + progressiveTax(stateTaxableB, stateData.brackets.single);
+    stateTax =
+      progressiveTax(stateTaxableA, stateData.brackets[filing]) +
+      progressiveTax(stateTaxableB, stateData.brackets.single);
   } else {
     // Single earner
     const std = STD_DEDUCTION_2026[filing];
@@ -96,7 +106,7 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   const monthlyNet = netIncome / 12;
 
   // ── Expenses ──
-  const lifestyleMult = lifestyle === 'modest' ? 0.85 : lifestyle === 'comfortable' ? 1.20 : 1.0;
+  const lifestyleMult = lifestyle === 'modest' ? 0.85 : lifestyle === 'comfortable' ? 1.2 : 1.0;
   const householdSize = adults + kids;
 
   // Housing footprint — sourced and editorial parts both flagged:
@@ -116,26 +126,30 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   if (kids >= 1) baseRent = cityData.rent3;
   else if (adults === 2) baseRent = cityData.rent1 * 1.2;
   else baseRent = cityData.rent1;
-  const housing = baseRent * (lifestyle === 'modest' ? 0.9 : lifestyle === 'comfortable' ? 1.15 : 1.0);
+  const housing =
+    baseRent * (lifestyle === 'modest' ? 0.9 : lifestyle === 'comfortable' ? 1.15 : 1.0);
 
   const utilities = cityData.utilities * (kids >= 2 ? 1.2 : 1.0);
-  const groceries = cityData.groceries * householdSize *
+  const groceries =
+    cityData.groceries *
+    householdSize *
     (lifestyle === 'modest' ? 0.85 : lifestyle === 'comfortable' ? 1.15 : 1.0);
 
   // Big transit cities: childless workers use transit; families need cars
   const isTransitCity = ['nyc', 'sf', 'bos', 'dc', 'chi'].includes(city);
-  const transportation = (isTransitCity && kids === 0)
-    ? cityData.transit * adults
-    : cityData.carCost * (adults === 2 && kids > 0 ? 1.4 : 1.0);
+  const transportation =
+    isTransitCity && kids === 0
+      ? cityData.transit * adults
+      : cityData.carCost * (adults === 2 && kids > 0 ? 1.4 : 1.0);
 
   const hasFamilyPlan = adults === 2 || kids > 0;
   const healthcare = hasFamilyPlan ? cityData.healthFamily : cityData.healthSingle;
 
   // Childcare lite: kids × preschool average × 0.85 (mix of ages, after-school discount)
-  const childcare = kids > 0 ? (cityData.childcarePreschool * kids * 0.85) : 0;
+  const childcare = kids > 0 ? cityData.childcarePreschool * kids * 0.85 : 0;
 
-  const phoneInternet = 130 + (adults === 2 ? 50 : 0) + (kids * 25);
-  const insuranceOther = 90 + (kids * 15) + ((kids >= 1 || adults === 2) ? 40 : 0);
+  const phoneInternet = 130 + (adults === 2 ? 50 : 0) + kids * 25;
+  const insuranceOther = 90 + kids * 15 + (kids >= 1 || adults === 2 ? 40 : 0);
   const personalEssentials = 120 * householdSize * lifestyleMult;
 
   // ── Benefits ──
@@ -188,30 +202,64 @@ export function computeBudget(input: BudgetInput): BudgetResult {
 
   const totalBenefits = Object.values(benefitsApplied).reduce((s, n) => s + n, 0);
 
-  const totalExpenses = housing + utilities + groceriesAfterBenefits + transportation +
-    healthcareAfterBenefits + childcare + phoneInternet + insuranceOther + personalEssentials;
+  const totalExpenses =
+    housing +
+    utilities +
+    groceriesAfterBenefits +
+    transportation +
+    healthcareAfterBenefits +
+    childcare +
+    phoneInternet +
+    insuranceOther +
+    personalEssentials;
 
   const discretionary = monthlyNet - totalExpenses;
   const annualDiscretionary = discretionary * 12;
 
-  const suggestedSavings = Math.max(0, discretionary * 0.50);
-  const suggestedVacation = Math.max(0, discretionary * 0.20);
-  const suggestedSplurge = Math.max(0, discretionary * 0.20);
-  const suggestedEmergency = Math.max(0, discretionary * 0.10);
+  const suggestedSavings = Math.max(0, discretionary * 0.5);
+  const suggestedVacation = Math.max(0, discretionary * 0.2);
+  const suggestedSplurge = Math.max(0, discretionary * 0.2);
+  const suggestedEmergency = Math.max(0, discretionary * 0.1);
 
   return {
-    grossIncome: totalIncome, incomeA, incomeB, hasSecondIncome, adults, householdSize,
-    federalTax, fedTaxRaw, ctc, eitc, stateTax, localTax, fica, totalTaxes, taxableIncome,
-    netIncome, monthlyNet,
+    grossIncome: totalIncome,
+    incomeA,
+    incomeB,
+    hasSecondIncome,
+    adults,
+    householdSize,
+    federalTax,
+    fedTaxRaw,
+    ctc,
+    eitc,
+    stateTax,
+    localTax,
+    fica,
+    totalTaxes,
+    taxableIncome,
+    netIncome,
+    monthlyNet,
     expenses: {
-      Housing: housing, Utilities: utilities, Groceries: groceriesAfterBenefits,
-      Transportation: transportation, Healthcare: healthcareAfterBenefits,
-      Childcare: childcare, 'Phone & Internet': phoneInternet,
-      Insurance: insuranceOther, 'Personal Essentials': personalEssentials,
+      Housing: housing,
+      Utilities: utilities,
+      Groceries: groceriesAfterBenefits,
+      Transportation: transportation,
+      Healthcare: healthcareAfterBenefits,
+      Childcare: childcare,
+      'Phone & Internet': phoneInternet,
+      Insurance: insuranceOther,
+      'Personal Essentials': personalEssentials,
     },
-    totalExpenses, discretionary, annualDiscretionary,
-    benefitsApplied, totalBenefits,
-    suggestedSavings, suggestedVacation, suggestedSplurge, suggestedEmergency,
-    cityData, stateData,
+    totalExpenses,
+    discretionary,
+    annualDiscretionary,
+    benefitsApplied,
+    totalBenefits,
+    suggestedSavings,
+    suggestedVacation,
+    suggestedSplurge,
+    suggestedEmergency,
+    cityData,
+    stateData,
   };
 }

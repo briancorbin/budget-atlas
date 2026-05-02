@@ -8,8 +8,15 @@ import { computeBudget } from '@/lib/budget';
 import { SearchableSelect, SectionTitle, type SearchableOption } from './ui';
 
 export function CityComparison({
-  result, compareCity, setCompareCity,
-  incomeA, incomeB, hasPartner, filing, kids, lifestyle,
+  result,
+  compareCity,
+  setCompareCity,
+  incomeA,
+  incomeB,
+  hasPartner,
+  filing,
+  kids,
+  lifestyle,
 }: {
   result: BudgetResult;
   compareCity: string;
@@ -22,7 +29,8 @@ export function CityComparison({
   lifestyle: Lifestyle;
 }) {
   const compare = useMemo(
-    () => computeBudget({ incomeA, incomeB, hasPartner, filing, city: compareCity, kids, lifestyle }),
+    () =>
+      computeBudget({ incomeA, incomeB, hasPartner, filing, city: compareCity, kids, lifestyle }),
     [incomeA, incomeB, hasPartner, filing, compareCity, kids, lifestyle],
   );
 
@@ -35,14 +43,21 @@ export function CityComparison({
   const compareState = compare.cityData.state;
   const stateOptions: SearchableOption<StateCode>[] = (Object.keys(STATES) as StateCode[])
     .sort((a, b) => STATES[a].name.localeCompare(STATES[b].name))
-    .map(code => ({ value: code, label: STATES[code].name, hint: code }));
+    .map((code) => ({ value: code, label: STATES[code].name, hint: code }));
 
   const tierRank: Record<string, number> = {
-    'Very High': 0, 'High': 1, 'Moderate': 2, 'Lower': 3, 'Very Low': 4,
+    'Very High': 0,
+    High: 1,
+    Moderate: 2,
+    Lower: 3,
+    'Very Low': 4,
   };
   const curatedInState = Object.entries(CITIES)
     .filter(([, c]) => c.state === compareState)
-    .sort(([, a], [, b]) => (tierRank[a.tier] ?? 9) - (tierRank[b.tier] ?? 9) || a.name.localeCompare(b.name));
+    .sort(
+      ([, a], [, b]) =>
+        (tierRank[a.tier] ?? 9) - (tierRank[b.tier] ?? 9) || a.name.localeCompare(b.name),
+    );
   const localityOptions: SearchableOption<string>[] = [
     ...curatedInState.map(([id, c]) => ({ value: id, label: c.name, hint: c.tier })),
     { value: stateSlug(compareState), label: 'Statewide average', hint: 'approx.' },
@@ -55,27 +70,34 @@ export function CityComparison({
 
   return (
     <div style={{ marginBottom: 40 }}>
-      <SectionTitle kicker="The same income, somewhere else">
-        A geographic comparison
-      </SectionTitle>
+      <SectionTitle kicker="The same income, somewhere else">A geographic comparison</SectionTitle>
 
       <div style={{ background: T.surface, border: `1px solid ${T.border}`, padding: 24 }}>
         <div style={{ marginBottom: 18, fontFamily: fonts.body, fontSize: 14, color: T.inkSoft }}>
           Same household, same income — different city.
         </div>
         <div style={{ marginBottom: 24 }}>
-          <label style={{
-            fontSize: 12, color: T.inkSoft, display: 'block',
-            marginBottom: 6, letterSpacing: '0.05em',
-          }}>COMPARE WITH</label>
-          <div style={{
-            display: 'grid',
-            // auto-fit so the two pickers sit side-by-side when there's room
-            // and stack into a single column on narrow phones.
-            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-            gap: 8,
-            maxWidth: 520,
-          }}>
+          <label
+            style={{
+              fontSize: 12,
+              color: T.inkSoft,
+              display: 'block',
+              marginBottom: 6,
+              letterSpacing: '0.05em',
+            }}
+          >
+            COMPARE WITH
+          </label>
+          <div
+            style={{
+              display: 'grid',
+              // auto-fit so the two pickers sit side-by-side when there's room
+              // and stack into a single column on narrow phones.
+              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+              gap: 8,
+              maxWidth: 520,
+            }}
+          >
             <SearchableSelect<StateCode>
               value={compareState}
               options={stateOptions}
@@ -98,31 +120,57 @@ export function CityComparison({
           )}
         </div>
 
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: 1, background: T.border,
-        }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 1,
+            background: T.border,
+          }}
+        >
           {sides.map((side, idx) => {
             const other = sides[1 - idx].data;
-            const winning = side.data.discretionary >= 0 && side.data.discretionary >= other.discretionary;
+            const winning =
+              side.data.discretionary >= 0 && side.data.discretionary >= other.discretionary;
             return (
               <div key={idx} style={{ background: T.bg, padding: 24, position: 'relative' }}>
                 {winning && side.data.discretionary >= 0 && (
-                  <div style={{
-                    position: 'absolute', top: 12, right: 16,
-                    fontSize: 10, letterSpacing: '0.15em', color: T.positive, fontWeight: 600,
-                  }}>▲ MORE LEFT OVER</div>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 12,
+                      right: 16,
+                      fontSize: 10,
+                      letterSpacing: '0.15em',
+                      color: T.positive,
+                      fontWeight: 600,
+                    }}
+                  >
+                    ▲ MORE LEFT OVER
+                  </div>
                 )}
                 <div style={{ fontSize: 11, color: T.inkMuted, letterSpacing: '0.12em' }}>
                   {side.label.toUpperCase()}
                 </div>
-                <div style={{ fontFamily: fonts.display, fontSize: 22, marginTop: 4, marginBottom: 16 }}>
+                <div
+                  style={{
+                    fontFamily: fonts.display,
+                    fontSize: 22,
+                    marginTop: 4,
+                    marginBottom: 16,
+                  }}
+                >
                   {side.city.name}, {side.city.state}
                 </div>
-                <div style={{
-                  display: 'grid', gridTemplateColumns: 'auto 1fr',
-                  columnGap: 24, rowGap: 8, fontSize: 13,
-                }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'auto 1fr',
+                    columnGap: 24,
+                    rowGap: 8,
+                    fontSize: 13,
+                  }}
+                >
                   <span style={{ color: T.inkSoft }}>State tax</span>
                   <span style={{ fontFamily: fonts.mono, textAlign: 'right' }}>
                     {fmt(side.data.stateTax + side.data.localTax)}
@@ -148,10 +196,13 @@ export function CityComparison({
                   <div style={{ fontSize: 11, color: T.inkMuted, letterSpacing: '0.12em' }}>
                     DISCRETIONARY / MO
                   </div>
-                  <div style={{
-                    fontFamily: fonts.mono, fontSize: 26,
-                    color: side.data.discretionary >= 0 ? T.positive : T.accent,
-                  }}>
+                  <div
+                    style={{
+                      fontFamily: fonts.mono,
+                      fontSize: 26,
+                      color: side.data.discretionary >= 0 ? T.positive : T.accent,
+                    }}
+                  >
                     {fmtSigned(side.data.discretionary)}
                   </div>
                 </div>
@@ -160,14 +211,20 @@ export function CityComparison({
           })}
         </div>
 
-        <div style={{
-          marginTop: 16, fontFamily: fonts.display, fontSize: 16,
-          color: T.inkSoft, fontStyle: 'italic', lineHeight: 1.5,
-        }}>
+        <div
+          style={{
+            marginTop: 16,
+            fontFamily: fonts.display,
+            fontSize: 16,
+            color: T.inkSoft,
+            fontStyle: 'italic',
+            lineHeight: 1.5,
+          }}
+        >
           {result.discretionary > compare.discretionary
             ? `Difference: ${fmt(result.discretionary - compare.discretionary)}/mo more breathing room in ${result.cityData.name}.`
-            : `Difference: ${fmt(compare.discretionary - result.discretionary)}/mo more breathing room in ${compare.cityData.name}.`}
-          {' '}Geography is destiny — but only after you net out housing, taxes, and childcare.
+            : `Difference: ${fmt(compare.discretionary - result.discretionary)}/mo more breathing room in ${compare.cityData.name}.`}{' '}
+          Geography is destiny — but only after you net out housing, taxes, and childcare.
         </div>
       </div>
     </div>

@@ -29,10 +29,7 @@ export default function App() {
     // load so old bookmarks and shared links still work.
     if (window.location.hash) {
       const legacy = window.location.hash.replace(/^#\/?/, '').toLowerCase();
-      const target =
-        legacy === 'roadmap' ? '/roadmap' :
-        legacy === 'about' ? '/about' :
-        '/';
+      const target = legacy === 'roadmap' ? '/roadmap' : legacy === 'about' ? '/about' : '/';
       window.history.replaceState({}, '', target);
     }
     return routeFromPath(window.location.pathname);

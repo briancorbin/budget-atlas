@@ -112,7 +112,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Benefits & safety net',
     status: 'planned',
     summary:
-      'Surface alternate Medicaid tracks the model omits — SSI-linked (disabled), aged (65+), and pregnancy (often up to 200%+ FPL even in non-expansion states). Plus state waiver programs like Georgia\'s Pathways to Coverage, and a visualization of the Medicaid cliff at 138% FPL.',
+      "Surface alternate Medicaid tracks the model omits — SSI-linked (disabled), aged (65+), and pregnancy (often up to 200%+ FPL even in non-expansion states). Plus state waiver programs like Georgia's Pathways to Coverage, and a visualization of the Medicaid cliff at 138% FPL.",
   },
   {
     id: 11,
@@ -225,12 +225,12 @@ export const SHIPPED: readonly ShippedItem[] = [
     title: 'Per-state source citations',
     shippedAt: '2026-05-01',
     summary:
-      'Every state attaches its own Department of Revenue / Taxation, SNAP agency, Medicaid agency, and CHIP program citation. The page footer rotates the current state\'s sources alongside the cross-state aggregators.',
+      "Every state attaches its own Department of Revenue / Taxation, SNAP agency, Medicaid agency, and CHIP program citation. The page footer rotates the current state's sources alongside the cross-state aggregators.",
   },
   {
     title: 'Benefits & safety net',
     shippedAt: '2026-05-01',
     summary:
-      'SNAP, Medicaid, and CHIP eligibility — with state-specific BBCE thresholds, Medicaid expansion vs. coverage-gap branching, and CHIP\'s state-set income limits. Claimed benefits adjust the budget.',
+      "SNAP, Medicaid, and CHIP eligibility — with state-specific BBCE thresholds, Medicaid expansion vs. coverage-gap branching, and CHIP's state-set income limits. Claimed benefits adjust the budget.",
   },
 ];

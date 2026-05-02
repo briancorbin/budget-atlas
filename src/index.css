@@ -4,7 +4,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
@@ -12,20 +13,21 @@ html, body {
 }
 
 body {
-  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  background: #F4EFE3;
+  font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  background: #f4efe3;
 }
 
 button {
   font-family: inherit;
 }
 
-input, select {
+input,
+select {
   font-family: inherit;
 }
 
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }

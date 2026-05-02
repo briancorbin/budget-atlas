@@ -20,9 +20,12 @@ export type BenefitId = 'snap' | 'medicaid' | 'chip';
  */
 export function checkBenefit(id: BenefitId, inputs: BenefitInputs): BenefitEligibility {
   switch (id) {
-    case 'snap': return checkSnap(inputs);
-    case 'medicaid': return checkMedicaid(inputs);
-    case 'chip': return checkChip(inputs);
+    case 'snap':
+      return checkSnap(inputs);
+    case 'medicaid':
+      return checkMedicaid(inputs);
+    case 'chip':
+      return checkChip(inputs);
   }
 }
 
@@ -80,7 +83,11 @@ function snapMaxBenefit(householdSize: number): number {
  * - Benefit = max(0, max_benefit − 0.30 × net_income / 12). The 30%
  *   factor is the federal "expected family contribution to food".
  */
-export function checkSnap({ grossIncome, householdSize, state }: BenefitInputs): BenefitEligibility {
+export function checkSnap({
+  grossIncome,
+  householdSize,
+  state,
+}: BenefitInputs): BenefitEligibility {
   if (householdSize <= 0) {
     return { eligible: false, reason: 'No household members specified.', monthlyBenefit: 0 };
   }
@@ -88,9 +95,10 @@ export function checkSnap({ grossIncome, householdSize, state }: BenefitInputs):
   const limitFpl = snapIncomeLimitFpl(state);
   const limitPct = Math.round(limitFpl * 100);
   const limitDollars = Math.round(fpl(householdSize) * limitFpl);
-  const policyNote = limitFpl > SNAP_GROSS_INCOME_LIMIT_FPL_FEDERAL
-    ? `${state} raises the gross-income limit to ${limitPct}% of FPL (≈ $${limitDollars.toLocaleString()}/yr for a household of ${householdSize}) via Broad-Based Categorical Eligibility.`
-    : `${state} uses the 130% federal floor (≈ $${limitDollars.toLocaleString()}/yr for a household of ${householdSize}); no BBCE expansion adopted.`;
+  const policyNote =
+    limitFpl > SNAP_GROSS_INCOME_LIMIT_FPL_FEDERAL
+      ? `${state} raises the gross-income limit to ${limitPct}% of FPL (≈ $${limitDollars.toLocaleString()}/yr for a household of ${householdSize}) via Broad-Based Categorical Eligibility.`
+      : `${state} uses the 130% federal floor (≈ $${limitDollars.toLocaleString()}/yr for a household of ${householdSize}); no BBCE expansion adopted.`;
 
   const ratio = fplPct(grossIncome, householdSize);
   if (ratio > limitFpl) {
@@ -103,10 +111,10 @@ export function checkSnap({ grossIncome, householdSize, state }: BenefitInputs):
   }
 
   const monthlyGross = grossIncome / 12;
-  const earnedDeduction = monthlyGross * 0.20;
+  const earnedDeduction = monthlyGross * 0.2;
   const netMonthly = Math.max(0, monthlyGross - earnedDeduction - SNAP_STD_DEDUCTION_2026);
   const max = snapMaxBenefit(householdSize);
-  const benefit = Math.max(0, Math.round(max - 0.30 * netMonthly));
+  const benefit = Math.max(0, Math.round(max - 0.3 * netMonthly));
 
   return { eligible: true, monthlyBenefit: benefit, policyNote };
 }
@@ -127,7 +135,11 @@ export function checkSnap({ grossIncome, householdSize, state }: BenefitInputs):
  * separate program, which subsumes Medicaid-for-kids in this model.
  */
 export function checkMedicaid({
-  grossIncome, householdSize, state, kids, monthlyHealthcareCost,
+  grossIncome,
+  householdSize,
+  state,
+  kids,
+  monthlyHealthcareCost,
 }: BenefitInputs): BenefitEligibility {
   const policy = STATE_MEDICAID_POLICY[state];
   const ratio = fplPct(grossIncome, householdSize);
@@ -190,7 +202,12 @@ export function checkMedicaid({
  * we treat coverage as fully replacing the kids' share for simplicity.
  */
 export function checkChip({
-  grossIncome, householdSize, state, adults, kids, monthlyHealthcareCost,
+  grossIncome,
+  householdSize,
+  state,
+  adults,
+  kids,
+  monthlyHealthcareCost,
   monthlyHealthcareSingle,
 }: BenefitInputs): BenefitEligibility {
   const limit = STATE_CHIP_LIMIT_FPL[state];
@@ -217,9 +234,7 @@ export function checkChip({
     };
   }
 
-  const adultBaseline = adults === 2
-    ? 2 * monthlyHealthcareSingle
-    : monthlyHealthcareSingle;
+  const adultBaseline = adults === 2 ? 2 * monthlyHealthcareSingle : monthlyHealthcareSingle;
   const kidsShare = Math.max(0, monthlyHealthcareCost - adultBaseline);
   return {
     eligible: true,

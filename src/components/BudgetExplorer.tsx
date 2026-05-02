@@ -29,14 +29,25 @@ export function BudgetExplorer() {
   const effectiveIncomeB = twoIncome ? incomeB : 0;
 
   const result = useMemo(
-    () => computeBudget({ incomeA, incomeB: effectiveIncomeB, hasPartner: twoIncome, filing, city, kids, lifestyle, claimedBenefits }),
+    () =>
+      computeBudget({
+        incomeA,
+        incomeB: effectiveIncomeB,
+        hasPartner: twoIncome,
+        filing,
+        city,
+        kids,
+        lifestyle,
+        claimedBenefits,
+      }),
     [incomeA, effectiveIncomeB, twoIncome, filing, city, kids, lifestyle, claimedBenefits],
   );
 
   const toggleBenefit = useCallback((id: string) => {
-    setClaimedBenefits(prev => {
+    setClaimedBenefits((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }, []);
@@ -49,9 +60,9 @@ export function BudgetExplorer() {
   useEffect(() => {
     if (claimedBenefits.size === 0) return;
     const preBenefitHealthcare =
-      result.expenses.Healthcare
-      + (result.benefitsApplied['Medicaid'] ?? 0)
-      + (result.benefitsApplied['CHIP'] ?? 0);
+      result.expenses.Healthcare +
+      (result.benefitsApplied['Medicaid'] ?? 0) +
+      (result.benefitsApplied['CHIP'] ?? 0);
     const inputs = {
       grossIncome: result.grossIncome,
       householdSize: result.householdSize,
@@ -73,26 +84,36 @@ export function BudgetExplorer() {
   }, [result, claimedBenefits]);
 
   const inputState: InputsState = {
-    scenarioId, setScenarioId,
-    incomeA, setIncomeA,
-    incomeB, setIncomeB,
-    twoIncome, setTwoIncome,
-    filing, setFiling,
-    city, setCity,
-    kids, setKids,
-    lifestyle, setLifestyle,
+    scenarioId,
+    setScenarioId,
+    incomeA,
+    setIncomeA,
+    incomeB,
+    setIncomeB,
+    twoIncome,
+    setTwoIncome,
+    filing,
+    setFiling,
+    city,
+    setCity,
+    kids,
+    setKids,
+    lifestyle,
+    setLifestyle,
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: T.bg, color: T.ink,
-      fontFamily: '"IBM Plex Sans", sans-serif',
-      padding: '40px 24px 80px',
-      backgroundImage:
-        `radial-gradient(circle at 20% 0%, rgba(166, 38, 28, 0.04), transparent 50%),
+    <div
+      style={{
+        minHeight: '100vh',
+        background: T.bg,
+        color: T.ink,
+        fontFamily: '"IBM Plex Sans", sans-serif',
+        padding: '40px 24px 80px',
+        backgroundImage: `radial-gradient(circle at 20% 0%, rgba(166, 38, 28, 0.04), transparent 50%),
          radial-gradient(circle at 80% 100%, rgba(45, 80, 22, 0.03), transparent 50%)`,
-    }}>
+      }}
+    >
       <div style={{ maxWidth: 1240, margin: '0 auto' }}>
         <Masthead />
         <ScenarioPicker {...inputState} />
@@ -103,16 +124,23 @@ export function BudgetExplorer() {
         <IncomeFlow result={result} />
         <BracketWalkthrough
           result={result}
-          incomeA={incomeA} incomeB={effectiveIncomeB}
-          hasPartner={twoIncome} filing={filing}
+          incomeA={incomeA}
+          incomeB={effectiveIncomeB}
+          hasPartner={twoIncome}
+          filing={filing}
         />
         <ExpenseBreakdown result={result} />
         <DiscretionaryPlan result={result} />
         <CityComparison
           result={result}
-          compareCity={compareCity} setCompareCity={setCompareCity}
-          incomeA={incomeA} incomeB={effectiveIncomeB} hasPartner={twoIncome}
-          filing={filing} kids={kids} lifestyle={lifestyle}
+          compareCity={compareCity}
+          setCompareCity={setCompareCity}
+          incomeA={incomeA}
+          incomeB={effectiveIncomeB}
+          hasPartner={twoIncome}
+          filing={filing}
+          kids={kids}
+          lifestyle={lifestyle}
         />
         <Notes filing={filing} stateTaxSource={result.stateData.taxSource} />
       </div>

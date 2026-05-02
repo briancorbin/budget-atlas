@@ -7,24 +7,38 @@ export function DiscretionaryPlan({ result }: { result: BudgetResult }) {
   if (result.discretionary < 0) return null;
 
   const cards: {
-    label: string; value: number; color: string; sub: React.ReactNode;
+    label: string;
+    value: number;
+    color: string;
+    sub: React.ReactNode;
   }[] = [
     {
       label: 'SAVINGS / RETIREMENT',
       value: result.suggestedSavings,
       color: T.positive,
-      sub: <>{fmt(result.suggestedSavings * 12)}/yr. At 7% real return,
-        ~{fmt(result.suggestedSavings * 12 * 47.6)} in 25 yrs.</>,
+      sub: (
+        <>
+          {fmt(result.suggestedSavings * 12)}/yr. At 7% real return, ~
+          {fmt(result.suggestedSavings * 12 * 47.6)} in 25 yrs.
+        </>
+      ),
     },
     {
       label: 'VACATION',
       value: result.suggestedVacation,
       color: T.warning,
-      sub: <>{fmt(result.suggestedVacation * 12)}/yr.{' '}
-        {result.suggestedVacation * 12 < 1500 ? 'Camping or short trips.' :
-         result.suggestedVacation * 12 < 4000 ? '1 modest week away.' :
-         result.suggestedVacation * 12 < 10000 ? '2 weeks domestic.' :
-         'International travel possible.'}</>,
+      sub: (
+        <>
+          {fmt(result.suggestedVacation * 12)}/yr.{' '}
+          {result.suggestedVacation * 12 < 1500
+            ? 'Camping or short trips.'
+            : result.suggestedVacation * 12 < 4000
+              ? '1 modest week away.'
+              : result.suggestedVacation * 12 < 10000
+                ? '2 weeks domestic.'
+                : 'International travel possible.'}
+        </>
+      ),
     },
     {
       label: 'SPLURGE / DINING',
@@ -46,21 +60,46 @@ export function DiscretionaryPlan({ result }: { result: BudgetResult }) {
         The future, the trip, the splurge
       </SectionTitle>
       <div style={{ background: T.surface, border: `1px solid ${T.border}`, padding: 24 }}>
-        <div style={{
-          fontFamily: fonts.display, fontSize: 16, color: T.inkSoft,
-          marginBottom: 20, lineHeight: 1.5, fontStyle: 'italic',
-        }}>
+        <div
+          style={{
+            fontFamily: fonts.display,
+            fontSize: 16,
+            color: T.inkSoft,
+            marginBottom: 20,
+            lineHeight: 1.5,
+            fontStyle: 'italic',
+          }}
+        >
           Suggested allocation of the {fmt(result.discretionary)}/mo discretionary surplus,
-          following a rough 50 / 20 / 20 / 10 split (savings · vacation · splurge · emergency cushion).
+          following a rough 50 / 20 / 20 / 10 split (savings · vacation · splurge · emergency
+          cushion).
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-          {cards.map(c => (
-            <div key={c.label} style={{
-              padding: 20, background: T.bg, borderTop: `3px solid ${c.color}`,
-            }}>
-              <div style={{
-                fontSize: 11, color: T.inkMuted, letterSpacing: '0.12em', marginBottom: 6,
-              }}>{c.label}</div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 16,
+          }}
+        >
+          {cards.map((c) => (
+            <div
+              key={c.label}
+              style={{
+                padding: 20,
+                background: T.bg,
+                borderTop: `3px solid ${c.color}`,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  color: T.inkMuted,
+                  letterSpacing: '0.12em',
+                  marginBottom: 6,
+                }}
+              >
+                {c.label}
+              </div>
               <div style={{ fontFamily: fonts.mono, fontSize: 22, color: T.ink }}>
                 {fmt(c.value)}/mo
               </div>

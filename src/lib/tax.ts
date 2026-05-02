@@ -24,10 +24,10 @@ export function progressiveTax(taxable: number, brackets: readonly TaxBracket[])
 /** One row of a bracket walkthrough — what's taxed in this bracket and how much. */
 export interface BracketRow {
   from: number;
-  to: number;             // Infinity for the top bracket
+  to: number; // Infinity for the top bracket
   rate: number;
-  taxableInRow: number;   // dollars of taxable income that fall inside this bracket
-  taxFromRow: number;     // tax contributed by this bracket
+  taxableInRow: number; // dollars of taxable income that fall inside this bracket
+  taxFromRow: number; // tax contributed by this bracket
   /** True if the filer's last taxable dollar lands in this bracket. */
   isUserBracket: boolean;
 }
@@ -36,10 +36,7 @@ export interface BracketRow {
  * Walk the brackets and report per-row detail. Sum of `taxFromRow` matches
  * `progressiveTax(taxable, brackets)`. Used by the bracket walkthrough UI.
  */
-export function bracketBreakdown(
-  taxable: number,
-  brackets: readonly TaxBracket[],
-): BracketRow[] {
+export function bracketBreakdown(taxable: number, brackets: readonly TaxBracket[]): BracketRow[] {
   const rows: BracketRow[] = [];
   let prev = 0;
   let userMarked = false;
@@ -101,22 +98,28 @@ export function calcChildTaxCredit(
  * nuance (investment income limits, separate childless thresholds for
  * older workers post-OBBBA, etc). 2026 max amounts per IRS Rev. Proc. 2025-32.
  */
-export function calcEITC(
-  grossIncome: number,
-  kids: number,
-  filing: FilingStatus,
-): number {
+export function calcEITC(grossIncome: number, kids: number, filing: FilingStatus): number {
   if (grossIncome > 70000) return 0;
   const married = filing === 'married';
 
   const max = kids === 0 ? 664 : kids === 1 ? 4427 : kids === 2 ? 7316 : 8231;
   const phaseInEnd = kids === 0 ? 8500 : kids === 1 ? 13000 : 18500;
-  const phaseOutStart = married
-    ? (kids === 0 ? 17800 : 30500)
-    : (kids === 0 ? 11000 : 23700);
+  const phaseOutStart = married ? (kids === 0 ? 17800 : 30500) : kids === 0 ? 11000 : 23700;
   const phaseOutEnd = married
-    ? (kids === 0 ? 26500 : kids === 1 ? 56500 : kids === 2 ? 63000 : 67500)
-    : (kids === 0 ? 19700 : kids === 1 ? 50000 : kids === 2 ? 56000 : 60000);
+    ? kids === 0
+      ? 26500
+      : kids === 1
+        ? 56500
+        : kids === 2
+          ? 63000
+          : 67500
+    : kids === 0
+      ? 19700
+      : kids === 1
+        ? 50000
+        : kids === 2
+          ? 56000
+          : 60000;
 
   if (grossIncome < phaseInEnd) {
     return max * (grossIncome / phaseInEnd);

@@ -40,10 +40,7 @@ export default tseslint.config(
       // Vite's HMR can only refresh files that export *only* components.
       // This warns when a file mixes a component export with other exports
       // (e.g. a constant), which would silently break Fast Refresh.
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       // Allow intentionally-unused params/vars when prefixed with _.
       // Matches a common TS convention.
       '@typescript-eslint/no-unused-vars': [

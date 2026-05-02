@@ -24,7 +24,7 @@ export const SS_WAGE_BASE_SOURCE: Source = {
  */
 export const FEDERAL_BRACKETS_2026: Record<FilingStatus, readonly TaxBracket[]> = {
   single: [
-    [12400, 0.10],
+    [12400, 0.1],
     [50400, 0.12],
     [105700, 0.22],
     [201775, 0.24],
@@ -33,7 +33,7 @@ export const FEDERAL_BRACKETS_2026: Record<FilingStatus, readonly TaxBracket[]> 
     [Infinity, 0.37],
   ],
   married: [
-    [24800, 0.10],
+    [24800, 0.1],
     [100800, 0.12],
     [211400, 0.22],
     [403550, 0.24],
@@ -42,7 +42,7 @@ export const FEDERAL_BRACKETS_2026: Record<FilingStatus, readonly TaxBracket[]> 
     [Infinity, 0.37],
   ],
   head: [
-    [17700, 0.10],
+    [17700, 0.1],
     [67450, 0.12],
     [105700, 0.22],
     [201775, 0.24],

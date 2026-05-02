@@ -2,11 +2,57 @@ export type FilingStatus = 'single' | 'married' | 'head';
 export type Lifestyle = 'modest' | 'moderate' | 'comfortable';
 
 export type StateCode =
-  | 'AL' | 'AK' | 'AZ' | 'AR' | 'CA' | 'CO' | 'CT' | 'DE' | 'FL' | 'GA'
-  | 'HI' | 'ID' | 'IL' | 'IN' | 'IA' | 'KS' | 'KY' | 'LA' | 'ME' | 'MD'
-  | 'MA' | 'MI' | 'MN' | 'MS' | 'MO' | 'MT' | 'NE' | 'NV' | 'NH' | 'NJ'
-  | 'NM' | 'NY' | 'NC' | 'ND' | 'OH' | 'OK' | 'OR' | 'PA' | 'RI' | 'SC'
-  | 'SD' | 'TN' | 'TX' | 'UT' | 'VT' | 'VA' | 'WA' | 'WV' | 'WI' | 'WY' | 'DC';
+  | 'AL'
+  | 'AK'
+  | 'AZ'
+  | 'AR'
+  | 'CA'
+  | 'CO'
+  | 'CT'
+  | 'DE'
+  | 'FL'
+  | 'GA'
+  | 'HI'
+  | 'ID'
+  | 'IL'
+  | 'IN'
+  | 'IA'
+  | 'KS'
+  | 'KY'
+  | 'LA'
+  | 'ME'
+  | 'MD'
+  | 'MA'
+  | 'MI'
+  | 'MN'
+  | 'MS'
+  | 'MO'
+  | 'MT'
+  | 'NE'
+  | 'NV'
+  | 'NH'
+  | 'NJ'
+  | 'NM'
+  | 'NY'
+  | 'NC'
+  | 'ND'
+  | 'OH'
+  | 'OK'
+  | 'OR'
+  | 'PA'
+  | 'RI'
+  | 'SC'
+  | 'SD'
+  | 'TN'
+  | 'TX'
+  | 'UT'
+  | 'VT'
+  | 'VA'
+  | 'WA'
+  | 'WV'
+  | 'WI'
+  | 'WY'
+  | 'DC';
 
 export interface StateInfo {
   name: string;
@@ -45,15 +91,15 @@ export interface CityInfo {
   tier: 'Very High' | 'High' | 'Moderate' | 'Lower' | 'Very Low';
   /** Local income tax (NYC, some Ohio cities, some PA municipalities). */
   localTax: number;
-  rent1: number;            // 1BR median monthly rent
-  rent3: number;            // 3BR family-sized monthly rent
-  groceries: number;        // per person, monthly
-  utilities: number;        // monthly
-  transit: number;          // monthly transit pass
-  carCost: number;          // total monthly car cost (loan + ins + gas + maint)
-  childcareInfant: number;  // per child, monthly
+  rent1: number; // 1BR median monthly rent
+  rent3: number; // 3BR family-sized monthly rent
+  groceries: number; // per person, monthly
+  utilities: number; // monthly
+  transit: number; // monthly transit pass
+  carCost: number; // total monthly car cost (loan + ins + gas + maint)
+  childcareInfant: number; // per child, monthly
   childcarePreschool: number;
-  healthSingle: number;     // employer plan + OOP, monthly
+  healthSingle: number; // employer plan + OOP, monthly
   healthFamily: number;
 }
 
@@ -98,8 +144,8 @@ export interface BudgetResult {
   adults: number;
   householdSize: number;
   // Tax components
-  federalTax: number;       // post-credits, can be negative (refund)
-  fedTaxRaw: number;        // pre-credits
+  federalTax: number; // post-credits, can be negative (refund)
+  fedTaxRaw: number; // pre-credits
   ctc: number;
   eitc: number;
   stateTax: number;
