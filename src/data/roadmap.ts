@@ -13,7 +13,8 @@ export type RoadmapCategory =
   | 'Cost of living'
   | 'Benefits & safety net'
   | 'Geography'
-  | 'Sharing';
+  | 'Sharing'
+  | 'UX & navigation';
 
 export interface RoadmapItem {
   id: number;
@@ -130,6 +131,14 @@ export const ROADMAP: readonly RoadmapItem[] = [
     status: 'planned',
     summary:
       'Add an input for monthly student loan payment, with optional balance + rate + standard 10-year payment estimate. Model income-driven repayment (IDR / SAVE / PAYE) where payments scale with discretionary income above a poverty multiple. Pick up the $2,500/yr student loan interest deduction (above-the-line, phased out at ~$80K single / $165K joint).',
+  },
+  {
+    id: 18,
+    title: 'Rethink the "Start with someone real" section',
+    category: 'UX & navigation',
+    status: 'planned',
+    summary:
+      'The scenario picker shipped early as a friendly entry point — half a dozen archetype households with one-line bios. As the model has grown (graduated state brackets, benefits, statewide fallbacks, more inputs), the section feels increasingly cluttered and the archetypes feel less load-bearing now that anyone can model their own situation directly. Open questions: keep it as a quick-start carousel, fold it into a smaller "examples" link, replace it with a guided onboarding flow, or drop it entirely in favor of sensible defaults? Worth a design pass once it gets in the way of something concrete rather than refactoring preemptively.',
   },
   {
     id: 17,
