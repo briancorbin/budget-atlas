@@ -20,6 +20,10 @@
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,500&amp;display=swap');
   </style>
   <rect width="100" height="100" fill="#F4EFE3"/>
+  <!-- Italic A with the circle period nestled at the foot of the right
+       leg (just barely touching, reading as one mark). The OG card
+       watermark uses the same proportional placement so all branding
+       PNGs share the same spacing. -->
   <text x="42" y="80" text-anchor="middle"
         font-family="Fraunces"
         font-size="92" font-weight="500" font-style="italic"

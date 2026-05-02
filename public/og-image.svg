@@ -51,14 +51,16 @@
         letter-spacing="1"
         fill="#7a736b">THEBUDGETATLAS.COM</text>
 
-  <!-- Watermark: italic Fraunces A with a circle period, bottom-right.
-       Spacing modeled directly on the favicon (cream gap between the A's
-       right leg and the period — close enough to read as a unit, but with
-       a clear gap, no clipping). -->
+  <!-- Watermark: italic Fraunces A with a circle period nestled at the
+       foot of the right leg, matching the favicon's tight placement so
+       all branding PNGs share the same mark. Proportions scaled from the
+       favicon (cx=78, cy=76, r=7 on a 100-unit canvas with font-size 92)
+       to font-size 260: period offset 11% past A's right edge, ~4% above
+       baseline, period radius ~7.6% of font-size. -->
   <text x="1085" y="580"
         text-anchor="end"
         font-family="Fraunces"
         font-size="260" font-weight="500" font-style="italic"
         fill="#A6261C">A</text>
-  <circle cx="1115" cy="560" r="20" fill="#A6261C"/>
+  <circle cx="1105" cy="569" r="20" fill="#A6261C"/>
 </svg>
