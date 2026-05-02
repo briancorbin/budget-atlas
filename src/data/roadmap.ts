@@ -14,7 +14,8 @@ export type RoadmapCategory =
   | 'Benefits & safety net'
   | 'Geography'
   | 'Sharing'
-  | 'UX & navigation';
+  | 'UX & navigation'
+  | 'Transparency';
 
 export interface RoadmapItem {
   id: number;
@@ -187,6 +188,14 @@ export const ROADMAP: readonly RoadmapItem[] = [
     status: 'planned',
     summary:
       'Today every dollar of input income is treated as W-2 wages — federal brackets, state brackets, full FICA. Plenty of real income gets taxed very differently and the model currently can\'t represent any of it. (a) **Social Security benefits** — up to 85% federally taxable based on "combined income," and many states exempt SS entirely (or partially: CT, MN, MO, NM, RI, UT, VT, WV phase out). (b) **Pension / traditional 401(k) / traditional IRA distributions** — ordinary income federally, no FICA, and several states exempt retirement income up to a cap (PA exempts entirely after 59½; IL exempts qualified plans; GA up to $65K over 65; etc.). (c) **Roth IRA / Roth 401(k) qualified withdrawals** — federally and state tax-free. (d) **Long-term capital gains & qualified dividends** — 0/15/20% federal preferred rates (with NIIT 3.8% above thresholds), state usually ordinary (but WA has a 7% LTCG tax above $270K, and a few states exempt). (e) **Interest income** — ordinary federal + state. (f) **Municipal bond interest** — federal-exempt; in-state munis usually state-exempt too. (g) **Unemployment insurance** — federally taxable, state-varied (CA/NJ/PA/VA/MT exempt). (h) **Disability income** — SSDI partially taxable like SS; private LTD depends on who paid premiums. (i) **Rental income** (Schedule E, passive) and **self-employment income** (Schedule C, full SE tax of 15.3%) — both very different from W-2. Likely ship as an "Other income" expand under the primary income input: pick a type, enter an amount, and the model routes it through the right rules. Big surface area; could be done in waves (SS + retirement first, then capital gains, then SE, etc.).',
+  },
+  {
+    id: 21,
+    title: 'Funding transparency dashboard',
+    category: 'Transparency',
+    status: 'planned',
+    summary:
+      'A first-class /funding page on the site itself — not just a link out to Open Collective — that turns the project\'s own money trail into a Budget Atlas-style data product. Every dollar in (date, amount, contributor name where consented, "general fund" otherwise) and every dollar out (date, amount, payee, one-line purpose, link to the deliverable: a PR, a commit, an audit report, a data refresh diff). Running balance with explicit allocation: how much is committed to named upcoming work (e.g. "$2,000 toward 2027 tax-bracket research") versus operating reserve versus unrestricted. Charts in the same editorial visual language as the rest of the site — small multiples, ink-on-cream, no chartjunk. Quarterly written summary written in plain language. Source of truth pulled from the Open Collective ledger via their API where possible, with a hand-curated overlay for the deliverable links and the "why" notes the ledger doesn\'t capture. Companion docs in the repo: a TRANSPARENCY.md codifying the policy (every expense itemized within 7 days, contractor invoices include deliverable links, personal compensation published with the same itemization as any other expense) and a FUNDING.md mirror of the dashboard for anyone reading the source. Goal: hold the project to the same citation rigor it applies to tax brackets — every penny traceable, every choice defensible.',
   },
   {
     id: 13,
