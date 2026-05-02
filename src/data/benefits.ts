@@ -150,3 +150,101 @@ const STATE_SNAP_AGENCY: Record<StateCode, Source> = {
 export function snapStateSource(state: StateCode): Source {
   return STATE_SNAP_AGENCY[state];
 }
+
+// ── Medicaid ────────────────────────────────────────────────────────────
+
+/**
+ * Per-state Medicaid policy. ACA expansion adopters cover all adults up to
+ * 138% FPL. Non-expansion states cover parents up to a much lower threshold
+ * and offer no Medicaid pathway for childless adults — the "coverage gap"
+ * affects an estimated 1.5M Americans.
+ *
+ * Non-expansion parent limits are approximate FY2024–25 figures and shift
+ * occasionally; verify before relying on them.
+ */
+export interface StateMedicaidPolicy {
+  expanded: boolean;
+  /** % FPL parent threshold in non-expansion states. Childless adults
+   *  remain ineligible regardless of income. */
+  nonExpansionParentLimit?: number;
+}
+
+export const STATE_MEDICAID_POLICY: Record<StateCode, StateMedicaidPolicy> = {
+  // Expansion states (40 + DC)
+  AK: { expanded: true }, AZ: { expanded: true }, AR: { expanded: true },
+  CA: { expanded: true }, CO: { expanded: true }, CT: { expanded: true },
+  DE: { expanded: true }, DC: { expanded: true }, HI: { expanded: true },
+  ID: { expanded: true }, IL: { expanded: true }, IN: { expanded: true },
+  IA: { expanded: true }, KY: { expanded: true }, LA: { expanded: true },
+  ME: { expanded: true }, MD: { expanded: true }, MA: { expanded: true },
+  MI: { expanded: true }, MN: { expanded: true }, MO: { expanded: true },
+  MT: { expanded: true }, NE: { expanded: true }, NV: { expanded: true },
+  NH: { expanded: true }, NJ: { expanded: true }, NM: { expanded: true },
+  NY: { expanded: true }, NC: { expanded: true }, ND: { expanded: true },
+  OH: { expanded: true }, OK: { expanded: true }, OR: { expanded: true },
+  PA: { expanded: true }, RI: { expanded: true }, SD: { expanded: true },
+  UT: { expanded: true }, VT: { expanded: true }, VA: { expanded: true },
+  WA: { expanded: true }, WV: { expanded: true },
+  // Non-expansion states (10) — parent limits as % FPL, approximate
+  AL: { expanded: false, nonExpansionParentLimit: 0.18 },
+  FL: { expanded: false, nonExpansionParentLimit: 0.30 },
+  GA: { expanded: false, nonExpansionParentLimit: 0.36 },
+  KS: { expanded: false, nonExpansionParentLimit: 0.38 },
+  MS: { expanded: false, nonExpansionParentLimit: 0.27 },
+  SC: { expanded: false, nonExpansionParentLimit: 0.67 },
+  TN: { expanded: false, nonExpansionParentLimit: 0.95 },
+  TX: { expanded: false, nonExpansionParentLimit: 0.17 },
+  WI: { expanded: false, nonExpansionParentLimit: 1.00 },
+  WY: { expanded: false, nonExpansionParentLimit: 0.58 },
+};
+
+/** Federal Medicaid expansion is 138% FPL (133% + 5% disregard). */
+export const MEDICAID_EXPANSION_LIMIT_FPL = 1.38;
+
+export const MEDICAID_SOURCE: Source = {
+  label: 'Medicaid.gov',
+  url: 'https://www.medicaid.gov/medicaid/index.html',
+  date: '2026',
+};
+
+export const MEDICAID_EXPANSION_SOURCE: Source = {
+  label: 'KFF: Status of State Medicaid Expansion Decisions',
+  url: 'https://www.kff.org/medicaid/issue-brief/status-of-state-medicaid-expansion-decisions-interactive-map/',
+  date: '2025',
+};
+
+// ── CHIP ────────────────────────────────────────────────────────────────
+
+/**
+ * CHIP income limit (% FPL) for children in each state. Each state sets
+ * its own threshold, typically 200%–400% FPL. CHIP fills the gap above
+ * Medicaid for children — a family that's over Medicaid for adults can
+ * often still get the kids covered through CHIP. Approximate FY2024
+ * values; some states have separate tiers and pregnancy-specific limits
+ * not captured here.
+ */
+export const STATE_CHIP_LIMIT_FPL: Record<StateCode, number> = {
+  AL: 3.17, AK: 2.08, AZ: 2.05, AR: 2.16, CA: 2.66,
+  CO: 2.65, CT: 3.23, DE: 2.17, DC: 3.24, FL: 2.10,
+  GA: 2.55, HI: 3.13, ID: 1.85, IL: 3.18, IN: 2.55,
+  IA: 3.07, KS: 2.50, KY: 2.18, LA: 2.55, ME: 2.13,
+  MD: 3.22, MA: 3.05, MI: 2.17, MN: 2.88, MS: 2.14,
+  MO: 3.05, MT: 2.66, NE: 2.18, NV: 2.05, NH: 3.23,
+  NJ: 3.55, NM: 3.05, NY: 4.05, NC: 2.16, ND: 1.75,
+  OH: 2.11, OK: 2.10, OR: 3.05, PA: 3.19, RI: 2.66,
+  SC: 2.13, SD: 2.09, TN: 2.55, TX: 2.06, UT: 2.05,
+  VT: 3.17, VA: 2.05, WA: 3.17, WV: 3.05, WI: 3.06,
+  WY: 2.00,
+};
+
+export const CHIP_SOURCE: Source = {
+  label: 'InsureKidsNow.gov',
+  url: 'https://www.insurekidsnow.gov',
+  date: '2026',
+};
+
+export const CHIP_STATE_THRESHOLDS_SOURCE: Source = {
+  label: 'Medicaid.gov: CHIP Eligibility Levels',
+  url: 'https://www.medicaid.gov/chip/eligibility/index.html',
+  date: '2025',
+};

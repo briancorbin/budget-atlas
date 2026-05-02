@@ -3,7 +3,7 @@ import { CITIES } from '@/data/cities';
 import { STATES } from '@/data/states';
 import { FEDERAL_BRACKETS_2026, STD_DEDUCTION_2026 } from '@/data/federalTax';
 import { progressiveTax, calcFICA, calcChildTaxCredit, calcEITC } from '@/lib/tax';
-import { checkSnap } from '@/lib/benefits';
+import { checkChip, checkMedicaid, checkSnap } from '@/lib/benefits';
 
 /**
  * Given household inputs, compute taxes, expenses, and discretionary income.
@@ -132,9 +132,18 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   // eligible for, even if the UI somehow lets them claim it).
   const benefitsApplied: Record<string, number> = {};
   let groceriesAfterBenefits = groceries;
+  let healthcareAfterBenefits = healthcare;
+
+  const benefitInputs = {
+    grossIncome: totalIncome,
+    householdSize,
+    state: cityData.state,
+    kids,
+    monthlyHealthcareCost: healthcare,
+  };
 
   if (claimedBenefits?.has('snap')) {
-    const snap = checkSnap({ grossIncome: totalIncome, householdSize, state: cityData.state });
+    const snap = checkSnap(benefitInputs);
     if (snap.eligible && snap.monthlyBenefit > 0) {
       const offset = Math.min(snap.monthlyBenefit, groceries);
       groceriesAfterBenefits = groceries - offset;
@@ -142,10 +151,31 @@ export function computeBudget(input: BudgetInput): BudgetResult {
     }
   }
 
+  // Medicaid takes priority over CHIP — if Medicaid covers the household,
+  // CHIP isn't separately needed (Medicaid covers kids too in this case).
+  let medicaidApplied = false;
+  if (claimedBenefits?.has('medicaid')) {
+    const med = checkMedicaid(benefitInputs);
+    if (med.eligible) {
+      benefitsApplied['Medicaid'] = healthcareAfterBenefits;
+      healthcareAfterBenefits = 0;
+      medicaidApplied = true;
+    }
+  }
+
+  if (!medicaidApplied && claimedBenefits?.has('chip')) {
+    const chip = checkChip(benefitInputs);
+    if (chip.eligible && chip.monthlyBenefit > 0) {
+      const offset = Math.min(chip.monthlyBenefit, healthcareAfterBenefits);
+      healthcareAfterBenefits = healthcareAfterBenefits - offset;
+      benefitsApplied['CHIP'] = offset;
+    }
+  }
+
   const totalBenefits = Object.values(benefitsApplied).reduce((s, n) => s + n, 0);
 
   const totalExpenses = housing + utilities + groceriesAfterBenefits + transportation +
-    healthcare + childcare + phoneInternet + insuranceOther + personalEssentials;
+    healthcareAfterBenefits + childcare + phoneInternet + insuranceOther + personalEssentials;
 
   const discretionary = monthlyNet - totalExpenses;
   const annualDiscretionary = discretionary * 12;
@@ -161,7 +191,7 @@ export function computeBudget(input: BudgetInput): BudgetResult {
     netIncome, monthlyNet,
     expenses: {
       Housing: housing, Utilities: utilities, Groceries: groceriesAfterBenefits,
-      Transportation: transportation, Healthcare: healthcare,
+      Transportation: transportation, Healthcare: healthcareAfterBenefits,
       Childcare: childcare, 'Phone & Internet': phoneInternet,
       Insurance: insuranceOther, 'Personal Essentials': personalEssentials,
     },

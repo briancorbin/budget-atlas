@@ -48,10 +48,16 @@ export function BudgetExplorer() {
   // calc silently refuses to apply it.
   useEffect(() => {
     if (claimedBenefits.size === 0) return;
+    const preBenefitHealthcare =
+      result.expenses.Healthcare
+      + (result.benefitsApplied['Medicaid'] ?? 0)
+      + (result.benefitsApplied['CHIP'] ?? 0);
     const inputs = {
       grossIncome: result.grossIncome,
       householdSize: result.householdSize,
       state: result.cityData.state,
+      kids: result.householdSize - result.adults,
+      monthlyHealthcareCost: preBenefitHealthcare,
     };
     const next = new Set(claimedBenefits);
     let changed = false;
@@ -62,7 +68,7 @@ export function BudgetExplorer() {
       }
     }
     if (changed) setClaimedBenefits(next);
-  }, [result.grossIncome, result.householdSize, result.cityData.state, claimedBenefits]);
+  }, [result, claimedBenefits]);
 
   const inputState: InputsState = {
     scenarioId, setScenarioId,

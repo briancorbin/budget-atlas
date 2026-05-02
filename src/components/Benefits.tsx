@@ -2,7 +2,11 @@ import type { BudgetResult, Source } from '@/types';
 import { theme as T, fonts } from '@/theme';
 import { fmt } from '@/lib/format';
 import { checkBenefit, type BenefitEligibility, type BenefitId, type BenefitInputs } from '@/lib/benefits';
-import { SNAP_SOURCE, snapStateSource } from '@/data/benefits';
+import {
+  CHIP_SOURCE, CHIP_STATE_THRESHOLDS_SOURCE,
+  MEDICAID_SOURCE, MEDICAID_EXPANSION_SOURCE,
+  SNAP_SOURCE, snapStateSource,
+} from '@/data/benefits';
 import { POVERTY_SOURCE } from '@/data/poverty';
 import { Cite, SectionTitle } from './ui';
 
@@ -13,8 +17,8 @@ interface BenefitMeta {
   blurb: string;
   /** What the benefit reduces in the budget, in plain language. */
   appliesTo: string;
-  /** Federal-level citation. Always shown. */
-  source: Source;
+  /** Federal-level citation(s). Always shown. */
+  source: Source | readonly Source[];
   /** Optional state-specific citation, computed at render time. */
   stateSource?: (inputs: BenefitInputs) => Source;
 }
@@ -27,6 +31,20 @@ const BENEFIT_META: readonly BenefitMeta[] = [
     appliesTo: 'Reduces the grocery line.',
     source: SNAP_SOURCE,
     stateSource: inputs => snapStateSource(inputs.state),
+  },
+  {
+    id: 'medicaid',
+    name: 'Medicaid',
+    blurb: 'Free or near-free health coverage for low-income households. Eligibility depends on whether your state expanded Medicaid under the ACA.',
+    appliesTo: 'Zeros out the healthcare line.',
+    source: [MEDICAID_SOURCE, MEDICAID_EXPANSION_SOURCE],
+  },
+  {
+    id: 'chip',
+    name: 'CHIP',
+    blurb: 'Low-cost health coverage for children in families above the Medicaid limit. State-set income threshold, typically 200%–400% FPL.',
+    appliesTo: "Reduces the kids' share of healthcare (~40% of family premium).",
+    source: [CHIP_SOURCE, CHIP_STATE_THRESHOLDS_SOURCE],
   },
 ];
 
@@ -42,10 +60,19 @@ export function Benefits({
   claimed: ReadonlySet<string>;
   toggle: (id: string) => void;
 }) {
-  const inputs = {
+  // Reconstruct pre-benefit healthcare so eligibility checks can estimate
+  // their value based on what the household *would* pay without coverage.
+  const preBenefitHealthcare =
+    result.expenses.Healthcare
+    + (result.benefitsApplied['Medicaid'] ?? 0)
+    + (result.benefitsApplied['CHIP'] ?? 0);
+
+  const inputs: BenefitInputs = {
     grossIncome: result.grossIncome,
     householdSize: result.householdSize,
     state: result.cityData.state,
+    kids: result.householdSize - result.adults,
+    monthlyHealthcareCost: preBenefitHealthcare,
   };
 
   const evaluate = (id: BenefitId): BenefitEligibility => checkBenefit(id, inputs);
@@ -62,9 +89,12 @@ export function Benefits({
         {BENEFIT_META.map(meta => {
           const elig = evaluate(meta.id);
           const isClaimed = claimed.has(meta.id);
+          const baseSources: readonly Source[] = Array.isArray(meta.source)
+            ? meta.source
+            : [meta.source as Source];
           const sources: readonly Source[] = meta.stateSource
-            ? [meta.source, meta.stateSource(inputs)]
-            : [meta.source];
+            ? [...baseSources, meta.stateSource(inputs)]
+            : baseSources;
           return (
             <Card
               key={meta.id}
