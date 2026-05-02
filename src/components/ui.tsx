@@ -5,12 +5,13 @@ import { theme as T, fonts } from '@/theme';
 import { fmt } from '@/lib/format';
 
 /**
- * Tiny editorial citation. Renders a superscript "ⁱ" that opens the source
- * URL in a new tab; the source label appears in the native browser tooltip
- * on hover. Designed to be unobtrusive next to a value.
+ * Editorial citation pill. Renders a small uppercase "SRC" badge in the
+ * accent color that opens the source URL in a new tab; the source label
+ * appears in the native browser tooltip on hover. Visible enough to read
+ * as a clickable affordance, restrained enough not to dominate text.
  *
  * Pass an array to attach multiple sources to a single value; each gets its
- * own indicator.
+ * own pill.
  */
 export function Cite({ source }: { source: Source | readonly Source[] }) {
   const sources = Array.isArray(source) ? source : [source as Source];
@@ -25,13 +26,24 @@ export function Cite({ source }: { source: Source | readonly Source[] }) {
           title={s.date ? `${s.label} (${s.date})` : s.label}
           aria-label={`Source: ${s.label}`}
           style={{
-            color: T.inkMuted, textDecoration: 'none',
-            fontSize: '0.7em', verticalAlign: 'super',
-            padding: '0 2px', cursor: 'help',
-            fontFamily: fonts.body, fontWeight: 600,
-            letterSpacing: 0,
+            display: 'inline-block',
+            fontSize: '0.62em',
+            fontFamily: fonts.body,
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: T.accent,
+            padding: '2px 5px',
+            margin: '0 4px',
+            border: `1px solid ${T.accent}`,
+            borderRadius: 2,
+            textDecoration: 'none',
+            verticalAlign: '0.2em',
+            lineHeight: 1,
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
           }}
-        >ⁱ</a>
+        >src ↗</a>
       ))}
     </>
   );
