@@ -197,7 +197,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Transparency',
     status: 'planned',
     summary:
-      'A first-class /funding page that turns the project\'s own money trail into a Budget Atlas-style data product — every dollar in and out with deliverable links, running balance, and explicit allocation. Same citation rigor applied to tax brackets, applied to ourselves.',
+      "A first-class /funding page that turns the project's own money trail into a Budget Atlas-style data product — every dollar in and out with deliverable links, running balance, and explicit allocation. Same citation rigor applied to tax brackets, applied to ourselves.",
   },
   {
     id: 13,

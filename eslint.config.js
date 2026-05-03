@@ -54,6 +54,27 @@ export default tseslint.config(
     },
   },
 
+  // Node-side scripts: audit pipeline, build helpers. They're plain ESM
+  // running under `node`, so `process`/`console`/etc. are real globals.
+  // Without this block, every script gets dozens of false-positive
+  // `no-undef` errors.
+  {
+    files: ['**/*.mjs', 'scripts/**/*.{js,mjs}', 'audit/**/*.{js,mjs}'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        Buffer: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        setTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearTimeout: 'readonly',
+        clearInterval: 'readonly',
+      },
+    },
+  },
+
   // Disable any formatting-adjacent rules that would conflict with Prettier.
   // Must come last so it wins.
   prettierConfig,

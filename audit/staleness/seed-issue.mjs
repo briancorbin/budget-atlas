@@ -138,10 +138,7 @@ function parseSources() {
 
     // Entry close — commit and reset. Match `  },` or `  }` at typical indent.
     if (/^\s{2,4}\},?\s*$/.test(line)) {
-      const id =
-        block === 'top'
-          ? pendingKey
-          : `state-${block}-${pendingKey.toLowerCase()}`;
+      const id = block === 'top' ? pendingKey : `state-${block}-${pendingKey.toLowerCase()}`;
       meta.set(id, {
         url: pendingFields.url ?? null,
         label: pendingFields.label ?? id,

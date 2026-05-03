@@ -185,7 +185,6 @@ const SUMMARY = (() => {
   return { total, original, reference, estimate, reviewed, overdue, broken, verified };
 })();
 
-
 export function Sources({ onBack }: { onBack: () => void }) {
   return (
     <div

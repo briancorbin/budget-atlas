@@ -172,8 +172,7 @@ export function CiteGroup({ sources }: { sources: readonly Source[] }) {
                   textDecoration: 'none',
                 }}
               >
-                <span>{s.label}</span>{' '}
-                <span style={{ color: T.accent, fontWeight: 600 }}>↗</span>
+                <span>{s.label}</span> <span style={{ color: T.accent, fontWeight: 600 }}>↗</span>
                 <div
                   style={{
                     fontSize: rem(11),
