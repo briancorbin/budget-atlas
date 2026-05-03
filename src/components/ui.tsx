@@ -256,11 +256,11 @@ export function CiteGroup({ sources }: { sources: readonly Source[] }) {
 }
 
 /**
- * Compact pill rendering a source's tier — original / reference / estimate.
+ * Compact pill rendering a source's tier — primary / reference / commercial.
  * Matches the styling used on /sources for visual continuity. Inline in
- * citation popovers so readers see the epistemic status of every source
- * (original published value vs. calibrated baseline vs. approximation)
- * without leaving the page.
+ * citation popovers so readers see the trust tier of every source
+ * (publisher-direct vs. peer-respected interpretation vs. commercial /
+ * crowd-sourced product) without leaving the page.
  */
 function TierPill({ tier }: { tier: string }) {
   // Tier colours: green for primary, slate-blue for reference (one step

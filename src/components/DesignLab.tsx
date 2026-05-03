@@ -243,7 +243,7 @@ const SYNTHETIC_ROWS: readonly SyntheticRow[] = [
     reviewer: 'briancorbin',
   },
   {
-    source: makeSrc('lab-commercial-human', 'BLS CEX Regional Tables', 'commercial'),
+    source: makeSrc('lab-commercial-human', 'Zillow Observed Rent Index', 'commercial'),
     kind: 'human',
     reviewedAt: '2026-05-03',
     reviewer: 'briancorbin',
