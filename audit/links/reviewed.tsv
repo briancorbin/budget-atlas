@@ -1,9 +1,20 @@
-# Human review log for cited URLs.
+# Human review log for cited URLs — the unified resolution log.
 #
-# Add a row when you've manually opened a URL and confirmed the destination
-# still cites the content the codebase relies on. A 200 from curl only tells
-# you something loaded — only a human can tell you whether what loaded is
-# still the right document.
+# Add a row when:
+#
+#   1. You ADD a new entry to src/data/sources.ts. The act of adding a source
+#      presupposes a human verified it; the row here is the proof. Without
+#      this row, the staleness audit will flag the new source as overdue
+#      immediately, by design — forcing the question "did a human actually
+#      open this URL?"
+#   2. You RESOLVE an audit issue (audit:link or audit:report). Whether the
+#      resolution was URL change / data update / removal / "validated as-is,"
+#      one row lands here describing what was done.
+#   3. You DO A PERIODIC REVIEW (maintainer / trusted reviewer sweep) and
+#      have just verified that an existing citation still backs the claim.
+#
+# A 200 from curl only tells you something loaded — only a human can tell
+# you whether what loaded is still the right document.
 #
 # Format: url \t YYYY-MM-DD \t reviewer \t notes (tab-separated)
 # Lines starting with # are comments. Keep the format flat — this file is

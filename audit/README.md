@@ -6,7 +6,8 @@ This is the same transparency stance as the [funding ledger](../funding/ledger.m
 
 ## Audits
 
-- **[Link audit](./links/)** — Are the URLs cited from the codebase still alive, and do they still point at the document they claim to?
+- **[Link audit](./links/)** — Are the URLs cited from the codebase still alive, and do they still point at the document they claim to? (Nightly bot + community reports.)
+- **[Staleness audit](./staleness/)** — Has any human eye verified each citation recently enough? (Weekly bot, tier-specific thresholds.)
 
 ## Why we audit
 

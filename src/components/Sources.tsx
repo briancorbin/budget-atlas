@@ -151,6 +151,18 @@ const GROUPS: readonly Group[] = [
 
 const ALL_SOURCES = GROUPS.flatMap((g) => g.sources);
 
+/**
+ * Tier review thresholds in days — must stay in sync with
+ * `audit/staleness/seed-issue.mjs`. The Node script writes the issue;
+ * this UI displays the at-a-glance count.
+ */
+const STALENESS_THRESHOLDS_DAYS: Record<string, number> = {
+  primary: 90,
+  secondary: 180,
+  editorial: 365,
+};
+const STALENESS_DEFAULT_DAYS = 180;
+
 const SUMMARY = (() => {
   const total = ALL_SOURCES.length;
   let primary = 0;
@@ -164,12 +176,35 @@ const SUMMARY = (() => {
   }
   const reviewedUrls = new Set<string>();
   for (const url of REVIEWS.keys()) reviewedUrls.add(url);
-  // Only count reviewed sources that are actually in the registry.
   let reviewed = 0;
   for (const s of ALL_SOURCES) {
     if (reviewedUrls.has(s.url)) reviewed++;
   }
-  return { total, primary, secondary, editorial, reviewed };
+
+  // Overdue: tier-aware staleness check. Never-reviewed sources count as
+  // overdue from day one — the audit's job is to honestly represent how
+  // much human verification has happened, not to soft-start with addedAt
+  // as a free pass. See audit/staleness/ for the rolling-issue workflow
+  // that surfaces the queue for triage.
+  const today = new Date();
+  let overdue = 0;
+  for (const s of ALL_SOURCES) {
+    const tier = (s as Source & { tier?: string }).tier ?? 'secondary';
+    const thresholdDays = STALENESS_THRESHOLDS_DAYS[tier] ?? STALENESS_DEFAULT_DAYS;
+    const latest = REVIEWS.get(s.url)?.[0];
+    if (!latest) {
+      // Never reviewed → overdue.
+      overdue++;
+      continue;
+    }
+    const reviewDate = new Date(latest.date + 'T00:00:00Z');
+    if (Number.isNaN(reviewDate.valueOf())) continue;
+    const dueDate = new Date(reviewDate);
+    dueDate.setUTCDate(dueDate.getUTCDate() + thresholdDays);
+    if (today > dueDate) overdue++;
+  }
+
+  return { total, primary, secondary, editorial, reviewed, overdue };
 })();
 
 export function Sources({ onBack }: { onBack: () => void }) {
@@ -305,11 +340,20 @@ function Intro() {
 }
 
 function Summary() {
-  const stats: ReadonlyArray<{ label: string; value: number; tone?: 'accent' | 'positive' }> = [
+  const stats: ReadonlyArray<{
+    label: string;
+    value: number;
+    tone?: 'accent' | 'positive' | 'warning';
+  }> = [
     { label: 'Total cited', value: SUMMARY.total },
     { label: 'Primary sources', value: SUMMARY.primary, tone: 'positive' },
     { label: 'Secondary', value: SUMMARY.secondary },
     { label: 'Human-reviewed', value: SUMMARY.reviewed, tone: 'accent' },
+    {
+      label: 'Overdue',
+      value: SUMMARY.overdue,
+      tone: SUMMARY.overdue > 0 ? 'warning' : undefined,
+    },
   ];
   return (
     <section
@@ -332,7 +376,14 @@ function Summary() {
               fontSize: 32,
               fontWeight: 500,
               lineHeight: 1,
-              color: s.tone === 'accent' ? T.accent : s.tone === 'positive' ? T.positive : T.ink,
+              color:
+                s.tone === 'accent'
+                  ? T.accent
+                  : s.tone === 'positive'
+                    ? T.positive
+                    : s.tone === 'warning'
+                      ? T.warning
+                      : T.ink,
             }}
           >
             {s.value}

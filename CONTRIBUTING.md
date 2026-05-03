@@ -65,7 +65,15 @@ When adding a citation, include `addedBy` (your **GitHub username**, no `@` pref
 },
 ```
 
-These fields don't drive any UI — they're audit-trail metadata that surfaces in [`audit/links/status.md`](./audit/links/status.md). They DON'T change when an existing citation's URL gets updated (the citation is the same; the URL just moved). They DO get filled when a new citation is introduced.
+**Same PR must also append a row to [`audit/links/reviewed.tsv`](./audit/links/reviewed.tsv).** Any change to a source — adding, URL update, data correction, removal, or just affirmative review — pairs with a row. The registry never changes silently. Format:
+
+```
+URL<TAB>YYYY-MM-DD<TAB>your-handle<TAB>brief notes describing what you verified or did
+```
+
+A source whose latest state-change isn't paired with a row will be flagged as overdue by the [staleness audit](./audit/staleness/README.md) immediately — by design. The asymmetry catches AI-proposed citations that get merged without manual verification, URL updates made without re-reading the destination, and any human edits where the verification step was skipped. Every category should be visible.
+
+The `addedBy` / `addedAt` fields surface in [`audit/links/status.md`](./audit/links/status.md). They DON'T change when an existing citation's URL gets updated (the citation is the same; the URL just moved). They DO get filled when a new citation is introduced.
 
 ### Auditing a cited link
 

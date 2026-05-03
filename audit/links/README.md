@@ -10,6 +10,18 @@ Reproducible audit of every external URL cited from the codebase — does it sti
 
 A `200 OK` from curl only tells us _something_ loaded. Only a human can tell us whether the loaded page still cites the document we built the model around. Both columns matter.
 
+## Any source change pairs with a `reviewed.tsv` row
+
+The registry never changes silently. **Every state transition** on a source in `sources.ts` lands in the same PR as a paired row in `reviewed.tsv`:
+
+- **Adding a new source** → row dated today proves a human verified it before adding.
+- **Changing an existing URL** (page moved, new canonical home) → row proves the human re-opened the new URL and confirmed content unchanged.
+- **Updating data** that depended on a source (because the document was revised) → row describes what was checked and what changed.
+- **Removing a source** → row records the verification that the citation no longer backs the claim.
+- **Affirmative periodic review** (no change, just verification) → row is the entire deliverable.
+
+A source whose latest state-change isn't paired with a row gets flagged as overdue by the [staleness audit](../staleness/) immediately. The asymmetry is deliberate: it catches AI-proposed citations that were merged without manual verification, URL updates made without re-reading the destination, and any human edits where the verification step got skipped. Every category should be visible.
+
 ## Two streams in, one stream out
 
 The audit has **two ways things enter the queue** — and **one way things leave it**:

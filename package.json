@@ -18,7 +18,8 @@
     "render-branding": "./scripts/render-branding.sh",
     "check-links": "./audit/links/check.sh",
     "audit:seed-issues": "node audit/links/seed-issues.mjs",
-    "audit:status": "node audit/links/generate-status.mjs"
+    "audit:status": "node audit/links/generate-status.mjs",
+    "audit:staleness": "node audit/staleness/seed-issue.mjs"
   },
   "dependencies": {
     "react": "^19.2.5",

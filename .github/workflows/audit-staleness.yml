@@ -1,0 +1,41 @@
+name: Audit staleness
+
+# Weekly check for source reviews that have aged past their tier-specific
+# threshold. Maintains a single rolling `audit:staleness` issue that gets
+# updated each run with the current overdue list.
+#
+# Tier thresholds:
+#   primary   90d  · direct from agency / data publisher
+#   secondary 180d · operational handbooks, agency landing pages, surveys
+#   editorial 365d · approximations flagged honestly
+#
+# Soft-start from `addedAt` so the queue ramps up naturally over months
+# rather than flagging 200+ "never reviewed" sources on day one.
+#
+# See audit/staleness/README.md for the full philosophy.
+
+on:
+  schedule:
+    # Monday 09:00 UTC — fresh queue at the start of the work week.
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: audit-staleness
+  cancel-in-progress: false
+
+jobs:
+  staleness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run staleness check + manage rolling issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node audit/staleness/seed-issue.mjs
