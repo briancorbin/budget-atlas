@@ -2,14 +2,16 @@ import { useEffect, useState } from 'react';
 import { BudgetExplorer } from '@/components/BudgetExplorer';
 import { Roadmap } from '@/components/Roadmap';
 import { About } from '@/components/About';
+import { Sources } from '@/components/Sources';
 import { NAV_EVENT, navigate } from '@/lib/nav';
 
-type Route = 'atlas' | 'roadmap' | 'about';
+type Route = 'atlas' | 'roadmap' | 'about' | 'sources';
 
 function routeFromPath(pathname: string): Route {
   const trimmed = pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
   if (trimmed === 'roadmap') return 'roadmap';
   if (trimmed === 'about') return 'about';
+  if (trimmed === 'sources') return 'sources';
   return 'atlas';
 }
 
@@ -44,6 +46,9 @@ export default function App() {
   }
   if (route === 'about') {
     return <About onBack={() => navigate('/')} />;
+  }
+  if (route === 'sources') {
+    return <Sources onBack={() => navigate('/')} />;
   }
   return <BudgetExplorer />;
 }

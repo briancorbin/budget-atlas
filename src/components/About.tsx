@@ -232,7 +232,19 @@ function StillImproving() {
       <p style={proseStyle}>
         This is a growing community tool that gets more accurate as more eyes check it. If you find
         a broken citation, an outdated program rule, or a number that looks wrong, the way to make
-        it better is to open an issue or a pull request. We run a public{' '}
+        it better is to open an issue or a pull request. Every citation the model relies on is
+        listed on the{' '}
+        <a
+          href="/sources"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate('/sources');
+          }}
+          style={linkStyle}
+        >
+          sources page
+        </a>{' '}
+        with attribution and review history; the underlying{' '}
         <a
           href={`${GITHUB_URL}/tree/main/audit`}
           target="_blank"
@@ -241,7 +253,7 @@ function StillImproving() {
         >
           link audit
         </a>{' '}
-        and welcome help triaging it.
+        runs nightly.
       </p>
     </section>
   );

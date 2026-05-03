@@ -199,6 +199,15 @@ export interface Source {
   url: string;
   /** Optional retrieval / publication date in ISO form. */
   date?: string;
+  /**
+   * Epistemic weight of the source:
+   *   - `'primary'`   — direct from the agency / data publisher (IRS, BLS, eCFR)
+   *   - `'secondary'` — operational handbook, agency landing page, industry survey,
+   *                     think-tank methodology
+   *   - `'editorial'` — approximation flagged honestly rather than dressed up as
+   *                     a hard number
+   */
+  tier?: 'primary' | 'secondary' | 'editorial';
   /** Audit attribution: who added this citation to the registry (handle / name). */
   addedBy?: string;
   /** Audit attribution: when this citation was added (YYYY-MM-DD). */
