@@ -88,7 +88,7 @@ export const SOURCES = {
   },
   'care-com-childcare': {
     label: 'Care.com Cost of Care Report',
-    url: 'https://www.care.com/c/cost-of-childcare/',
+    url: 'https://www.care.com/c/cost-of-care-report/',
     date: '2025',
     tier: 'reference',
     addedBy: 'briancorbin',
@@ -96,7 +96,7 @@ export const SOURCES = {
   },
   'kff-employer-health-benefits': {
     label: 'KFF Employer Health Benefits Survey',
-    url: 'https://www.kff.org/health-costs/report/employer-health-benefits-annual-survey/',
+    url: 'https://www.kff.org/series/employer-health-benefits-survey/',
     date: '2025',
     tier: 'reference',
     addedBy: 'briancorbin',
@@ -159,7 +159,7 @@ export const SOURCES = {
   },
   'child-care-aware': {
     label: 'Child Care Aware — Price of Care',
-    url: 'https://www.childcareaware.org/state-fact-sheets/',
+    url: 'https://www.childcareaware.org/price-landscape24/',
     date: '2025',
     tier: 'reference',
     addedBy: 'briancorbin',

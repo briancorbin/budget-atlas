@@ -25,3 +25,6 @@
 #
 # url	reviewed_at	reviewed_by	notes
 https://www.hud.gov/hudclips/handbooks/housing-4350-3	2026-05-02	briancorbin	HUD Handbook 4350.3 REV-1, Change 4 (Nov 2013). Confirmed the landing page lists the handbook + chapters; Ch. 3 covers occupancy. Replaces the 404'd /sites/dfiles/OCHCO/documents/4350.3.pdf citation.
+https://www.kff.org/series/employer-health-benefits-survey/	2026-05-03	briancorbin	KFF moved the annual survey to a year-stable series archive. Confirmed the page links to the latest (2025) report with the figures we anchor employer health-insurance employee-share to. Replaces the 404'd /health-costs/report/employer-health-benefits-annual-survey/.
+https://www.care.com/c/cost-of-care-report/	2026-05-03	briancorbin	Care.com renamed the cost-of-care landing page. Confirmed the new URL hosts the current Cost of Care Report with per-metro childcare cost figures. Replaces the 404'd /c/cost-of-childcare/.
+https://www.childcareaware.org/price-landscape24/	2026-05-03	briancorbin	Child Care Aware retired the /state-fact-sheets/ page. The 2024 Price & Supply report at /price-landscape24/ has an interactive state selector with per-state child-care price breakdowns — same content territory we cited the fact sheets for. Year-stamped slug; staleness audit will surface it on the next cycle.
