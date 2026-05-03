@@ -29,6 +29,10 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Need history so the source-pairing check can `git show`
+          # the PR's base ref. fetch-depth: 0 is cheap on this repo.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -50,3 +54,17 @@ jobs:
 
       - name: Typecheck
         run: yarn typecheck
+
+      - name: Source registry — unused-source check
+        # Fails if any top-level SOURCES['<id>'] is unreferenced outside
+        # the registry itself and the bibliography page. A citation only
+        # used by /sources is functionally dead — wire it in or remove it.
+        run: node --experimental-strip-types scripts/source-inventory.mjs --check
+
+      - name: Source registry — paired reviewed.tsv row for new sources
+        # PR-only: every newly-added source needs a matching row in
+        # audit/links/reviewed.tsv proving a human verified it. Skipped on
+        # push events because there's no clear "base" — the PR check
+        # already gated the merge.
+        if: github.event_name == 'pull_request'
+        run: node scripts/check-source-pairing.mjs
