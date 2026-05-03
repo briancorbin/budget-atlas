@@ -294,7 +294,10 @@ function Intro() {
         >
           link audit
         </a>{' '}
-        catches dead URLs automatically; everything else needs human eyes.
+        catches dead URLs automatically; everything else needs human eyes —{' '}
+        <strong style={{ color: T.ink }}>your eyes</strong>, not an AI's. Reviews must be 100%
+        manual. Don't ask a chatbot to read the page for you; that's the failure mode this audit
+        exists to catch.
       </p>
     </div>
   );

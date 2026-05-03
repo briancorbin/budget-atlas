@@ -30,6 +30,18 @@ Requires bash + curl + grep + xargs + awk. Takes ~1 minute over all ~230 URLs at
 | `404`         | Page is gone        | Replace the citation or remove the data point                                     |
 | `000` / `ERR` | DNS/TLS/timeout     | Manual browser check; might be a transient outage or a domain that's gone         |
 
+## Reviews must be 100% human
+
+This is the load-bearing rule of the audit. **No AI assistance.** The whole point of human review is to catch the failure mode where a page loads but no longer cites what we claim — exactly the failure that automated checking can't detect (and that AI summarization can _create_ by hallucinating support that isn't there).
+
+You must:
+
+- Open the URL yourself in a browser.
+- Read enough of the destination to verify the claim with your own eyes.
+- Write the notes in your own words, based on what you actually saw.
+
+Reviews that look AI-generated will be rejected. The submission form has a checkbox confirming this; treat it seriously. Ten honest human reviews are worth more than a hundred laundered through a chatbot — the audit is only as good as the discipline that backs it.
+
 ## Recording a manual review
 
 When you've opened a URL and confirmed the cited content is still there:

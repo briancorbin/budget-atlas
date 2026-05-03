@@ -8,7 +8,19 @@ body:
       value: |
         Thanks for reviewing a citation. Your review becomes a durable row in [`audit/links/reviewed.tsv`](https://github.com/TheBudgetAtlas/thebudgetatlas/blob/main/audit/links/reviewed.tsv) — the public audit trail. A maintainer will batch accepted reviews into the file and close this issue.
 
-        New here? See [the audit guide](https://github.com/TheBudgetAtlas/thebudgetatlas/blob/main/audit/links/README.md) for what we mean by "review."
+        ### ⚠️ Reviews must be 100% human
+
+        **No AI assistance.** Don't ask ChatGPT, Claude, Gemini, Perplexity, or any other AI tool to read the page for you, summarize it, or judge whether it backs our claim. That's the failure mode this audit exists to catch — automated link checking is what the [nightly link audit](https://github.com/TheBudgetAtlas/thebudgetatlas/tree/main/audit/links) already does, and machines can't tell whether a loaded page still cites the document we built the model around.
+
+        You must:
+
+        - Open the URL yourself in a browser.
+        - Read enough of the destination to verify the claim with your own eyes.
+        - Write the notes in your own words, based on what you actually saw.
+
+        Reviews that look AI-generated will be rejected. We'd rather have ten honest human reviews than a hundred laundered through a chatbot.
+
+        New here? See [the audit guide](https://github.com/TheBudgetAtlas/thebudgetatlas/blob/main/audit/links/README.md) for the full philosophy.
 
   - type: input
     id: source-url
@@ -66,4 +78,6 @@ body:
       label: Confirm
       options:
         - label: I actually opened the URL and read enough of the page to verify the claim. I'm not just checking that it loads.
+          required: true
+        - label: I did this review myself, with no AI assistance. I did not ask ChatGPT, Claude, Gemini, or any other AI tool to read, summarize, or judge the page.
           required: true
