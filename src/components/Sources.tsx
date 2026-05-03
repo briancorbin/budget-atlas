@@ -147,11 +147,21 @@ const SUMMARY = (() => {
     else if (tier === 'reference') reference++;
     else if (tier === 'estimate') estimate++;
   }
-  const reviewedIds = new Set(REVIEWS.keys());
-  let reviewed = 0;
+  // Split the reviewed count by kind of latest review so the summary
+  // honestly reflects the level of human involvement, not just "any
+  // review at all." A source whose only review is `ai-proposed` should
+  // not be counted next to one with eyes-on-source verification.
+  let reviewedHuman = 0;
+  let reviewedAiAssisted = 0;
+  let reviewedAiProposed = 0;
   for (const s of ALL_SOURCES) {
-    if (reviewedIds.has(s.id)) reviewed++;
+    const latest = REVIEWS.get(s.id)?.[0];
+    if (!latest) continue;
+    if (latest.kind === 'ai-assisted') reviewedAiAssisted++;
+    else if (latest.kind === 'ai-proposed') reviewedAiProposed++;
+    else reviewedHuman++;
   }
+  const reviewed = reviewedHuman + reviewedAiAssisted + reviewedAiProposed;
 
   // Overdue: tier-aware staleness check. Never-reviewed sources count as
   // overdue from day one — the audit's job is to honestly represent how
@@ -182,7 +192,19 @@ const SUMMARY = (() => {
   for (const s of ALL_SOURCES) {
     if (!isBrokenStatus(STATUS_BY_URL.get(s.url)) && !isOverdue(s)) verified++;
   }
-  return { total, original, reference, estimate, reviewed, overdue, broken, verified };
+  return {
+    total,
+    original,
+    reference,
+    estimate,
+    reviewed,
+    reviewedHuman,
+    reviewedAiAssisted,
+    reviewedAiProposed,
+    overdue,
+    broken,
+    verified,
+  };
 })();
 
 export function Sources({ onBack }: { onBack: () => void }) {
@@ -394,8 +416,18 @@ function Summary() {
     { label: 'Reference', value: SUMMARY.reference },
     { label: 'Estimate', value: SUMMARY.estimate },
   ];
+  // Review-kind row: how much of our verification came from eyes-on-source
+  // vs AI-assisted vs AI-proposed. The audit's purpose is honesty about
+  // what's been verified and how — collapsing these into a single
+  // "reviewed" count would launder AI work as the same kind of evidence
+  // as human review.
+  const reviewKinds: ReadonlyArray<Stat> = [
+    { label: 'Human', value: SUMMARY.reviewedHuman, tone: 'positive' },
+    { label: 'AI-assisted', value: SUMMARY.reviewedAiAssisted, tone: 'warning' },
+    { label: 'AI-proposed', value: SUMMARY.reviewedAiProposed, tone: 'accent' },
+    { label: 'Unreviewed', value: SUMMARY.total - SUMMARY.reviewed },
+  ];
   const state: ReadonlyArray<Stat> = [
-    { label: 'Human-reviewed', value: SUMMARY.reviewed, tone: 'accent' },
     {
       label: 'Verified',
       value: SUMMARY.verified,
@@ -422,6 +454,8 @@ function Summary() {
       }}
     >
       <StatRow heading="Composition" stats={composition} />
+      <div style={{ height: 1, background: T.border, opacity: 0.6 }} />
+      <StatRow heading="Review kinds" stats={reviewKinds} />
       <div style={{ height: 1, background: T.border, opacity: 0.6 }} />
       <StatRow heading="State" stats={state} />
     </section>
@@ -666,6 +700,11 @@ function MetaStrip({
       }}
     >
       {tier && <TierPill tier={tier} />}
+      {/* Surface the latest review's kind alongside the tier so a reader
+          can scan a row and see at a glance whether the verification was
+          eyes-on-source vs AI-assisted. Skip rendering for `human` to
+          reduce visual noise — human is the baseline expectation. */}
+      {latestReview && latestReview.kind !== 'human' && <ReviewKindPill kind={latestReview.kind} />}
       <MetaFact label="Added" date={addedAt ?? addedFallback} handle={addedBy} />
       {latestReview && (
         <MetaFact

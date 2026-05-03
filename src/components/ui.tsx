@@ -11,7 +11,7 @@ import { theme as T, fonts, rem } from '@/theme';
 import { fmt } from '@/lib/format';
 import { navigate } from '@/lib/nav';
 import { ALL_SOURCES } from '@/data/sources';
-import { StatusDot, ReportFlag, getStatusKind, type StatusKind } from '@/lib/sourceStatus';
+import { StatusDot, ReportFlag, getStatusKind, REVIEWS, type StatusKind } from '@/lib/sourceStatus';
 
 /**
  * Roll a list of source statuses up to a single "worst" one. Broken
@@ -185,6 +185,16 @@ export function CiteGroup({ sources }: { sources: readonly Source[] }) {
                   }}
                 >
                   {s.tier && <TierPill tier={s.tier} />}
+                  {(() => {
+                    // Surface the latest review's kind alongside the tier
+                    // pill so a reader sees at a glance whether the
+                    // citation was eyes-on-source verified vs AI-assisted.
+                    // Skip rendering for `human` (the baseline) to keep
+                    // the popover row uncluttered.
+                    const latestKind = REVIEWS.get(s.id)?.[0]?.kind;
+                    if (!latestKind || latestKind === 'human') return null;
+                    return <PopoverKindPill kind={latestKind} />;
+                  })()}
                   {s.date && <span>{s.date}</span>}
                 </div>
               </a>
@@ -247,6 +257,35 @@ function TierPill({ tier }: { tier: string }) {
       }}
     >
       {tier}
+    </span>
+  );
+}
+
+/**
+ * Popover-flavored review-kind pill. Same shape as TierPill so the two
+ * read as a coordinated pair on a single popover row. Only rendered for
+ * non-`human` kinds — `human` is the baseline expectation and showing
+ * it would just add noise.
+ */
+function PopoverKindPill({ kind }: { kind: 'ai-assisted' | 'ai-proposed' }) {
+  const palette =
+    kind === 'ai-assisted'
+      ? { bg: 'rgba(184, 116, 43, 0.18)', fg: T.warning }
+      : { bg: 'rgba(166, 38, 28, 0.10)', fg: T.accent };
+  return (
+    <span
+      style={{
+        fontSize: rem(10),
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        fontWeight: 600,
+        background: palette.bg,
+        color: palette.fg,
+        padding: '2px 8px',
+        borderRadius: 2,
+      }}
+    >
+      {kind}
     </span>
   );
 }
