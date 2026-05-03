@@ -77,9 +77,11 @@ yarn check-links
 
 This extracts every URL from `src/data/sources.ts`, hits each with curl, and writes a dated TSV to `audit/links/results/`. Status code reference and full philosophy live in [`audit/links/README.md`](./audit/links/README.md).
 
-**The unified rule:** every resolved audit issue — `audit:link` from the nightly bot or `audit:review` from a community submission — writes exactly one row to `audit/links/reviewed.tsv`, regardless of outcome. Whether the resolution was "validated as-is," "URL was moved and we updated it," "data needed correction," or "citation was retired," the row in `reviewed.tsv` is the durable record. Code changes (`sources.ts` edit, data-file edit, removal) ride along in the same PR. The PR's `Closes #N` in the description auto-closes the originating issue.
+**The unified rule:** every resolved audit issue — `audit:link` from the nightly bot or `audit:report` from a community submission — writes exactly one row to `audit/links/reviewed.tsv`, regardless of outcome. Whether the resolution was "URL was moved and we updated it," "data needed correction," or "citation was retired," the row in `reviewed.tsv` is the durable record. Code changes (`sources.ts` edit, data-file edit, removal) ride along in the same PR. The PR's `Closes #N` in the description auto-closes the originating issue.
 
-Reviews must be 100% human — no AI assistance. Open the URL yourself, read enough to verify the claim, write notes in your own words. The issue form has a required checkbox confirming this.
+The community-submission form is for **reporting problems only** — broken URLs, drifted content, citations that should be replaced or removed. Affirmative "this is still correct" reviews are reserved for periodic sweeps by maintainers and trusted reviewers, who enter rows directly to `reviewed.tsv` (no issue lifecycle).
+
+Reports and reviews must both be 100% human — no AI assistance. Open the URL yourself, read enough to verify the claim, write notes in your own words. The issue form has a required checkbox confirming this.
 
 ### Updating branding
 

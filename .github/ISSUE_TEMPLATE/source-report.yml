@@ -1,0 +1,91 @@
+name: Report a problem with a citation
+description: Found a citation that's broken, no longer says what we claim, or otherwise wrong? File it here.
+title: 'Report: '
+labels: ['audit:report']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for flagging a problem with a citation. Your report becomes a public issue under the [`audit:report`](https://github.com/TheBudgetAtlas/thebudgetatlas/issues?q=is%3Aopen+label%3Aaudit%3Areport) label, and a maintainer will triage it. If accepted, the resolution lands as a row in [`audit/links/reviewed.tsv`](https://github.com/TheBudgetAtlas/thebudgetatlas/blob/main/audit/links/reviewed.tsv) — the public audit trail.
+
+        ### This form is for reporting problems only
+
+        If a citation is **working correctly and the page still says what we claim**, no report is needed — affirmative reviews are reserved for periodic sweeps by maintainers and trusted reviewers. Use this form when:
+
+        - The URL is broken (404, redirects to a generic homepage, etc.)
+        - The page loads but no longer says what we cite from it
+        - The document was revised and the data we display is now wrong
+        - The citation should be replaced with a different/better source
+        - You can't reach the page (region-blocked, paywalled, etc.) and the citation should reflect that
+
+        ### ⚠️ Reports must be 100% human
+
+        **No AI assistance.** Don't ask ChatGPT, Claude, Gemini, Perplexity, or any other AI tool to read the page, summarize it, or judge whether it backs our claim. That's the failure mode this audit exists to catch — automated link checking is what the [nightly link audit](https://github.com/TheBudgetAtlas/thebudgetatlas/tree/main/audit/links) already does, and machines can't tell whether a loaded page still cites the document we built the model around.
+
+        You must:
+
+        - Open the URL yourself in a browser.
+        - Read enough of the destination to verify the problem with your own eyes.
+        - Write the report in your own words, based on what you actually saw.
+
+        Reports that look AI-generated will be rejected.
+
+  - type: input
+    id: source-url
+    attributes:
+      label: Source URL
+      description: The full URL of the citation you're reporting.
+      placeholder: https://example.gov/some-page
+    validations:
+      required: true
+
+  - type: input
+    id: report-date
+    attributes:
+      label: Date observed
+      description: The day you actually opened the URL and saw the problem. Format YYYY-MM-DD.
+      placeholder: '2026-05-03'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: What's wrong?
+      description: Best matching description of the problem.
+      options:
+        - URL is broken (404, error, or redirects elsewhere)
+        - Page loads but no longer backs our claim
+        - Document was revised; data we show may be outdated
+        - Citation should be replaced with a different source
+        - Can't reach the URL (region-blocked, paywalled, transient outage)
+        - Other (explain in notes)
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: What you observed
+      description: Specifically what you saw, in your own words. Be concrete — this is the audit trail.
+      placeholder: |
+        Opened the page; it 404'd. Tried navigating from the agency homepage and found the handbook now lives at /hudclips/handbooks/housing-4350-3 — same content. The citation should point there.
+    validations:
+      required: true
+
+  - type: input
+    id: replacement-url
+    attributes:
+      label: Replacement URL (optional)
+      description: If you found a better URL for the same source, paste it here.
+      placeholder: https://example.gov/new-canonical-page
+
+  - type: checkboxes
+    id: agreements
+    attributes:
+      label: Confirm
+      options:
+        - label: I actually opened the URL and observed the problem with my own eyes. I'm not just guessing or pattern-matching.
+          required: true
+        - label: I wrote this report myself, with no AI assistance. I did not ask ChatGPT, Claude, Gemini, or any other AI tool to read, summarize, or judge the page.
+          required: true

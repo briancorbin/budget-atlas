@@ -284,8 +284,8 @@ function Intro() {
         }}
       >
         Spotted a citation that's broken or no longer says what we claim? Click{' '}
-        <em>Submit a review</em> on any source below to file a structured report — it becomes a row
-        in the public audit trail once accepted. A nightly{' '}
+        <em>Report a problem</em> on any source below to file a structured report — a maintainer
+        will triage it, and the resolution becomes a row in the public audit trail. A nightly{' '}
         <a
           href={`${GITHUB_REPO}/tree/main/audit/links`}
           target="_blank"
@@ -295,9 +295,10 @@ function Intro() {
           link audit
         </a>{' '}
         catches dead URLs automatically; everything else needs human eyes —{' '}
-        <strong style={{ color: T.ink }}>your eyes</strong>, not an AI's. Reviews must be 100%
+        <strong style={{ color: T.ink }}>your eyes</strong>, not an AI's. Reports must be 100%
         manual. Don't ask a chatbot to read the page for you; that's the failure mode this audit
-        exists to catch.
+        exists to catch. Affirmative <em>"this is correct"</em> reviews are reserved for periodic
+        sweeps by maintainers — this form is for problems only.
       </p>
     </div>
   );
@@ -484,7 +485,7 @@ function SourceRow({ source }: { source: Source }) {
         }}
       >
         {reviews.length > 0 && <ReviewLog reviews={reviews} />}
-        <SubmitReviewLink source={source} />
+        <ReportProblemLink source={source} />
       </div>
     </li>
   );
@@ -564,20 +565,20 @@ function MetaFact({
   );
 }
 
-function reviewSubmissionUrl(source: Source): string {
+function reportSubmissionUrl(source: Source): string {
   const params = new URLSearchParams({
-    template: 'source-review.yml',
-    title: `Review: ${source.label}`,
+    template: 'source-report.yml',
+    title: `Report: ${source.label}`,
     'source-url': source.url,
-    'review-date': new Date().toISOString().slice(0, 10),
+    'report-date': new Date().toISOString().slice(0, 10),
   });
   return `${GITHUB_REPO}/issues/new?${params.toString()}`;
 }
 
-function SubmitReviewLink({ source }: { source: Source }) {
+function ReportProblemLink({ source }: { source: Source }) {
   return (
     <a
-      href={reviewSubmissionUrl(source)}
+      href={reportSubmissionUrl(source)}
       target="_blank"
       rel="noreferrer"
       style={{
@@ -592,7 +593,7 @@ function SubmitReviewLink({ source }: { source: Source }) {
         gap: 4,
       }}
     >
-      <span aria-hidden="true">+</span> Submit a review
+      <span aria-hidden="true">⚑</span> Report a problem
     </a>
   );
 }

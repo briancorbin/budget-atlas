@@ -10,9 +10,24 @@ Reproducible audit of every external URL cited from the codebase — does it sti
 
 A `200 OK` from curl only tells us _something_ loaded. Only a human can tell us whether the loaded page still cites the document we built the model around. Both columns matter.
 
+## Two streams in, one stream out
+
+The audit has **two ways things enter the queue** — and **one way things leave it**:
+
+**In:**
+
+- `audit:link` — bot-created when the nightly job sees a non-success curl status (404, ERR, 999) on a registry URL.
+- `audit:report` — human-filed via the [Report a problem](../../.github/ISSUE_TEMPLATE/source-report.yml) form on `/sources` when someone notices a broken link, drifted content, or other issue.
+
+**Out:**
+
+- A row appended to `reviewed.tsv`, accompanied by whatever code changes the resolution required, in a single PR with `Closes #N` to the originating issue.
+
+**Reports** flag problems. **Affirmative "this is correct" reviews** are a different activity entirely — reserved for periodic sweeps by maintainers / trusted reviewers and entered directly to `reviewed.tsv` (no issue lifecycle). The community submission form deliberately doesn't offer a "this looks fine" outcome; that asymmetry is by design (the incentive structure for "report a problem" is honest; the structure for "validate as fine" invites trust laundering).
+
 ## `reviewed.tsv` is the unified resolution log
 
-**Every resolved audit issue — `audit:link` from the nightly bot or `audit:review` from a community submission — writes exactly one row to `reviewed.tsv`.** The row's notes explain what was done. Code changes (URL update in `sources.ts`, data-file edit, removal) happen in the same PR, but `reviewed.tsv` is always the durable "this got handled" log.
+**Every resolved audit issue — `audit:link` or `audit:report` — writes exactly one row to `reviewed.tsv`.** The row's notes explain what was done. Code changes (URL update in `sources.ts`, data-file edit, removal) happen in the same PR, but `reviewed.tsv` is always the durable "this got handled" log.
 
 Why one rule for all resolutions: it collapses the mental model. There's exactly one place to look for "what's been resolved lately." Whether the resolution was "validated as-is," "URL was moved and we updated it," "data needed correction," or "citation was retired," it shows up the same way.
 
@@ -76,7 +91,7 @@ The next audit run picks it up; `status.md` regenerates with the latest review r
 The audit runs nightly via [GitHub Actions](../../.github/workflows/audit-links.yml) (09:00 UTC) and can be triggered manually from the Actions tab. The nightly job:
 
 1. Runs `check.sh` against the current `main` branch.
-2. Compares the resulting failures against open issues labeled [`audit:link`](https://github.com/TheBudgetAtlas/thebudgetatlas/issues?q=is%3Aopen+label%3Aaudit%3Alink).
+2. Compares the resulting failures against open issues labeled [`audit:link`](https://github.com/TheBudgetAtlas/thebudgetatlas/issues?q=is%3Aopen+label%3Aaudit%3Alink) (separate from [`audit:report`](https://github.com/TheBudgetAtlas/thebudgetatlas/issues?q=is%3Aopen+label%3Aaudit%3Areport), which is for human-submitted reports).
 3. Creates a new issue per newly-broken URL (deduped by URL in body). Hard cap of 50 issues per run as a safety valve.
 4. Uploads the dated TSV as a workflow artifact (90-day retention).
 
@@ -90,7 +105,7 @@ To seed issues manually from a local audit run: `yarn audit:seed-issues` (or `--
 
 ## Contributing a fix
 
-1. Pick an open issue (`audit:link` from the nightly bot, or `audit:review` from a community submission).
+1. Pick an open issue (`audit:link` from the nightly bot, or `audit:report` from a community submission).
 2. Open the URL yourself. Read the destination. Decide what the right outcome is.
 3. Apply the code change if any (`sources.ts` edit for URL changes / removals; data-file edit for value corrections).
 4. **Append a row to `reviewed.tsv`** describing the resolution — this is non-optional, even for "validated as-is."
