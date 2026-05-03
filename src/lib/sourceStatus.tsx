@@ -239,7 +239,7 @@ export function ReportFlag({ source }: { source: Source }) {
         width: 22,
         height: 22,
         borderRadius: 2,
-        color: T.inkMuted,
+        color: T.accent,
         textDecoration: 'none',
         flexShrink: 0,
         fontSize: rem(13),
