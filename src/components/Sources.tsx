@@ -14,6 +14,7 @@
  * `audit/links/status.md` on GitHub.
  */
 
+import { useState } from 'react';
 import { theme as T, fonts, rem } from '@/theme';
 import { SectionTitle } from './ui';
 import {
@@ -27,6 +28,8 @@ import type { Source } from '@/types';
 import {
   REVIEWS,
   STATUS_BY_URL,
+  STALENESS_THRESHOLDS_DAYS,
+  STALENESS_DEFAULT_DAYS,
   isBrokenStatus,
   isOverdue,
   getStatusKind,
@@ -380,17 +383,48 @@ interface Stat {
   label: string;
   value: number;
   tone?: StatTone;
+  /**
+   * Optional editorial tooltip surfaced when the user hovers/focuses the
+   * label. Used to explain what each cell counts — what an "Original"
+   * source is, how long until a tier goes "Overdue," what makes a row
+   * "AI verified" rather than "Human verified," etc.
+   */
+  tooltip?: string;
 }
+
+const TIER_REVIEW_DAYS = {
+  original: STALENESS_THRESHOLDS_DAYS.original ?? STALENESS_DEFAULT_DAYS,
+  reference: STALENESS_THRESHOLDS_DAYS.reference ?? STALENESS_DEFAULT_DAYS,
+  estimate: STALENESS_THRESHOLDS_DAYS.estimate ?? STALENESS_DEFAULT_DAYS,
+} as const;
 
 function Summary() {
   // Two semantic rows: composition (what's in the registry by class) on top,
   // current state (how the registry is doing) below. Each row gets four
   // cells, fits cleanly without auto-fit awkwardness.
   const composition: ReadonlyArray<Stat> = [
-    { label: 'Total cited', value: SUMMARY.total },
-    { label: 'Original', value: SUMMARY.original, tone: 'positive' },
-    { label: 'Reference', value: SUMMARY.reference },
-    { label: 'Estimate', value: SUMMARY.estimate },
+    {
+      label: 'Total cited',
+      value: SUMMARY.total,
+      tooltip:
+        'Every citation the model relies on, across all categories. Each source has a tier (Original / Reference / Estimate) that determines how often it gets re-reviewed.',
+    },
+    {
+      label: 'Original',
+      value: SUMMARY.original,
+      tone: 'positive',
+      tooltip: `Direct from the agency or data publisher (IRS, BLS, eCFR, SSA, HUD, etc.). Highest-confidence tier. Re-reviewed every ${TIER_REVIEW_DAYS.original} days.`,
+    },
+    {
+      label: 'Reference',
+      value: SUMMARY.reference,
+      tooltip: `Operational handbook, industry survey, think-tank methodology, or state-agency landing page — authoritative but one step removed from the publisher. Re-reviewed every ${TIER_REVIEW_DAYS.reference} days.`,
+    },
+    {
+      label: 'Estimate',
+      value: SUMMARY.estimate,
+      tooltip: `Approximation flagged honestly rather than dressed up as a hard number — used when no clean source exists for a value the model needs. Re-reviewed every ${TIER_REVIEW_DAYS.estimate} days.`,
+    },
   ];
   // State row: per-source health, split by who did the most recent
   // review. "Human verified" is the gold standard (URL live + eyes-on-
@@ -404,18 +438,29 @@ function Summary() {
       label: 'Human verified',
       value: SUMMARY.humanVerified,
       tone: SUMMARY.humanVerified > 0 ? 'positive' : undefined,
+      tooltip:
+        'URL is live and the most recent review was eyes-on-source by a human within the tier window. The gold standard.',
     },
     {
       label: 'AI verified',
       value: SUMMARY.aiVerified,
       tone: SUMMARY.aiVerified > 0 ? 'ai' : undefined,
+      tooltip:
+        'URL is live and reviewed within the tier window, but the most recent review was AI-assisted rather than eyes-on-source by a human. Provisional — awaiting a human pass.',
     },
     {
       label: 'Overdue',
       value: SUMMARY.overdue,
       tone: SUMMARY.overdue > 0 ? 'warning' : undefined,
+      tooltip: `No review within the tier-specific window (Original ${TIER_REVIEW_DAYS.original}d, Reference ${TIER_REVIEW_DAYS.reference}d, Estimate ${TIER_REVIEW_DAYS.estimate}d). Picked up during periodic sweeps.`,
     },
-    { label: 'Broken', value: SUMMARY.broken, tone: SUMMARY.broken > 0 ? 'broken' : undefined },
+    {
+      label: 'Broken',
+      value: SUMMARY.broken,
+      tone: SUMMARY.broken > 0 ? 'broken' : undefined,
+      tooltip:
+        'URL is currently unreachable (404 or other error code from the periodic curl audit). Needs a fix in src/data/sources.ts paired with a row in reviewed.tsv.',
+    },
   ];
   return (
     <section
@@ -460,43 +505,99 @@ function StatRow({ heading, stats }: { heading: string; stats: ReadonlyArray<Sta
         }}
       >
         {stats.map((s) => (
-          <div key={s.label}>
-            <div
-              style={{
-                fontFamily: fonts.display,
-                fontSize: rem(32),
-                fontWeight: 500,
-                lineHeight: 1,
-                color:
-                  s.tone === 'accent'
-                    ? T.accent
-                    : s.tone === 'positive'
-                      ? T.positive
-                      : s.tone === 'warning'
-                        ? T.warning
-                        : s.tone === 'broken'
-                          ? T.accent
-                          : s.tone === 'ai'
-                            ? T.aiAccent
-                            : T.ink,
-              }}
-            >
-              {s.value}
-            </div>
-            <div
-              style={{
-                fontSize: rem(12),
-                textTransform: 'uppercase',
-                letterSpacing: '0.12em',
-                color: T.inkMuted,
-                marginTop: 4,
-              }}
-            >
-              {s.label}
-            </div>
-          </div>
+          <StatCell key={s.label} stat={s} />
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * One cell in a summary stat row. Renders the value (large, tone-coloured)
+ * and the label (small, uppercase). When the stat carries a `tooltip`, the
+ * label gets a dotted underline and a hover/focus tooltip explaining what
+ * the cell counts — used to define source tiers and review states without
+ * cluttering the page with permanent prose.
+ */
+function StatCell({ stat }: { stat: Stat }) {
+  const [hover, setHover] = useState(false);
+  const valueColor =
+    stat.tone === 'accent'
+      ? T.accent
+      : stat.tone === 'positive'
+        ? T.positive
+        : stat.tone === 'warning'
+          ? T.warning
+          : stat.tone === 'broken'
+            ? T.accent
+            : stat.tone === 'ai'
+              ? T.aiAccent
+              : T.ink;
+  const interactive = !!stat.tooltip;
+  return (
+    <div style={{ position: 'relative' }}>
+      <div
+        style={{
+          fontFamily: fonts.display,
+          fontSize: rem(32),
+          fontWeight: 500,
+          lineHeight: 1,
+          color: valueColor,
+        }}
+      >
+        {stat.value}
+      </div>
+      <span
+        onMouseEnter={() => interactive && setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        onFocus={() => interactive && setHover(true)}
+        onBlur={() => setHover(false)}
+        tabIndex={interactive ? 0 : -1}
+        aria-describedby={interactive ? `stat-tip-${stat.label}` : undefined}
+        style={{
+          display: 'inline-block',
+          fontSize: rem(12),
+          textTransform: 'uppercase',
+          letterSpacing: '0.12em',
+          color: T.inkMuted,
+          marginTop: 4,
+          cursor: interactive ? 'help' : 'default',
+          borderBottom: interactive ? `1px dotted ${T.inkMuted}` : 'none',
+          paddingBottom: interactive ? 1 : 0,
+        }}
+      >
+        {stat.label}
+      </span>
+      {interactive && hover && stat.tooltip && (
+        <span
+          id={`stat-tip-${stat.label}`}
+          role="tooltip"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            left: 0,
+            padding: '8px 12px',
+            background: T.ink,
+            color: T.bg,
+            fontSize: rem(12),
+            fontFamily: fonts.body,
+            lineHeight: 1.4,
+            fontWeight: 400,
+            textTransform: 'none',
+            letterSpacing: '0.01em',
+            borderRadius: 3,
+            whiteSpace: 'normal',
+            width: 'max-content',
+            maxWidth: 'min(280px, calc(100vw - 32px))',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            zIndex: 10,
+            pointerEvents: 'none',
+          }}
+        >
+          <span style={{ fontWeight: 600, color: valueColor }}>{stat.label}</span>
+          <span> — {stat.tooltip}</span>
+        </span>
+      )}
     </div>
   );
 }
