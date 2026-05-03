@@ -113,30 +113,41 @@ for (const line of readFileSync(latestPath, 'utf8').split('\n').slice(1)) {
 }
 
 // ── 3. Read reviewed.tsv ─────────────────────────────────────────────────
-const reviewed = new Map();
+// A URL can have multiple reviews — historical audit trail. We render the
+// latest in the table and expose the count so multi-verified citations get
+// visual credit. All rows stay in the TSV regardless.
+const reviewsByUrl = new Map();
 try {
   for (const line of readFileSync(REVIEWED_TSV, 'utf8').split('\n')) {
     if (!line || line.startsWith('#') || line.startsWith('url\t')) continue;
     const [url, date, reviewer, notes] = line.split('\t');
-    reviewed.set(url, { date, reviewer, notes: notes ?? '' });
+    if (!url) continue;
+    if (!reviewsByUrl.has(url)) reviewsByUrl.set(url, []);
+    reviewsByUrl.get(url).push({ date, reviewer, notes: notes ?? '' });
   }
 } catch {
   // No reviewed.tsv yet — fine.
+}
+// Sort each URL's reviews newest-first so [0] is the latest.
+for (const list of reviewsByUrl.values()) {
+  list.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
 }
 
 // ── 4. Build the rows ─────────────────────────────────────────────────────
 const rows = [];
 for (const [url, { label, tier }] of sourceMeta) {
   const s = status.get(url);
-  const r = reviewed.get(url);
+  const reviews = reviewsByUrl.get(url) ?? [];
+  const latest = reviews[0]; // newest-first after sort
   rows.push({
     url,
     label,
     tier: tier ?? '—',
     code: s?.code ?? 'unchecked',
-    reviewedAt: r?.date ?? null,
-    reviewer: r?.reviewer ?? null,
-    notes: r?.notes ?? '',
+    reviewedAt: latest?.date ?? null,
+    reviewer: latest?.reviewer ?? null,
+    notes: latest?.notes ?? '',
+    reviewCount: reviews.length,
     addedBy: sourceMeta.get(url)?.addedBy ?? null,
     addedAt: sourceMeta.get(url)?.addedAt ?? null,
   });
@@ -162,7 +173,12 @@ const statusEmoji = (code) => {
   if (/^(?:000|ERR|999)$/.test(code)) return '⚫';
   return '⚪';
 };
-const reviewMark = (r) => (r.reviewedAt ? '✅' : '—');
+const reviewMark = (r) => {
+  if (!r.reviewedAt) return '—';
+  // Show date + ×N badge when multiple reviews exist for this URL.
+  const badge = r.reviewCount > 1 ? ` (${r.reviewCount}×)` : '';
+  return `✅ ${r.reviewedAt}${badge}`;
+};
 
 const counts = {
   total: rows.length,
@@ -196,7 +212,7 @@ lines.push(
 lines.push('');
 lines.push('## Sources');
 lines.push('');
-lines.push('|  | Source | Tier | Status | Added by | Added | Reviewed | By | Notes |');
+lines.push('|  | Source | Tier | Status | Added by | Added | Latest review | By | Notes |');
 lines.push('| --- | --- | --- | --- | --- | --- | --- | --- | --- |');
 
 for (const r of rows) {
