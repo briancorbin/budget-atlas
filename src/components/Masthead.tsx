@@ -99,16 +99,21 @@ export function Masthead() {
       <h1
         style={{
           fontFamily: fonts.display,
-          fontSize: 'clamp(40px, 5vw, 64px)',
+          // Floor low enough to read on iPhone widths (~32px on a 390px viewport
+          // via 8vw); ceiling preserved at 64px for desktop drama.
+          fontSize: 'clamp(32px, 8vw, 64px)',
           fontWeight: 400,
           letterSpacing: '-0.025em',
           lineHeight: 1.05,
           margin: '14px 0 14px',
           fontStyle: 'italic',
+          // ch unit scales with the current font size, so the title wraps to
+          // ~2-3 lines at any viewport rather than running off the right at
+          // desktop sizes (where 64px italic on one line is ~1300px wide).
+          maxWidth: '20ch',
         }}
       >
-        How Americans actually <br />
-        live on what they earn.
+        How Americans actually live on what they earn.
       </h1>
       <div
         style={{

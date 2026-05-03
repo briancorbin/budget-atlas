@@ -470,7 +470,9 @@ export function SectionTitle({ children, kicker }: { children: ReactNode; kicker
       <div
         style={{
           fontFamily: fonts.display,
-          fontSize: 26,
+          // Slight clamp on the section title so long ones (e.g. "State CHIP
+          // administering agencies") don't crowd the kicker on narrow widths.
+          fontSize: 'clamp(20px, 4.5vw, 26px)',
           fontWeight: 500,
           color: T.ink,
           letterSpacing: '-0.01em',

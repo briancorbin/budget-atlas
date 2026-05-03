@@ -251,7 +251,7 @@ function Intro() {
       <div
         style={{
           fontFamily: fonts.display,
-          fontSize: 'clamp(34px, 5vw, 44px)',
+          fontSize: 'clamp(28px, 7vw, 44px)',
           fontWeight: 500,
           lineHeight: 1.05,
           letterSpacing: '-0.01em',
