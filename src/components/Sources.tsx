@@ -470,10 +470,12 @@ function SourceRow({ source }: { source: Source }) {
       <div
         style={{
           display: 'flex',
-          // flex-start so the submit link stays anchored to the disclosure
-          // summary line; alignItems:center would float it down to the
-          // visual middle of the expanded review log.
-          alignItems: 'flex-start',
+          // baseline-align so the disclosure summary text and the submit
+          // link sit on the same typographic baseline; switching to
+          // flex-start would line up the box tops (off because the
+          // disclosure carries a triangle marker), and alignItems:center
+          // would float submit down beside the expanded review log.
+          alignItems: 'baseline',
           gap: 18,
           flexWrap: 'wrap',
         }}
@@ -585,7 +587,6 @@ function SubmitReviewLink({ source }: { source: Source }) {
         display: 'inline-flex',
         alignItems: 'center',
         gap: 4,
-        marginTop: 10,
       }}
     >
       <span aria-hidden="true">+</span> Submit a review
