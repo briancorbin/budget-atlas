@@ -184,6 +184,37 @@ function PlannedCard({ item }: { item: RoadmapItem }) {
         {item.summary}
       </p>
       {item.status === 'in-progress' && <ProgressStrip item={item} />}
+      <IssueLink id={item.id} />
+    </div>
+  );
+}
+
+/**
+ * Subtle link to the GitHub issue tracking this roadmap item. Roadmap `id`
+ * values are kept aligned with issue numbers, so the link is mechanical.
+ * The summary above is intentionally short; deep detail (open questions,
+ * implementation notes, dollar magnitudes) lives in the issue.
+ */
+function IssueLink({ id }: { id: number }) {
+  return (
+    <div style={{ marginTop: 12, textAlign: 'right' }}>
+      <a
+        href={`https://github.com/TheBudgetAtlas/thebudgetatlas/issues/${id}`}
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          fontSize: rem(11),
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: T.accent,
+          textDecoration: 'none',
+          fontWeight: 600,
+          borderBottom: `1px solid ${T.border}`,
+          paddingBottom: 1,
+        }}
+      >
+        Issue #{id} →
+      </a>
     </div>
   );
 }
@@ -292,12 +323,17 @@ function ShippedList() {
   // Merge roadmap items that have shipped (from ROADMAP) with the historical
   // pre-roadmap milestones (from SHIPPED). Both render the same way.
   // Newest first so the most recent ship is visible without scrolling.
+  // Carry roadmap items' `id` through the merge so we can render an Issue
+  // link on those cards. The four historical SHIPPED entries predate the
+  // roadmap-as-issues convention and have no associated issue number.
   const shippedRoadmap = ROADMAP.filter((i) => i.status === 'shipped').map((i) => ({
+    id: i.id as number | undefined,
     title: i.title,
     summary: i.summary,
     shippedAt: i.shippedAt ?? '',
   }));
-  const all = [...shippedRoadmap, ...SHIPPED].sort((a, b) =>
+  const historical = SHIPPED.map((s) => ({ ...s, id: undefined as number | undefined }));
+  const all = [...shippedRoadmap, ...historical].sort((a, b) =>
     (b.shippedAt ?? '').localeCompare(a.shippedAt ?? ''),
   );
 
@@ -424,6 +460,7 @@ function ShippedList() {
             >
               {item.summary}
             </p>
+            {item.id !== undefined && <IssueLink id={item.id} />}
           </div>
         ))}
       </div>

@@ -41,7 +41,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Household detail',
     status: 'planned',
     summary:
-      'Input weekly working hours and surface derived metrics: time for personal childcare vs hired help, free time for own pursuits, sleep budget. Shows the time cost of work alongside the dollar take-home.',
+      'Input weekly working hours and surface the time cost alongside the dollar take-home — childcare hours, free time, sleep budget. Shows what the money actually trades against.',
   },
   {
     id: 2,
@@ -49,7 +49,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Tax modeling',
     status: 'planned',
     summary:
-      'Add an input for tips or cash income that flows into take-home and lifestyle budgeting but bypasses federal/state/FICA. Common in restaurant, gig, and cash-based trades. Notes the legal grey area of underreporting.',
+      'Add an input for tips or cash income that flows into take-home and lifestyle but bypasses federal/state/FICA. Common in restaurant, gig, and cash-based trades.',
   },
   {
     id: 3,
@@ -57,7 +57,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Household detail',
     status: 'planned',
     summary:
-      'Today every kid is the same averaged-out kid. Expand from the 0–4 slider into per-child detail so the model reflects what actually drives household cost. Per-child age (infant care often ~2× preschool, Child Tax Credit cuts off at 17, school-age kids drop daycare but pick up after-school care). School type — public (free, but with supplies/activity fees), private K–12 (median ~$13K/yr nationally, much higher in metro privates), parochial (often $5–10K), or homeschool (curriculum + lost-income cost of a parent staying home). Activities and extracurriculars (sports leagues, music lessons, summer camps — easily $2–5K/kid/yr at the moderate tier). Special needs / therapies as an optional line. College savings (529 contributions) as a separate optional bucket. Keep the simple slider as the default; expand on demand.',
+      'Today every kid is the same averaged-out kid. Expand the 0–4 slider into per-child age, school type (public/private/parochial/homeschool), activities, and optional 529 contributions — keeping the simple slider as the default.',
   },
   {
     id: 4,
@@ -65,7 +65,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Tax modeling',
     status: 'planned',
     summary:
-      'Pre-tax retirement and health-savings contributions reduce federal and state taxable income. Currently the model assumes none, which materially overstates tax for higher-income households who max their 401(k) — a $7K+ gap at the 32% marginal bracket.',
+      'Pre-tax retirement and health-savings contributions reduce federal and state taxable income. The model currently assumes none, overstating tax by ~$7K at the 32% bracket for max-out 401(k) contributors.',
   },
   {
     id: 5,
@@ -73,7 +73,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Cost of living',
     status: 'planned',
     summary:
-      'Layer optional per-line inputs on top of the Modest/Moderate/Comfortable lever — gym, dining out, grocery budget, hobbies. Keep the simple lever as the default; expand for users who want to model their actual spending.',
+      'Layer optional per-line inputs — gym, dining out, groceries, hobbies — on top of the Modest/Moderate/Comfortable lever. Simple lever stays as the default; expand for users modeling their actual spending.',
   },
   {
     id: 6,
@@ -81,7 +81,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Geography',
     status: 'planned',
     summary:
-      'Pick a job type (software engineer, bartender, nanny, etc.) and see what the same job pays across cities, with cost-of-living adjusted take-home. Answers "would I be better off moving?". Requires BLS occupational wage data by metro.',
+      'Pick a job type (software engineer, bartender, nanny) and see what the same job pays across cities, cost-of-living adjusted. Answers "would I be better off moving?" Requires BLS occupational wage data by metro.',
   },
   {
     id: 7,
@@ -89,7 +89,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Tax modeling',
     status: 'planned',
     summary:
-      'Today filing status is single, married (always MFJ), or head of household. Two pieces here: (1) add Married Filing Separately as a real filing status with its own brackets, ~half the standard deduction, EITC disqualification, and tighter credit phase-outs. (2) Build a side-by-side comparison view that shows the same household run through every applicable filing status — Single vs MFJ vs MFS for couples, Single vs HoH for single parents — with the dollar delta on each row. Plus surface the qualifying-person and "considered unmarried" rules for HoH (often misunderstood: cost-of-keeping-up-home > 50%, qualifying child or relative living with you more than half the year, etc.) so users see when HoH is actually available.',
+      'Add Married Filing Separately as a real filing status, then build a side-by-side view that runs the same household through every applicable status (Single vs MFJ vs MFS, Single vs HoH) with dollar deltas on each row.',
   },
   {
     id: 8,
@@ -97,7 +97,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Sharing',
     status: 'planned',
     summary:
-      'Encode the household state into a URL hash (#income=…) so a specific scenario can be shared. Also a copy-able short code for paste-into-chat. No backend required.',
+      'Encode the household state into a URL hash so a specific scenario can be shared. Plus a copy-able short code for paste-into-chat. No backend required.',
   },
   {
     id: 9,
@@ -105,7 +105,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Benefits & safety net',
     status: 'planned',
     summary:
-      'Add shelter and childcare deductions to the SNAP net-income formula (real SNAP subtracts both before applying the 30% multiplier; meaningful in high-rent metros and for working parents). Plus a calculation breakdown UI and a cliff visualization for the income threshold.',
+      'Add shelter and childcare deductions to the SNAP net-income formula — real SNAP subtracts both before applying the 30% multiplier, meaningful in high-rent metros. Plus a calculation breakdown UI and a cliff visualization.',
   },
   {
     id: 10,
@@ -113,7 +113,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Benefits & safety net',
     status: 'planned',
     summary:
-      "Surface alternate Medicaid tracks the model omits — SSI-linked (disabled), aged (65+), and pregnancy (often up to 200%+ FPL even in non-expansion states). Plus state waiver programs like Georgia's Pathways to Coverage, and a visualization of the Medicaid cliff at 138% FPL.",
+      'Surface alternate Medicaid tracks the model omits — SSI-linked, aged (65+), and pregnancy (often 200%+ FPL even in non-expansion states). Plus state waiver programs and a visualization of the Medicaid cliff at 138% FPL.',
   },
   {
     id: 11,
@@ -123,7 +123,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     startedAt: '2026-05-01',
     progress: 60,
     summary:
-      'Phase 1 (shipped): state-first picker with searchable typeahead and statewide-average fallback for any of the 51 jurisdictions, even ones without a curated city. Phase 2 (planned): per-locality custom overrides for rent, groceries, healthcare, etc. Phase 3 (planned): round-trip via shareable links.',
+      'Phase 1 (shipped): state-first picker with searchable typeahead and statewide-average fallback for any of 51 jurisdictions. Phase 2: per-locality custom overrides. Phase 3: round-trip via shareable links.',
   },
   {
     id: 12,
@@ -131,7 +131,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Cost of living',
     status: 'planned',
     summary:
-      'Add an input for monthly student loan payment, with optional balance + rate + standard 10-year payment estimate. Model income-driven repayment (IDR / SAVE / PAYE) where payments scale with discretionary income above a poverty multiple. Pick up the $2,500/yr student loan interest deduction (above-the-line, phased out at ~$80K single / $165K joint).',
+      'Add a monthly student loan input with optional balance + rate. Model income-driven repayment (IDR/SAVE/PAYE) and pick up the $2,500/yr student loan interest deduction (phased out ~$80K single / $165K joint).',
   },
   {
     id: 18,
@@ -140,7 +140,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     status: 'shipped',
     shippedAt: '2026-05-02',
     summary:
-      'Demoted from a 13-card top-of-page grid to a stateless single-line dropdown at the top of the Customize panel. Picking a scenario applies the prefill via the existing input setters and the dropdown immediately resets to its placeholder — it never claims to reflect "current state," so once any input is tweaked the picker can\'t lie. Each scenario carries a one-line editorial takeaway (marriage bonus, benefit cliff, credit phase-out) shown next to its label, so the picker doubles as a teaching surface. Reuses SearchableSelect for consistency with the existing state and locality pickers.',
+      'Demoted from a 13-card top-of-page grid to a stateless dropdown at the top of the Customize panel. Each scenario carries a one-line editorial takeaway, so the picker doubles as a teaching surface.',
   },
   {
     id: 17,
@@ -148,7 +148,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Household detail',
     status: 'planned',
     summary:
-      'Today the household model is "adults + kids 0–4" and assumes kids age out at 18. In reality plenty of households support an adult special-needs child, an elderly parent who lives with them, or a sibling between jobs. Add a "other dependents" input that flows into household size (rent, groceries, utilities), tax math (Credit for Other Dependents — $500 nonrefundable per qualifying non-child dependent), and optionally their own income contribution if they work. Surfaces the real cost of multigenerational and care-giving households, and the modest tax offset that exists for them.',
+      'Today the model is "adults + kids 0–4." Add an "other dependents" input — adult special-needs child, elderly parent, sibling between jobs — that flows into household size, the $500 Credit for Other Dependents, and optional dependent income.',
   },
   {
     id: 16,
@@ -156,7 +156,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Household detail',
     status: 'planned',
     summary:
-      'Let households override the default bedroom-count assumption. Today the model picks 1BR / 1BR+20% / 3BR rigidly from adults+kids; in reality plenty of families share bedrooms (two kids in a 2BR with bunkbeds, three kids splitting a room, a couple staying in a studio, multigenerational households doubling up). Add a "bedrooms" override so users can pick smaller or larger than the default — surfaces the rent savings of trading space for togetherness, or the premium of wanting a dedicated room per kid.',
+      'Let households override the default bedroom count — two kids in a 2BR, three splitting a room, a couple in a studio, multigenerational doubling-up. Surfaces the rent savings of trading space for togetherness.',
   },
   {
     id: 15,
@@ -164,7 +164,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Sharing',
     status: 'planned',
     summary:
-      'A lightweight path for visitors to suggest new roadmap items, flag bad data, or contribute fixes — without needing a GitHub account. Likely a "Suggest an idea" form that opens a pre-filled GitHub issue, plus clear CONTRIBUTING docs for adding cities, sources, or local resources via PR. Goal: turn the roadmap from a one-person backlog into a place anyone can shape.',
+      'A lightweight path for visitors to suggest roadmap items, flag bad data, or contribute fixes without needing a GitHub account. Likely a "Suggest an idea" form that opens a pre-filled issue, plus clear CONTRIBUTING docs.',
   },
   {
     id: 14,
@@ -172,7 +172,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Geography',
     status: 'planned',
     summary:
-      'Surface community resources for the selected location: food banks, shelters, free clinics, diaper banks, utility-assistance programs, legal aid, workforce centers. Seeded from public directories (211, FoodPantries.org, HUD shelter lists) and expandable as a community-driven layer where users can submit additions for their city. Shows alongside benefits so a household sees both the formal safety net and the local one.',
+      'Surface community resources for the selected location — food banks, free clinics, diaper banks, utility assistance, legal aid. Seeded from public directories (211, FoodPantries.org, HUD) and expandable as a community-driven layer.',
   },
   {
     id: 19,
@@ -181,7 +181,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     status: 'shipped',
     shippedAt: '2026-05-03',
     summary:
-      'Today citations live inline next to the values that use them, plus a rotating footer block, plus a Sources section in the README. That works for "where did this number come from" but not for "show me everything this site is built on." Build a dedicated /sources page that pulls every Source constant in the codebase into one organized reference: grouped by type (federal tax, state tax, SNAP, Medicaid, CHIP, cost of living, minimum wage, etc.), with a state-by-state breakdown for the per-jurisdiction sources. Each entry shows the agency, the URL, what it covers, and last-checked date. Goal: make the editorial credibility legible — anyone landing on the site can see the whole bibliography in one place, the way a real reference work would have one.',
+      'A /sources page that pulls every Source constant in the codebase into one organized reference, with per-row status indicators (broken / overdue / verified) and tier-aware staleness windows. The whole bibliography in one place.',
   },
   {
     id: 20,
@@ -189,7 +189,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Tax modeling',
     status: 'planned',
     summary:
-      'Today every dollar of input income is treated as W-2 wages — federal brackets, state brackets, full FICA. Plenty of real income gets taxed very differently and the model currently can\'t represent any of it. (a) **Social Security benefits** — up to 85% federally taxable based on "combined income," and many states exempt SS entirely (or partially: CT, MN, MO, NM, RI, UT, VT, WV phase out). (b) **Pension / traditional 401(k) / traditional IRA distributions** — ordinary income federally, no FICA, and several states exempt retirement income up to a cap (PA exempts entirely after 59½; IL exempts qualified plans; GA up to $65K over 65; etc.). (c) **Roth IRA / Roth 401(k) qualified withdrawals** — federally and state tax-free. (d) **Long-term capital gains & qualified dividends** — 0/15/20% federal preferred rates (with NIIT 3.8% above thresholds), state usually ordinary (but WA has a 7% LTCG tax above $270K, and a few states exempt). (e) **Interest income** — ordinary federal + state. (f) **Municipal bond interest** — federal-exempt; in-state munis usually state-exempt too. (g) **Unemployment insurance** — federally taxable, state-varied (CA/NJ/PA/VA/MT exempt). (h) **Disability income** — SSDI partially taxable like SS; private LTD depends on who paid premiums. (i) **Rental income** (Schedule E, passive) and **self-employment income** (Schedule C, full SE tax of 15.3%) — both very different from W-2. Likely ship as an "Other income" expand under the primary income input: pick a type, enter an amount, and the model routes it through the right rules. Big surface area; could be done in waves (SS + retirement first, then capital gains, then SE, etc.).',
+      'Today every dollar is treated as W-2 wages. Add the income types that get taxed differently — Social Security, pensions and traditional 401(k), Roth withdrawals, long-term capital gains, municipal bond interest, unemployment, SE income. Likely shipped in waves; SS + retirement first.',
   },
   {
     id: 21,
@@ -197,7 +197,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Transparency',
     status: 'planned',
     summary:
-      'A first-class /funding page on the site itself — not just a link out to Open Collective — that turns the project\'s own money trail into a Budget Atlas-style data product. Every dollar in (date, amount, contributor name where consented, "general fund" otherwise) and every dollar out (date, amount, payee, one-line purpose, link to the deliverable: a PR, a commit, an audit report, a data refresh diff). Running balance with explicit allocation: how much is committed to named upcoming work (e.g. "$2,000 toward 2027 tax-bracket research") versus operating reserve versus unrestricted. Charts in the same editorial visual language as the rest of the site — small multiples, ink-on-cream, no chartjunk. Quarterly written summary written in plain language. Source of truth pulled from the Open Collective ledger via their API where possible, with a hand-curated overlay for the deliverable links and the "why" notes the ledger doesn\'t capture. Companion docs in the repo: a TRANSPARENCY.md codifying the policy (every expense itemized within 7 days, contractor invoices include deliverable links, personal compensation published with the same itemization as any other expense) and a FUNDING.md mirror of the dashboard for anyone reading the source. Goal: hold the project to the same citation rigor it applies to tax brackets — every penny traceable, every choice defensible.',
+      'A first-class /funding page that turns the project\'s own money trail into a Budget Atlas-style data product — every dollar in and out with deliverable links, running balance, and explicit allocation. Same citation rigor applied to tax brackets, applied to ourselves.',
   },
   {
     id: 13,
@@ -205,7 +205,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Cost of living',
     status: 'planned',
     summary:
-      'Today everyone rents. Add an "I own" toggle that swaps rent for full PITI (principal, interest, property tax, insurance) plus HOA and a 1%/yr maintenance reserve. State-specific effective property tax rates (TX ~1.6%, NJ ~2.2%, HI ~0.3%). Shows that owning often looks cheaper monthly until you net out maintenance and opportunity cost of the down payment.',
+      'Add an "I own" toggle that swaps rent for full PITI plus HOA and a 1%/yr maintenance reserve. State-specific property tax (TX ~1.6%, NJ ~2.2%, HI ~0.3%). Owning often looks cheaper monthly until you net out maintenance and the down-payment opportunity cost.',
   },
 ];
 
