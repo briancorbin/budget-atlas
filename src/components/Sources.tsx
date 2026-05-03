@@ -467,7 +467,17 @@ function SourceRow({ source }: { source: Source }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+      <div
+        style={{
+          display: 'flex',
+          // flex-start so the submit link stays anchored to the disclosure
+          // summary line; alignItems:center would float it down to the
+          // visual middle of the expanded review log.
+          alignItems: 'flex-start',
+          gap: 18,
+          flexWrap: 'wrap',
+        }}
+      >
         {reviews.length > 0 && <ReviewLog reviews={reviews} />}
         <SubmitReviewLink source={source} />
       </div>
