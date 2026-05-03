@@ -94,10 +94,7 @@ const sourceMeta = new Map();
     if (addedAt) pendingFields.addedAt = addedAt[1];
 
     if (/^\s{2,4}\},?\s*$/.test(line)) {
-      const id =
-        block === 'top'
-          ? pendingKey
-          : `state-${block}-${pendingKey.toLowerCase()}`;
+      const id = block === 'top' ? pendingKey : `state-${block}-${pendingKey.toLowerCase()}`;
       sourceMeta.set(id, {
         url: pendingFields.url ?? null,
         label: pendingFields.label ?? id,

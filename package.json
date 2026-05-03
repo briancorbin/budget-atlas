@@ -20,7 +20,8 @@
     "check-links": "./audit/links/check.sh",
     "audit:seed-issues": "node audit/links/seed-issues.mjs",
     "audit:status": "node audit/links/generate-status.mjs",
-    "audit:staleness": "node audit/staleness/seed-issue.mjs"
+    "audit:staleness": "node audit/staleness/seed-issue.mjs",
+    "audit:inventory": "node --experimental-strip-types scripts/source-inventory.mjs"
   },
   "dependencies": {
     "react": "^19.2.5",

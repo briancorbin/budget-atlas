@@ -104,10 +104,7 @@ export function getStatusKind(source: Source): StatusKind {
   return 'verified';
 }
 
-const STATUS_PALETTE: Record<
-  StatusKind,
-  { color: string; short: string; long: string }
-> = {
+const STATUS_PALETTE: Record<StatusKind, { color: string; short: string; long: string }> = {
   broken: {
     color: T.accent,
     short: 'Broken',
@@ -256,9 +253,9 @@ export function ReportFlag({ source }: { source: Source }) {
           textDecoration: 'none',
           flexShrink: 0,
           fontSize: rem(13),
-        lineHeight: 1,
-      }}
-    >
+          lineHeight: 1,
+        }}
+      >
         ⚑
       </a>
       {hover && (
