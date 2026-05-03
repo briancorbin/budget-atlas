@@ -218,6 +218,7 @@ export function StatusDot({
  * into a "give us feedback" call to action.
  */
 export function ReportFlag({ source }: { source: Source }) {
+  const [hover, setHover] = useState(false);
   const params = new URLSearchParams({
     template: 'source-report.yml',
     title: `Report: ${source.label}`,
@@ -225,28 +226,64 @@ export function ReportFlag({ source }: { source: Source }) {
   });
   const href = `${REPO}/issues/new?${params.toString()}`;
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      title="Report a problem with this citation"
-      aria-label={`Report a problem with ${source.label}`}
-      onMouseDown={(e) => e.stopPropagation()}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 22,
-        height: 22,
-        borderRadius: 2,
-        color: T.accent,
-        textDecoration: 'none',
-        flexShrink: 0,
-        fontSize: rem(13),
+    <span
+      style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      <a
+        href={href}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`Report a problem with ${source.label}`}
+        onMouseDown={(e) => e.stopPropagation()}
+        onFocus={() => setHover(true)}
+        onBlur={() => setHover(false)}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 22,
+          height: 22,
+          borderRadius: 2,
+          color: T.accent,
+          textDecoration: 'none',
+          flexShrink: 0,
+          fontSize: rem(13),
         lineHeight: 1,
       }}
     >
-      ⚑
-    </a>
+        ⚑
+      </a>
+      {hover && (
+        <span
+          role="tooltip"
+          style={{
+            position: 'absolute',
+            bottom: 'calc(100% + 6px)',
+            // Anchor to the flag's right edge so the tooltip grows leftward —
+            // the flag sits at the right side of the popover row, so a
+            // left-anchored tooltip would clip on narrow viewports.
+            right: 0,
+            padding: '6px 10px',
+            background: T.ink,
+            color: T.bg,
+            fontSize: rem(11),
+            fontFamily: fonts.body,
+            lineHeight: 1.3,
+            fontWeight: 500,
+            textTransform: 'none',
+            letterSpacing: '0.01em',
+            borderRadius: 3,
+            whiteSpace: 'nowrap',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            zIndex: 10,
+            pointerEvents: 'none',
+          }}
+        >
+          Report a problem
+        </span>
+      )}
+    </span>
   );
 }
