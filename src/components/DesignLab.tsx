@@ -33,7 +33,7 @@ const LAB_SECTIONS: ReadonlyArray<{
   { id: 'rows', nav: 'Sources row — kind pill', count: 9, Component: SectionRowVariations },
   { id: 'summary', nav: 'Summary stats', count: 3, Component: SectionSummaryVariations },
   { id: 'popover', nav: 'Citation popover', count: 3, Component: SectionPopoverVariations },
-  { id: 'tiers', nav: 'Source tier naming', count: 7, Component: SectionTierNaming },
+  { id: 'tiers', nav: 'Source tier naming', count: 9, Component: SectionTierNaming },
 ];
 
 export function DesignLab({ onBack }: { onBack: () => void }) {
@@ -1233,9 +1233,9 @@ const TIER_CANDIDATES: readonly TierCandidate[] = [
   },
   {
     key: 'option-c',
-    title: 'B — Option C: Primary / Reference / Aggregator',
+    title: 'B — Primary / Reference / Aggregator',
     description:
-      'Domain-fitted. Drops Estimate, narrows Reference to peer-respected interpretation, adds Aggregator as an honest name for commercial / crowd-sourced data products.',
+      'Domain-fitted. Drops Estimate, narrows Reference to peer-respected interpretation, adds Aggregator as an honest name for commercial / crowd-sourced data products. "Aggregator" is accurate but slightly jargon-y.',
     tiers: [
       {
         label: 'Primary',
@@ -1254,6 +1254,58 @@ const TIER_CANDIDATES: readonly TierCandidate[] = [
         tone: 'aggregator',
         meaning:
           'Commercial or crowd-sourced data product — methodology proprietary or community-driven.',
+      },
+    ],
+  },
+  {
+    key: 'commercial',
+    title: 'B2 — Primary / Reference / Commercial',
+    description:
+      'Same shape as B but the third tier reads as plain English. "Commercial" cleanly covers Zillow / RentCafe / Care.com; mild stretch for Numbeo (free, crowd-sourced — but ad-supported and runs a paid product side, so defensible).',
+    tiers: [
+      {
+        label: 'Primary',
+        tone: 'positive',
+        meaning:
+          'Publisher of the underlying data or rule. Includes federal agencies + state agencies on their own programs.',
+      },
+      {
+        label: 'Reference',
+        tone: 'reference',
+        meaning:
+          'Peer-respected third-party interpretation, methodology document, or original research-org survey.',
+      },
+      {
+        label: 'Commercial',
+        tone: 'aggregator',
+        meaning:
+          'For-profit data product or commercially-supported community site. Methodology proprietary or self-reported.',
+      },
+    ],
+  },
+  {
+    key: 'industry',
+    title: 'B3 — Primary / Reference / Industry',
+    description:
+      'Same shape as B/B2 but the third tier sidesteps the "is Numbeo really commercial?" debate. "Industry" reads as "from the industry side rather than government/research" — neutral, fits all four (Zillow, RentCafe, Care.com, Numbeo) without exceptions.',
+    tiers: [
+      {
+        label: 'Primary',
+        tone: 'positive',
+        meaning:
+          'Publisher of the underlying data or rule. Includes federal agencies + state agencies on their own programs.',
+      },
+      {
+        label: 'Reference',
+        tone: 'reference',
+        meaning:
+          'Peer-respected third-party interpretation, methodology document, or original research-org survey.',
+      },
+      {
+        label: 'Industry',
+        tone: 'aggregator',
+        meaning:
+          'Industry-side data product or community site. Methodology proprietary or self-reported, not peer-reviewed.',
       },
     ],
   },
