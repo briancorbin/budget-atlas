@@ -1,12 +1,19 @@
 name: CI
 
-# Lint, format, and typecheck checks for every PR + every push to main.
-# Fast (~30s with cache), runs in parallel, blocks merge if anything fails.
+# Per-check CI: each entry below renders as its own status line on the PR
+# (e.g. `CI / lint`, `CI / format`, `CI / unused-sources`). Failing any one
+# fails its own line independently, which is easier to scan than a single
+# job with N steps where you have to dig into logs to see which step blew
+# up.
 #
-# Branch protection on main should require this workflow's "checks" job
-# before merging — set in Settings → Branches → Branch protection rules.
-# Requiring the job (rather than each step) lets us add new checks here
-# without re-configuring branch protection.
+# Branch protection on main should require each check listed in the matrix
+# (Settings → Branches → Branch protection → Require status checks). To
+# add a new check, append a matrix entry and add it to the required-checks
+# list — small cost, big visibility win.
+#
+# Setup is duplicated across jobs but parallelism + setup-node's yarn
+# cache keep total wall-clock low. `fail-fast: false` so a lint blowup
+# doesn't hide a typecheck blowup in the same PR.
 
 on:
   pull_request:
@@ -17,36 +24,62 @@ on:
 permissions:
   contents: read
 
-# Newer pushes to the same PR/branch cancel in-flight runs — saves CI
-# minutes when someone pushes a quick fixup.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  checks:
+  check:
+    name: ${{ matrix.check.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        check:
+          - name: lint
+            run: yarn lint
+          - name: format
+            run: yarn format:check
+          - name: typecheck
+            run: yarn typecheck
+          - name: unused-sources
+            run: node --experimental-strip-types scripts/source-inventory.mjs --check
+          - name: source-pairing
+            run: node scripts/check-source-pairing.mjs
+          - name: reviewed-immutable
+            run: node scripts/check-reviewed-immutable.mjs
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          # source-pairing and reviewed-immutable need history to git-show
+          # the base ref. fetch-depth: 0 is cheap here and keeps the matrix
+          # uniform — not worth conditional logic to save a few hundred KB.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          # No `cache: 'yarn'` here: setup-node calls `yarn cache dir`
+          # before our Corepack-enable step, but the runner's bundled
+          # Yarn 1.x refuses to run because package.json declares
+          # packageManager: yarn@4. Caching can be reintroduced via a
+          # separate actions/cache@v4 step after Corepack is enabled —
+          # not worth the complexity for now.
 
       - name: Enable Corepack (Yarn 4)
         run: corepack enable
 
       - name: Install dependencies
-        # `--immutable` fails the run if yarn.lock would need updates,
-        # which is what we want on CI: locked deps, deterministic checks.
         run: yarn install --immutable
 
-      - name: Lint
-        run: yarn lint
-
-      - name: Format check
-        run: yarn format:check
-
-      - name: Typecheck
-        run: yarn typecheck
+      - name: ${{ matrix.check.name }}
+        env:
+          # PR target on pull_request, previous tip on push. Used by
+          # source-pairing and reviewed-immutable; ignored by the others.
+          # The push-event case is a tripwire — if main drifts (force-push,
+          # direct commit, branch-protection misconfig), the failure
+          # should surface, not hide.
+          AUDIT_BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
+        run: ${{ matrix.check.run }}

@@ -5,7 +5,7 @@ Reproducible audit of every external URL cited from the codebase — does it sti
 ## How it works
 
 1. **`check.sh`** extracts every `http(s)://` URL from [`src/data/sources.ts`](../../src/data/sources.ts) — the citation registry — hits each with curl, and writes a dated TSV to `results/`. Other URLs in the codebase (font CDN preconnects, repo links, build artifacts) aren't checked: only declared citations are auditable, by design.
-2. **`reviewed.tsv`** is the unified resolution log (see below). One row per `id · date · reviewer · notes` event — keyed by stable source slug, not URL, so review history follows a citation across URL changes.
+2. **`reviewed.tsv`** is the unified resolution log (see below). One row per `id · date · reviewer · notes` event — keyed by stable source slug, not URL, so review history follows a citation across URL changes. **Rows are append-only**: existing rows can't be modified, removed, or reordered (CI enforces this via `scripts/check-reviewed-immutable.mjs`). If a past review needs correction, append a new row that supersedes it — don't edit history.
 3. **`results/<date>.tsv`** captures the union: machine status (does it load?) + human review state (did someone verify the content?).
 
 A `200 OK` from curl only tells us _something_ loaded. Only a human can tell us whether the loaded page still cites the document we built the model around. Both columns matter.

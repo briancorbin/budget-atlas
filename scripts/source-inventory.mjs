@@ -155,6 +155,26 @@ const unused = rows.filter((r) => r.isTopLevel && r.usage.length === 0);
 const broken = rows.filter((r) => r.broken);
 const originalUnreviewed = rows.filter((r) => r.tier === 'original' && !r.latestReview);
 
+// ── --check mode (CI-friendly) ──────────────────────────────────────────
+// `node scripts/source-inventory.mjs --check` exits non-zero if there are
+// any unused top-level sources, without writing the markdown report. Used
+// as a required PR check so dead citations can't merge into the registry.
+if (process.argv.includes('--check')) {
+  if (unused.length > 0) {
+    console.error(`❌ ${unused.length} unused top-level source(s):`);
+    for (const r of unused) console.error(`   - ${r.id} (${r.label})`);
+    console.error('');
+    console.error("Each top-level source must have at least one SOURCES['<id>']");
+    console.error('reference outside src/data/sources.ts and src/components/Sources.tsx');
+    console.error('(the bibliography page enumerates everything by design and is');
+    console.error('excluded from the usage check). Either wire it into a consumer or');
+    console.error('remove the entry. See audit/links/README.md for the rationale.');
+    process.exit(1);
+  }
+  console.log(`✓ All ${rows.filter((r) => r.isTopLevel).length} top-level sources are referenced.`);
+  process.exit(0);
+}
+
 // ── Render ──────────────────────────────────────────────────────────────
 const today = new Date().toISOString().slice(0, 10);
 // Record the snapshot date of the link-audit data so a re-run without a
