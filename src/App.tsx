@@ -3,15 +3,17 @@ import { BudgetExplorer } from '@/components/BudgetExplorer';
 import { Roadmap } from '@/components/Roadmap';
 import { About } from '@/components/About';
 import { Sources } from '@/components/Sources';
+import { DesignLab } from '@/components/DesignLab';
 import { NAV_EVENT, navigate } from '@/lib/nav';
 
-type Route = 'atlas' | 'roadmap' | 'about' | 'sources';
+type Route = 'atlas' | 'roadmap' | 'about' | 'sources' | 'design-lab';
 
 function routeFromPath(pathname: string): Route {
   const trimmed = pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
   if (trimmed === 'roadmap') return 'roadmap';
   if (trimmed === 'about') return 'about';
   if (trimmed === 'sources') return 'sources';
+  if (trimmed === 'design-lab') return 'design-lab';
   return 'atlas';
 }
 
@@ -49,6 +51,9 @@ export default function App() {
   }
   if (route === 'sources') {
     return <Sources onBack={() => navigate('/')} />;
+  }
+  if (route === 'design-lab') {
+    return <DesignLab onBack={() => navigate('/')} />;
   }
   return <BudgetExplorer />;
 }
