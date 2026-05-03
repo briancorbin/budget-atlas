@@ -1239,7 +1239,7 @@ type TierColorKey = keyof typeof TIER_COLORS;
  * `role` rather than `color` so all of them re-render together when you
  * swap the picker. Tier4 is only used by candidate A (which has Estimate).
  */
-type TierRole = 'tier1' | 'tier2' | 'tier3' | 'tier4';
+type TierRole = 'tier1' | 'tier2' | 'tier3';
 
 interface TierCandidate {
   readonly key: string;
@@ -1268,7 +1268,7 @@ const TIER_CANDIDATES: readonly TierCandidate[] = [
       },
       {
         label: 'Estimate',
-        role: 'tier4',
+        role: 'tier3',
         meaning: 'Approximations flagged honestly. (Currently unused.)',
       },
     ],
@@ -1466,14 +1466,12 @@ const DEFAULT_ROLE_COLORS: RoleColors = {
   tier1: 'green',
   tier2: 'inkSoft',
   tier3: 'slateBlue',
-  tier4: 'amber',
 };
 
 const ROLE_LABELS: Record<TierRole, string> = {
   tier1: 'Top tier',
   tier2: 'Middle tier',
   tier3: 'Bottom tier',
-  tier4: 'Estimate (only A)',
 };
 
 function SectionTierNaming() {
