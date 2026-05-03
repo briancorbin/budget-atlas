@@ -152,7 +152,19 @@ function buildTitle(broken) {
   return `Broken citation queue: ${broken.length} broken${breakdown}`;
 }
 
-function buildBody(broken) {
+// Extract URLs that were checked (`[x]`) in the existing body, so claim-
+// state ("I'm working on this") survives regenerates. The body rewrites
+// each run; without this, every claim resets.
+function extractCheckedUrls(existingBody) {
+  if (!existingBody) return new Set();
+  const checked = new Set();
+  const re = /^- \[x\] \*\*\[[^\]]+\]\((https?:\/\/[^)]+)\)/gim;
+  let m;
+  while ((m = re.exec(existingBody)) !== null) checked.add(m[1]);
+  return checked;
+}
+
+function buildBody(broken, checkedUrls) {
   const by404 = broken.filter((r) => r.status === '404');
   const byErrors = broken.filter((r) => r.status === '000' || r.status === 'ERR');
   const byAnti = broken.filter((r) => r.status === '999');
@@ -162,7 +174,7 @@ function buildBody(broken) {
     ``,
     `These citations are returning errors from the [nightly link audit](https://github.com/${REPO}/tree/main/audit/links). Each one needs either a URL fix in [\`src/data/sources.ts\`](https://github.com/${REPO}/blob/main/src/data/sources.ts) or removal of the citation entirely. Per the unified resolution log, **every fix PR also appends a row to [\`audit/links/reviewed.tsv\`](https://github.com/${REPO}/blob/main/audit/links/reviewed.tsv)** describing what was changed and why.`,
     ``,
-    `The list regenerates with each nightly audit run; resolved citations disappear from this issue automatically as their fixes land. Checkboxes are aspirational visual — they reset on regenerate.`,
+    `**Use the checkboxes to claim work in progress** — checking a box says "I'm looking at this." Claim state is preserved across nightly regenerates, so once you check, it stays checked until the resolution lands and the item drops off the list entirely. List regenerates each nightly run; resolved citations disappear automatically.`,
     ``,
     `_Last refresh reflects audit run ${latestDate}._`,
     ``,
@@ -176,7 +188,8 @@ function buildBody(broken) {
       const meta = sourcesIndex.get(r.url);
       const label = meta?.label ?? r.url;
       const line = meta?.line ? `\`sources.ts:${meta.line}\`` : '_not found in registry_';
-      out.push(`- [ ] **[${label}](${r.url})** — ${line}`);
+      const mark = checkedUrls.has(r.url) ? 'x' : ' ';
+      out.push(`- [${mark}] **[${label}](${r.url})** — ${line}`);
     }
     out.push('');
     return out;
@@ -254,8 +267,12 @@ if (broken.length === 0) {
   process.exit(0);
 }
 
+const checkedUrls = extractCheckedUrls(existing?.body);
+if (checkedUrls.size > 0) {
+  console.log(`→ Preserving ${checkedUrls.size} checked claim(s) from existing body.`);
+}
 const title = buildTitle(broken);
-const body = buildBody(broken);
+const body = buildBody(broken, checkedUrls);
 
 if (DRY_RUN) {
   console.log(`\n--- WOULD ${existing ? 'EDIT #' + existing.number : 'CREATE'} ---`);

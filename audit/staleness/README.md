@@ -76,4 +76,4 @@ For each overdue item:
 2. If it still backs the claim → append a row to `audit/links/reviewed.tsv` with today's date and notes.
 3. If it doesn't → file an [`audit:report`](https://github.com/TheBudgetAtlas/thebudgetatlas/issues/new?template=source-report.yml) instead. The fix lands as the unified `reviewed.tsv` row in the resolving PR.
 
-The staleness issue's body regenerates each weekly run; resolved items disappear automatically as their `reviewed.tsv` rows land. Checkboxes are aspirational visual — they reset on regenerate but track progress at a glance during the work.
+The staleness issue's body regenerates each weekly run; resolved items disappear automatically as their `reviewed.tsv` rows land. Checking a box on the issue claims that item as in-progress — claim state persists across weekly regenerates (so checks survive Monday's run if you started reviewing on Friday). When the resolution lands, the item disappears entirely.

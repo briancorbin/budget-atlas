@@ -219,7 +219,7 @@ function buildTitle(overdue) {
   return `Source review queue: ${overdue.length} overdue${breakdown}`;
 }
 
-function buildBody(overdue) {
+function buildBody(overdue, checkedUrls) {
   const byTier = { primary: [], secondary: [], editorial: [], unspecified: [] };
   for (const r of overdue) byTier[r.tier].push(r);
 
@@ -227,6 +227,8 @@ function buildBody(overdue) {
     `## Overdue source reviews — ${overdue.length} total`,
     ``,
     `These citations need a human eyeball pass — open the URL, verify the destination still cites what we claim, then append a row to [\`audit/links/reviewed.tsv\`](https://github.com/${REPO}/blob/main/audit/links/reviewed.tsv) describing what you saw. **No AI assistance.**`,
+    ``,
+    `**Use the checkboxes to claim work in progress** — checking a box says "I'm reviewing this." Claim state is preserved across weekly regenerates, so once you check, it stays checked until your review row lands and the item drops off the list.`,
     ``,
     `If you find a problem with a citation (broken URL, drifted content, no longer backs claim), file an [\`audit:report\`](https://github.com/${REPO}/issues/new?template=source-report.yml) instead.`,
     ``,
@@ -250,15 +252,17 @@ function buildBody(overdue) {
       for (const r of neverReviewed) {
         const ageHint =
           r.daysSinceAdded != null ? `added ${r.daysSinceAdded} days ago` : `added unknown`;
-        out.push(`- [ ] **[${r.label}](${r.url})** — ${ageHint}`);
+        const mark = checkedUrls.has(r.url) ? 'x' : ' ';
+        out.push(`- [${mark}] **[${r.label}](${r.url})** — ${ageHint}`);
       }
       out.push('');
     }
     if (stale.length > 0) {
       out.push(`**Stale review (${stale.length})**`, ``);
       for (const r of stale) {
+        const mark = checkedUrls.has(r.url) ? 'x' : ' ';
         out.push(
-          `- [ ] **[${r.label}](${r.url})** — last reviewed ${r.lastReview} (${r.daysOverdue} days overdue)`,
+          `- [${mark}] **[${r.label}](${r.url})** — last reviewed ${r.lastReview} (${r.daysOverdue} days overdue)`,
         );
       }
       out.push('');
@@ -274,7 +278,7 @@ function buildBody(overdue) {
   lines.push(
     `---`,
     ``,
-    `_Auto-refreshed weekly by [\`.github/workflows/audit-staleness.yml\`](https://github.com/${REPO}/blob/main/.github/workflows/audit-staleness.yml). Checkboxes are aspirational visual — they reset when the issue body regenerates. The list shrinks as resolutions land in \`reviewed.tsv\`._`,
+    `_Auto-refreshed weekly by [\`.github/workflows/audit-staleness.yml\`](https://github.com/${REPO}/blob/main/.github/workflows/audit-staleness.yml). The list shrinks as resolutions land in \`reviewed.tsv\`. Checked items persist across regenerates so claims survive the week._`,
   );
 
   return lines.join('\n');
@@ -298,10 +302,21 @@ function findOpenStaleness() {
     '--limit',
     '5',
     '--json',
-    'number,title',
+    'number,title,body',
   ]);
   const issues = JSON.parse(out || '[]');
   return issues[0] ?? null;
+}
+
+// Extract URLs that were checked (`[x]`) in the existing body, so claim-
+// state ("I'm working on this") survives weekly regenerates.
+function extractCheckedUrls(existingBody) {
+  if (!existingBody) return new Set();
+  const checked = new Set();
+  const re = /^- \[x\] \*\*\[[^\]]+\]\((https?:\/\/[^)]+)\)/gim;
+  let m;
+  while ((m = re.exec(existingBody)) !== null) checked.add(m[1]);
+  return checked;
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────
@@ -336,8 +351,12 @@ if (overdue.length === 0) {
   process.exit(0);
 }
 
+const checkedUrls = extractCheckedUrls(existing?.body);
+if (checkedUrls.size > 0) {
+  console.log(`→ Preserving ${checkedUrls.size} checked claim(s) from existing body.`);
+}
 const title = buildTitle(overdue);
-const body = buildBody(overdue);
+const body = buildBody(overdue, checkedUrls);
 
 if (DRY_RUN) {
   console.log(`\n--- WOULD ${existing ? 'EDIT #' + existing.number : 'CREATE'} ---`);
