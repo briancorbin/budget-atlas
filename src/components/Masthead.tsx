@@ -61,6 +61,22 @@ export function Masthead() {
             About →
           </a>
           <a
+            href="/sources"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/sources');
+            }}
+            style={{
+              color: T.accent,
+              textDecoration: 'none',
+              fontWeight: 600,
+              borderBottom: `1px solid ${T.border}`,
+              paddingBottom: 1,
+            }}
+          >
+            Sources →
+          </a>
+          <a
             href="/roadmap"
             onClick={(e) => {
               e.preventDefault();

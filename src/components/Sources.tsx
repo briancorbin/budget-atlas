@@ -471,19 +471,7 @@ function SourceRow({ source }: { source: Source }) {
         >
           {source.url}
         </div>
-        {latest?.notes && (
-          <div
-            style={{
-              fontSize: 13,
-              color: T.inkSoft,
-              marginTop: 8,
-              fontStyle: 'italic',
-              maxWidth: 640,
-            }}
-          >
-            “{latest.notes}”
-          </div>
-        )}
+        {reviews.length > 0 && <ReviewLog reviews={reviews} />}
       </div>
       <div
         style={{
@@ -510,6 +498,92 @@ function SourceRow({ source }: { source: Source }) {
         )}
       </div>
     </li>
+  );
+}
+
+function ReviewLog({ reviews }: { reviews: readonly Review[] }) {
+  const count = reviews.length;
+  return (
+    <details
+      style={{
+        marginTop: 10,
+        fontSize: 13,
+        maxWidth: 640,
+      }}
+    >
+      <summary
+        style={{
+          cursor: 'pointer',
+          listStyle: 'none',
+          color: T.positive,
+          fontSize: 11,
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          fontWeight: 600,
+          userSelect: 'none',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+        }}
+      >
+        <span aria-hidden="true">▸</span>
+        {count === 1 ? '1 review' : `${count} reviews`}
+      </summary>
+      <ol
+        style={{
+          listStyle: 'none',
+          padding: '12px 0 0 16px',
+          margin: 0,
+          borderLeft: `2px solid ${T.border}`,
+          marginTop: 8,
+        }}
+      >
+        {reviews.map((r, i) => (
+          <li key={`${r.date}-${r.reviewer}-${i}`} style={{ marginBottom: 12 }}>
+            <div
+              style={{
+                fontSize: 11,
+                color: T.inkMuted,
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                fontWeight: 600,
+                marginBottom: 4,
+              }}
+            >
+              <span style={{ color: T.ink }}>{r.date}</span>
+              {r.reviewer && (
+                <>
+                  {' · '}
+                  <a
+                    href={`https://github.com/${r.reviewer.replace(/^@/, '')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      color: T.accent,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    @{r.reviewer.replace(/^@/, '')}
+                  </a>
+                </>
+              )}
+            </div>
+            {r.notes && (
+              <div
+                style={{
+                  fontSize: 13,
+                  color: T.inkSoft,
+                  fontStyle: 'italic',
+                  lineHeight: 1.5,
+                }}
+              >
+                “{r.notes}”
+              </div>
+            )}
+          </li>
+        ))}
+      </ol>
+    </details>
   );
 }
 
