@@ -47,7 +47,6 @@ export function CiteGroup({ sources }: { sources: readonly Source[] }) {
   }, [open]);
 
   if (sources.length === 0) return null;
-  if (sources.length === 1) return <Cite source={sources[0]} />;
 
   return (
     <span
@@ -86,7 +85,7 @@ export function CiteGroup({ sources }: { sources: readonly Source[] }) {
           top: '-0.1em',
         }}
       >
-        sources · {sources.length} ↗
+        {sources.length === 1 ? 'source · 1 ↗' : `sources · ${sources.length} ↗`}
       </button>
       {open && (
         <div
@@ -126,57 +125,91 @@ export function CiteGroup({ sources }: { sources: readonly Source[] }) {
               onMouseDown={(e) => e.stopPropagation()}
             >
               <span>{s.label}</span> <span style={{ color: T.accent, fontWeight: 600 }}>↗</span>
-              {s.date && (
-                <div style={{ fontSize: rem(11), color: T.inkMuted, marginTop: 1 }}>{s.date}</div>
-              )}
+              <div
+                style={{
+                  fontSize: rem(11),
+                  color: T.inkMuted,
+                  marginTop: 2,
+                  display: 'flex',
+                  gap: 8,
+                  alignItems: 'center',
+                }}
+              >
+                {s.tier && <TierPill tier={s.tier} />}
+                {s.date && <span>{s.date}</span>}
+              </div>
             </a>
           ))}
+          <a
+            href="/sources"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/sources');
+              setOpen(false);
+            }}
+            style={{
+              display: 'block',
+              padding: '8px 14px 6px',
+              borderTop: `1px solid ${T.border}`,
+              marginTop: 4,
+              fontSize: rem(11),
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: T.inkMuted,
+              textDecoration: 'none',
+              fontWeight: 600,
+            }}
+          >
+            What do these tiers mean? →
+          </a>
         </div>
       )}
     </span>
   );
 }
 
+/**
+ * Compact pill rendering a source's tier — original / reference / estimate.
+ * Matches the styling used on /sources for visual continuity. Inline in
+ * citation popovers so readers see the epistemic status of every source
+ * (original published value vs. calibrated baseline vs. approximation)
+ * without leaving the page.
+ */
+function TierPill({ tier }: { tier: string }) {
+  const palette =
+    tier === 'original'
+      ? { bg: 'rgba(45, 80, 22, 0.12)', fg: T.positive }
+      : tier === 'estimate'
+        ? { bg: 'rgba(184, 116, 43, 0.18)', fg: T.warning }
+        : { bg: 'rgba(166, 38, 28, 0.10)', fg: T.accent };
+  return (
+    <span
+      style={{
+        fontSize: rem(10),
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        fontWeight: 600,
+        background: palette.bg,
+        color: palette.fg,
+        padding: '2px 8px',
+        borderRadius: 2,
+      }}
+    >
+      {tier}
+    </span>
+  );
+}
+
+/**
+ * Inline single- or multi-source citation. Thin alias around CiteGroup so
+ * every citation on the site gets the same rich popover (tier pill + date +
+ * "what do these tiers mean?" link). Kept as a separate export because most
+ * call sites pass a single `source` prop and reading `<Cite source={X} />`
+ * is more natural at the call site than `<CiteGroup sources={[X]} />`.
+ */
 export function Cite({ source }: { source: Source | readonly Source[] }) {
   const sources = Array.isArray(source) ? source : [source as Source];
-  return (
-    <>
-      {sources.map((s, i) => (
-        <a
-          key={i}
-          href={s.url}
-          target="_blank"
-          rel="noreferrer"
-          title={s.date ? `${s.label} (${s.date})` : s.label}
-          aria-label={`Source: ${s.label}`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '0.62em',
-            fontFamily: fonts.body,
-            fontWeight: 700,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            color: T.accent,
-            padding: '3px 6px 2px',
-            margin: '0 4px',
-            border: `1px solid ${T.accent}`,
-            borderRadius: 2,
-            textDecoration: 'none',
-            verticalAlign: 'middle',
-            lineHeight: 1,
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            position: 'relative',
-            top: '-0.1em',
-          }}
-        >
-          source ↗
-        </a>
-      ))}
-    </>
-  );
+  return <CiteGroup sources={sources} />;
 }
 
 /**
