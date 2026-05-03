@@ -68,10 +68,12 @@ When adding a citation, include `addedBy` (your **GitHub username**, no `@` pref
 **Same PR must also append a row to [`audit/links/reviewed.tsv`](./audit/links/reviewed.tsv).** Any change to a source — adding, URL update, data correction, removal, or just affirmative review — pairs with a row. The registry never changes silently. Format:
 
 ```
-URL<TAB>YYYY-MM-DD<TAB>your-handle<TAB>brief notes describing what you verified or did
+id<TAB>YYYY-MM-DD<TAB>your-handle<TAB>kind<TAB>brief notes describing what you verified or did
 ```
 
-A source whose latest state-change isn't paired with a row will be flagged as overdue by the [staleness audit](./audit/staleness/README.md) immediately — by design. The asymmetry catches AI-proposed citations that get merged without manual verification, URL updates made without re-reading the destination, and any human edits where the verification step was skipped. Every category should be visible.
+`id` is the stable source slug from `src/data/sources.ts` (the outer key in `SOURCES`, or `state-${kind}-${code}` for state-agency maps). `kind` is `human` (eyes-on-source, no AI assistance) or `ai` (AI was involved in proposing, extracting, or refreshing the entry). Be honest — if you weren't eyes-on-source, it's `ai`.
+
+A source whose latest state-change isn't paired with a row will be flagged as overdue by the [staleness audit](./audit/staleness/README.md) immediately — by design. The asymmetry catches AI-proposed citations that get merged without an honest provenance row, URL updates made without re-reading the destination, and any human edits where the verification step was skipped. Every category should be visible.
 
 The `addedBy` / `addedAt` fields surface in [`audit/links/status.md`](./audit/links/status.md). They DON'T change when an existing citation's URL gets updated (the citation is the same; the URL just moved). They DO get filled when a new citation is introduced.
 
@@ -89,7 +91,7 @@ This extracts every URL from `src/data/sources.ts`, hits each with curl, and wri
 
 The community-submission form is for **reporting problems only** — broken URLs, drifted content, citations that should be replaced or removed. Affirmative "this is still correct" reviews are reserved for periodic sweeps by maintainers and trusted reviewers, who enter rows directly to `reviewed.tsv` (no issue lifecycle).
 
-Reports and reviews must both be 100% human — no AI assistance. Open the URL yourself, read enough to verify the claim, write notes in your own words. The issue form has a required checkbox confirming this.
+**Community-submitted reports must be 100% human** — no AI assistance. Open the URL yourself, read enough to verify the claim, write notes in your own words. The issue form has a required checkbox confirming this. Maintainer rows in `reviewed.tsv` can use either `kind=human` or `kind=ai`, marked honestly — the audit's job is to make the level of human involvement transparent, not absent. AI assistance is fine when it's labelled honestly; what isn't fine is laundering AI work as `human`.
 
 ### Updating branding
 

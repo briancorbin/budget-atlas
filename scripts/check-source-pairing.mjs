@@ -149,8 +149,9 @@ if (missing.length > 0) {
   for (const id of missing) console.error(`   - ${id}`);
   console.error('');
   console.error('Per the unified-resolution-log convention, every new source needs');
-  console.error('a row in audit/links/reviewed.tsv proving a human verified it.');
-  console.error('Format: id<TAB>YYYY-MM-DD<TAB>your-handle<TAB>brief notes');
+  console.error('a paired row in audit/links/reviewed.tsv recording how it was added.');
+  console.error('Format: id<TAB>YYYY-MM-DD<TAB>your-handle<TAB>kind<TAB>brief notes');
+  console.error('  kind: "human" (eyes-on-source) or "ai" (AI involved in proposing/extracting).');
   console.error('See CLAUDE.md and audit/links/README.md for the rationale.');
   process.exit(1);
 }

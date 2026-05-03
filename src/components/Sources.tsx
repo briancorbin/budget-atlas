@@ -14,6 +14,7 @@
  * `audit/links/status.md` on GitHub.
  */
 
+import { useState } from 'react';
 import { theme as T, fonts, rem } from '@/theme';
 import { SectionTitle } from './ui';
 import {
@@ -31,6 +32,7 @@ import {
   STALENESS_DEFAULT_DAYS,
   isBrokenStatus,
   isOverdue,
+  getStatusKind,
   StatusDot,
   type Review,
 } from '@/lib/sourceStatus';
@@ -147,42 +149,43 @@ const SUMMARY = (() => {
     else if (tier === 'reference') reference++;
     else if (tier === 'estimate') estimate++;
   }
-  const reviewedIds = new Set(REVIEWS.keys());
-  let reviewed = 0;
-  for (const s of ALL_SOURCES) {
-    if (reviewedIds.has(s.id)) reviewed++;
-  }
-
   // Overdue: tier-aware staleness check. Never-reviewed sources count as
   // overdue from day one — the audit's job is to honestly represent how
   // much human verification has happened, not to soft-start with addedAt
   // as a free pass. See audit/staleness/ for the rolling-issue workflow
   // that surfaces the queue for triage.
-  const today = new Date();
+  // Status classifier mirrors `getStatusKind` exactly so the four Status
+  // cells partition every source (sum equals total). Precedence: broken >
+  // overdue > ai-verified > human-verified. Counting broken and overdue
+  // independently would double-count any source that's both, breaking
+  // the row-level totals' agreement with the per-source dot.
+  let humanVerified = 0;
+  let aiVerified = 0;
   let overdue = 0;
   let broken = 0;
   for (const s of ALL_SOURCES) {
-    if (isBrokenStatus(STATUS_BY_URL.get(s.url))) broken++;
-    const tier = (s as Source & { tier?: string }).tier ?? 'reference';
-    const thresholdDays = STALENESS_THRESHOLDS_DAYS[tier] ?? STALENESS_DEFAULT_DAYS;
-    const latest = REVIEWS.get(s.id)?.[0];
-    if (!latest) {
+    if (isBrokenStatus(STATUS_BY_URL.get(s.url))) {
+      broken++;
+      continue;
+    }
+    if (isOverdue(s)) {
       overdue++;
       continue;
     }
-    const reviewDate = new Date(latest.date + 'T00:00:00Z');
-    if (Number.isNaN(reviewDate.valueOf())) continue;
-    const dueDate = new Date(reviewDate);
-    dueDate.setUTCDate(dueDate.getUTCDate() + thresholdDays);
-    if (today > dueDate) overdue++;
+    const latest = REVIEWS.get(s.id)?.[0];
+    if (latest?.kind === 'ai') aiVerified++;
+    else humanVerified++;
   }
-
-  // verified = loading correctly AND reviewed within tier window
-  let verified = 0;
-  for (const s of ALL_SOURCES) {
-    if (!isBrokenStatus(STATUS_BY_URL.get(s.url)) && !isOverdue(s)) verified++;
-  }
-  return { total, original, reference, estimate, reviewed, overdue, broken, verified };
+  return {
+    total,
+    original,
+    reference,
+    estimate,
+    overdue,
+    broken,
+    humanVerified,
+    aiVerified,
+  };
 })();
 
 export function Sources({ onBack }: { onBack: () => void }) {
@@ -377,36 +380,91 @@ function ThresholdsNote() {
   );
 }
 
-type StatTone = 'accent' | 'positive' | 'warning' | 'broken';
+type StatTone = 'accent' | 'positive' | 'warning' | 'broken' | 'ai';
 interface Stat {
   label: string;
   value: number;
   tone?: StatTone;
+  /**
+   * Optional editorial tooltip surfaced when the user hovers/focuses the
+   * label. Used to explain what each cell counts — what an "Original"
+   * source is, how long until a tier goes "Overdue," what makes a row
+   * "AI verified" rather than "Human verified," etc.
+   */
+  tooltip?: string;
 }
+
+const TIER_REVIEW_DAYS = {
+  original: STALENESS_THRESHOLDS_DAYS.original ?? STALENESS_DEFAULT_DAYS,
+  reference: STALENESS_THRESHOLDS_DAYS.reference ?? STALENESS_DEFAULT_DAYS,
+  estimate: STALENESS_THRESHOLDS_DAYS.estimate ?? STALENESS_DEFAULT_DAYS,
+} as const;
 
 function Summary() {
   // Two semantic rows: composition (what's in the registry by class) on top,
   // current state (how the registry is doing) below. Each row gets four
   // cells, fits cleanly without auto-fit awkwardness.
   const composition: ReadonlyArray<Stat> = [
-    { label: 'Total cited', value: SUMMARY.total },
-    { label: 'Original', value: SUMMARY.original, tone: 'positive' },
-    { label: 'Reference', value: SUMMARY.reference },
-    { label: 'Estimate', value: SUMMARY.estimate },
-  ];
-  const state: ReadonlyArray<Stat> = [
-    { label: 'Human-reviewed', value: SUMMARY.reviewed, tone: 'accent' },
     {
-      label: 'Verified',
-      value: SUMMARY.verified,
-      tone: SUMMARY.verified > 0 ? 'positive' : undefined,
+      label: 'Total cited',
+      value: SUMMARY.total,
+      tooltip:
+        'Every citation the model relies on, across all categories. Each source has a tier (Original / Reference / Estimate) that determines how often it gets re-reviewed.',
+    },
+    {
+      label: 'Original',
+      value: SUMMARY.original,
+      tone: 'positive',
+      tooltip: `Direct from the agency or data publisher (IRS, BLS, eCFR, SSA, HUD, etc.). Highest-confidence tier. Re-reviewed every ${TIER_REVIEW_DAYS.original} days.`,
+    },
+    {
+      label: 'Reference',
+      value: SUMMARY.reference,
+      tooltip: `Operational handbook, industry survey, think-tank methodology, or state-agency landing page — authoritative but one step removed from the publisher. Re-reviewed every ${TIER_REVIEW_DAYS.reference} days.`,
+    },
+    {
+      label: 'Estimate',
+      value: SUMMARY.estimate,
+      tooltip: `Approximation flagged honestly rather than dressed up as a hard number — used when no clean source exists for a value the model needs. Re-reviewed every ${TIER_REVIEW_DAYS.estimate} days.`,
+    },
+  ];
+  // Status row: per-source health, split by who did the most recent
+  // review. "Human verified" is the gold standard (URL live + eyes-on-
+  // source within window); "AI verified" is the same health but the
+  // latest pass was AI-flavoured, awaiting a human signoff. The audit's
+  // purpose is honesty about what's been verified and how — collapsing
+  // these into a single "verified" count would launder AI work as the
+  // same kind of evidence as human review. Heading uses "Status" rather
+  // than "State" to avoid colliding with the dozens of US-state-keyed
+  // citations on this page.
+  const status: ReadonlyArray<Stat> = [
+    {
+      label: 'Human verified',
+      value: SUMMARY.humanVerified,
+      tone: SUMMARY.humanVerified > 0 ? 'positive' : undefined,
+      tooltip:
+        'URL is live and the most recent review was eyes-on-source by a human within the tier window. The gold standard.',
+    },
+    {
+      label: 'AI verified',
+      value: SUMMARY.aiVerified,
+      tone: SUMMARY.aiVerified > 0 ? 'ai' : undefined,
+      tooltip:
+        'URL is live and reviewed within the tier window, but the most recent review was AI-assisted rather than eyes-on-source by a human. Provisional — awaiting a human pass.',
     },
     {
       label: 'Overdue',
       value: SUMMARY.overdue,
       tone: SUMMARY.overdue > 0 ? 'warning' : undefined,
+      tooltip: `No review within the tier-specific window (Original ${TIER_REVIEW_DAYS.original}d, Reference ${TIER_REVIEW_DAYS.reference}d, Estimate ${TIER_REVIEW_DAYS.estimate}d). Picked up during periodic sweeps.`,
     },
-    { label: 'Broken', value: SUMMARY.broken, tone: SUMMARY.broken > 0 ? 'broken' : undefined },
+    {
+      label: 'Broken',
+      value: SUMMARY.broken,
+      tone: SUMMARY.broken > 0 ? 'broken' : undefined,
+      tooltip:
+        'URL is currently unreachable (404 or other error code from the periodic curl audit). Needs a fix in src/data/sources.ts paired with a row in reviewed.tsv.',
+    },
   ];
   return (
     <section
@@ -423,7 +481,7 @@ function Summary() {
     >
       <StatRow heading="Composition" stats={composition} />
       <div style={{ height: 1, background: T.border, opacity: 0.6 }} />
-      <StatRow heading="State" stats={state} />
+      <StatRow heading="Status" stats={status} />
     </section>
   );
 }
@@ -451,41 +509,120 @@ function StatRow({ heading, stats }: { heading: string; stats: ReadonlyArray<Sta
         }}
       >
         {stats.map((s) => (
-          <div key={s.label}>
-            <div
-              style={{
-                fontFamily: fonts.display,
-                fontSize: rem(32),
-                fontWeight: 500,
-                lineHeight: 1,
-                color:
-                  s.tone === 'accent'
-                    ? T.accent
-                    : s.tone === 'positive'
-                      ? T.positive
-                      : s.tone === 'warning'
-                        ? T.warning
-                        : s.tone === 'broken'
-                          ? T.accent
-                          : T.ink,
-              }}
-            >
-              {s.value}
-            </div>
-            <div
-              style={{
-                fontSize: rem(12),
-                textTransform: 'uppercase',
-                letterSpacing: '0.12em',
-                color: T.inkMuted,
-                marginTop: 4,
-              }}
-            >
-              {s.label}
-            </div>
-          </div>
+          <StatCell key={s.label} stat={s} />
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * One cell in a summary stat row. Renders the value (large, tone-coloured)
+ * and the label (small, uppercase). When the stat carries a `tooltip`, the
+ * label gets a dotted underline and a hover/focus tooltip explaining what
+ * the cell counts — used to define source tiers and review states without
+ * cluttering the page with permanent prose.
+ */
+function StatCell({ stat }: { stat: Stat }) {
+  const [hover, setHover] = useState(false);
+  const valueColor =
+    stat.tone === 'accent'
+      ? T.accent
+      : stat.tone === 'positive'
+        ? T.positive
+        : stat.tone === 'warning'
+          ? T.warning
+          : stat.tone === 'broken'
+            ? T.accent
+            : stat.tone === 'ai'
+              ? T.aiAccent
+              : T.ink;
+  const interactive = !!stat.tooltip;
+  // Slugify the label for use in element ids — labels like "Human verified"
+  // would otherwise produce ids with spaces, which are invalid HTML and
+  // break the aria-describedby relationship for assistive tech.
+  const tipId = `stat-tip-${stat.label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')}`;
+  return (
+    <div style={{ position: 'relative' }}>
+      <div
+        style={{
+          fontFamily: fonts.display,
+          fontSize: rem(32),
+          fontWeight: 500,
+          lineHeight: 1,
+          color: valueColor,
+        }}
+      >
+        {stat.value}
+      </div>
+      <span
+        onMouseEnter={() => interactive && setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        onFocus={() => interactive && setHover(true)}
+        onBlur={() => setHover(false)}
+        tabIndex={interactive ? 0 : -1}
+        aria-describedby={interactive ? tipId : undefined}
+        style={{
+          display: 'inline-block',
+          fontSize: rem(12),
+          textTransform: 'uppercase',
+          letterSpacing: '0.12em',
+          color: T.inkMuted,
+          marginTop: 4,
+          cursor: interactive ? 'help' : 'default',
+          borderBottom: interactive ? `1px dotted ${T.inkMuted}` : 'none',
+          paddingBottom: interactive ? 1 : 0,
+        }}
+      >
+        {stat.label}
+      </span>
+      {interactive && hover && stat.tooltip && (
+        <span
+          id={tipId}
+          role="tooltip"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            left: 0,
+            padding: '8px 12px',
+            background: T.ink,
+            color: T.bg,
+            fontSize: rem(12),
+            fontFamily: fonts.body,
+            lineHeight: 1.4,
+            fontWeight: 400,
+            textTransform: 'none',
+            letterSpacing: '0.01em',
+            borderRadius: 3,
+            whiteSpace: 'normal',
+            width: 'max-content',
+            maxWidth: 'min(280px, calc(100vw - 32px))',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            zIndex: 10,
+            pointerEvents: 'none',
+          }}
+        >
+          {/* All tooltip text in cream-on-ink for guaranteed contrast.
+              Per-tone color lives on the large value above — using it in
+              the tooltip body too would put dark text (T.ink, T.positive,
+              T.aiAccent) against the dark T.ink background. The label is
+              still distinguishable via uppercase + bold weight. */}
+          <span
+            style={{
+              fontWeight: 600,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              color: T.bg,
+            }}
+          >
+            {stat.label}
+          </span>
+          <span style={{ color: T.bg }}> — {stat.tooltip}</span>
+        </span>
+      )}
     </div>
   );
 }
@@ -555,13 +692,7 @@ function SourceRow({ source }: { source: Source }) {
   const reviews = REVIEWS.get(source.id) ?? [];
   const latest = reviews[0];
   const tier = (source as Source & { tier?: string }).tier;
-  const broken = isBrokenStatus(STATUS_BY_URL.get(source.url));
-  const overdue = isOverdue(source);
-  const statusKind: 'broken' | 'overdue' | 'verified' = broken
-    ? 'broken'
-    : overdue
-      ? 'overdue'
-      : 'verified';
+  const statusKind = getStatusKind(source);
 
   // Single-column stacked layout. Title leads (it's the content); metadata
   // strip contextualizes it; URL is the reference / wayfinding; actions
@@ -596,14 +727,7 @@ function SourceRow({ source }: { source: Source }) {
         </a>
       </div>
 
-      <MetaStrip
-        tier={tier}
-        addedBy={source.addedBy ?? null}
-        addedAt={source.addedAt ?? null}
-        addedFallback={source.date ?? null}
-        latestReview={latest ?? null}
-        reviewCount={reviews.length}
-      />
+      <MetaStrip tier={tier} latestReview={latest ?? null} reviewCount={reviews.length} />
 
       <div
         style={{
@@ -638,16 +762,16 @@ function SourceRow({ source }: { source: Source }) {
 
 function MetaStrip({
   tier,
-  addedBy,
-  addedAt,
-  addedFallback,
   latestReview,
   reviewCount,
 }: {
   tier?: string;
-  addedBy: string | null;
-  addedAt: string | null;
-  addedFallback: string | null;
+  // Hard-stop convention: every source has at least one row in
+  // reviewed.tsv (CI enforces it for new sources, backfill covered the
+  // rest). `latestReview` is therefore non-null in production. We type
+  // it as nullable for defensive compile-time safety only — if it does
+  // somehow arrive null, MetaStrip just renders the tier pill without
+  // metadata, which is loud enough that it'll get noticed in review.
   latestReview: Review | null;
   reviewCount: number;
 }) {
@@ -666,44 +790,48 @@ function MetaStrip({
       }}
     >
       {tier && <TierPill tier={tier} />}
-      <MetaFact label="Added" date={addedAt ?? addedFallback} handle={addedBy} />
-      {latestReview && (
-        <MetaFact
-          label={`Reviewed${reviewCount > 1 ? ` ×${reviewCount}` : ''}`}
-          date={latestReview.date}
-          handle={latestReview.reviewer}
-          tone="positive"
-        />
-      )}
+      {latestReview && <ReviewedFact latestReview={latestReview} reviewCount={reviewCount} />}
     </div>
   );
 }
 
-function MetaFact({
-  label,
-  date,
-  handle,
-  tone,
+/**
+ * Renders the "Human reviewed" / "AI reviewed" line on a /sources row. The
+ * verb itself carries the provenance of the latest review:
+ *
+ *   - Human reviewed (green) — eyes-on-source, no AI assistance.
+ *   - AI reviewed (blue)     — AI-assisted or AI-proposed.
+ *
+ * This pairs with the hollow-green status dot rendered upstream when the
+ * latest review is AI-only — two reinforcing signals on the same row.
+ */
+function ReviewedFact({
+  latestReview,
+  reviewCount,
 }: {
-  label: string;
-  date: string | null;
-  handle: string | null;
-  tone?: 'positive';
+  latestReview: Review;
+  reviewCount: number;
 }) {
-  if (!date && !handle) return null;
-  const labelColor = tone === 'positive' ? T.positive : T.inkMuted;
+  const isAi = latestReview.kind === 'ai';
+  const verb = isAi ? 'AI reviewed' : 'Human reviewed';
+  const color = isAi ? T.aiAccent : T.positive;
+  const suffix = reviewCount > 1 ? ` ×${reviewCount}` : '';
+  const handle = latestReview.reviewer?.replace(/^@/, '') ?? null;
   return (
     <span style={{ display: 'inline-flex', gap: 6, alignItems: 'baseline' }}>
-      <span style={{ color: labelColor }}>{label}</span>
-      {date && <span style={{ color: T.inkSoft }}>{date}</span>}
+      <span style={{ color, fontWeight: 700 }}>
+        {verb}
+        {suffix}
+      </span>
+      <span style={{ color: T.inkSoft }}>{latestReview.date}</span>
       {handle && (
         <a
-          href={`https://github.com/${handle.replace(/^@/, '')}`}
+          href={`https://github.com/${handle}`}
           target="_blank"
           rel="noreferrer"
           style={{ color: T.accent, textDecoration: 'none' }}
         >
-          @{handle.replace(/^@/, '')}
+          @{handle}
         </a>
       )}
     </span>
@@ -811,6 +939,8 @@ function ReviewLog({ reviews }: { reviews: readonly Review[] }) {
                   </a>
                 </>
               )}
+              {' · '}
+              <ReviewKindPill kind={r.kind} />
             </div>
             {r.notes && (
               <div
@@ -832,12 +962,16 @@ function ReviewLog({ reviews }: { reviews: readonly Review[] }) {
 }
 
 function TierPill({ tier }: { tier: string }) {
+  // Reference tier uses a muted warm brown (inkSoft) rather than the
+  // accent red — red implied "warning / lower quality" when "Reference"
+  // really just means "one step removed from the publisher," a neutral
+  // relationship rather than a negative judgement.
   const palette =
     tier === 'original'
       ? { bg: 'rgba(45, 80, 22, 0.12)', fg: T.positive }
       : tier === 'estimate'
         ? { bg: 'rgba(184, 116, 43, 0.18)', fg: T.warning }
-        : { bg: 'rgba(166, 38, 28, 0.10)', fg: T.accent };
+        : { bg: 'rgba(90, 79, 66, 0.12)', fg: T.inkSoft };
   return (
     <span
       style={{
@@ -852,6 +986,36 @@ function TierPill({ tier }: { tier: string }) {
       }}
     >
       {tier}
+    </span>
+  );
+}
+
+/**
+ * Compact pill rendering a review's kind — human / ai. Surfaces the level
+ * of human involvement honestly: AI assistance is allowed and visible, not
+ * absent and laundered. Same shape as TierPill for visual consistency.
+ */
+function ReviewKindPill({ kind }: { kind: string }) {
+  const palette: { bg: string; fg: string; label: string } =
+    kind === 'human'
+      ? { bg: 'rgba(45, 80, 22, 0.12)', fg: T.positive, label: 'human' }
+      : kind === 'ai'
+        ? { bg: 'rgba(62, 90, 122, 0.16)', fg: T.aiAccent, label: 'ai' }
+        : { bg: 'rgba(0, 0, 0, 0.06)', fg: T.inkMuted, label: kind };
+  return (
+    <span
+      style={{
+        fontSize: rem(10),
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        fontWeight: 600,
+        background: palette.bg,
+        color: palette.fg,
+        padding: '2px 8px',
+        borderRadius: 2,
+      }}
+    >
+      {palette.label}
     </span>
   );
 }

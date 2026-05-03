@@ -63,13 +63,32 @@ const STATUS_BY_URL = (() => {
   return map;
 })();
 
+// Track latest review per source as { date, hasHumanReview }. We need the
+// kind axis (not just date) to power the "originals reviewed only by AI"
+// queue — under the hard-stop rule every source has at least one review,
+// so "never reviewed" is no longer the useful triage question. The new
+// question is "which originals haven't had a human pass yet."
+const VALID_KINDS = new Set(['human', 'ai', 'ai-assisted', 'ai-proposed']);
 const LATEST_REVIEW = (() => {
-  const map = new Map();
+  const map = new Map(); // id -> { date, hasHumanReview }
   for (const line of readFileSync(REVIEWED_TSV, 'utf8').split('\n')) {
     if (!line || line.startsWith('#') || line.startsWith('id\t')) continue;
-    const [id, date] = line.split('\t');
+    const parts = line.split('\t');
+    const [id, date] = parts;
     if (!id) continue;
-    if (!map.has(id) || date > map.get(id)) map.set(id, date);
+    // 5-col rows declare kind; 4-col legacy rows are kind=human.
+    const kind =
+      parts.length >= 5 && VALID_KINDS.has(parts[3])
+        ? parts[3] === 'human'
+          ? 'human'
+          : 'ai'
+        : 'human';
+    const existing = map.get(id);
+    const isNewer = !existing || date > existing.date;
+    map.set(id, {
+      date: isNewer ? date : existing.date,
+      hasHumanReview: (existing?.hasHumanReview ?? false) || kind === 'human',
+    });
   }
   return map;
 })();
@@ -132,7 +151,7 @@ for (const source of ALL_SOURCES) {
   const isTopLevel = topLevelIds.has(source.id);
   const status = STATUS_BY_URL.get(source.url) ?? '';
   const broken = BROKEN_SET.has(status);
-  const latestReview = LATEST_REVIEW.get(source.id) ?? null;
+  const review = LATEST_REVIEW.get(source.id) ?? null;
   const usage = isTopLevel ? gatherTopLevelUsage(source.id) : null;
 
   rows.push({
@@ -144,7 +163,8 @@ for (const source of ALL_SOURCES) {
     addedAt: source.addedAt ?? '',
     status,
     broken,
-    latestReview,
+    latestReview: review?.date ?? null,
+    hasHumanReview: review?.hasHumanReview ?? false,
     isTopLevel,
     usage, // null for state-map entries
   });
@@ -153,7 +173,11 @@ for (const source of ALL_SOURCES) {
 // ── Priority queues ─────────────────────────────────────────────────────
 const unused = rows.filter((r) => r.isTopLevel && r.usage.length === 0);
 const broken = rows.filter((r) => r.broken);
-const originalUnreviewed = rows.filter((r) => r.tier === 'original' && !r.latestReview);
+// "Originals never reviewed" used to mean "no row at all" — now logically
+// empty under the hard-stop rule (every source has ≥1 row). The useful
+// triage question instead is "which originals haven't had a human pass
+// yet" — i.e. only AI-flavoured reviews on the highest-stakes tier.
+const originalAiOnly = rows.filter((r) => r.tier === 'original' && !r.hasHumanReview);
 
 // ── --check mode (CI-friendly) ──────────────────────────────────────────
 // `node scripts/source-inventory.mjs --check` exits non-zero if there are
@@ -240,20 +264,20 @@ if (broken.length === 0) {
 }
 lines.push('');
 
-// Priority queue 3 — original tier, never reviewed
-lines.push('## 3. Original-tier sources never reviewed');
+// Priority queue 3 — original tier, AI-only reviews
+lines.push('## 3. Original-tier sources awaiting a human pass');
 lines.push('');
 lines.push(
-  '_Highest-stakes queue. By rule these reviews are 100% human, no AI assistance — open the URL, read the destination, append a row to `audit/links/reviewed.tsv` describing what you saw._',
+  '_Highest-stakes queue. These have AI-flavoured reviews but no human eyes-on-source pass yet. Open the URL, read the destination yourself, append a `kind=human` row to `audit/links/reviewed.tsv` describing what you saw._',
 );
 lines.push('');
-if (originalUnreviewed.length === 0) {
-  lines.push('_None — every original-tier source has at least one review._');
+if (originalAiOnly.length === 0) {
+  lines.push('_None — every original-tier source has at least one human review._');
 } else {
-  lines.push('| id | label | added | url |');
+  lines.push('| id | label | latest review | url |');
   lines.push('| --- | --- | --- | --- |');
-  for (const r of originalUnreviewed) {
-    lines.push(`| \`${r.id}\` | ${r.label} | ${r.addedAt} | <${r.url}> |`);
+  for (const r of originalAiOnly) {
+    lines.push(`| \`${r.id}\` | ${r.label} | ${r.latestReview ?? '—'} | <${r.url}> |`);
   }
 }
 lines.push('');
@@ -324,5 +348,5 @@ for (const prefix of stateMapPrefixes) {
 writeFileSync(OUT_MD, lines.join('\n') + '\n');
 console.log(`→ Wrote ${relative(ROOT, OUT_MD)}`);
 console.log(
-  `   ${rows.length} sources · ${unused.length} unused · ${broken.length} broken · ${originalUnreviewed.length} original/unreviewed`,
+  `   ${rows.length} sources · ${unused.length} unused · ${broken.length} broken · ${originalAiOnly.length} originals awaiting human pass`,
 );

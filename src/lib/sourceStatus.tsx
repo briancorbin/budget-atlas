@@ -25,10 +25,53 @@ import latestResultsTsv from '../../audit/links/results/latest.tsv?raw';
 
 const REPO = 'https://github.com/TheBudgetAtlas/thebudgetatlas';
 
+/**
+ * Review provenance — collapsed to a binary after the three-state experiment.
+ *
+ *   - `human` — eyes-on-source, no AI involvement.
+ *   - `ai`    — AI helped propose or extract; whatever human review happened
+ *               (a glance, a careful read, none) is self-reported and
+ *               unverifiable, so we don't pretend to subdivide.
+ *
+ * The earlier `ai-assisted` / `ai-proposed` split tried to grade AI work by
+ * how much human review followed. In practice the line was too fuzzy to
+ * carry weight (one person's "I read it" is another's "I clicked merge"),
+ * and the UI naturally collapsed both into "AI reviewed." Two states is
+ * sharper, less self-deceptive, and lower friction when adding rows.
+ */
+export type ReviewKind = 'human' | 'ai';
+
 export interface Review {
   date: string;
   reviewer: string;
+  /**
+   * What kind of verification this row records. Legacy rows (4-column
+   * format, pre-kind-column) default to `human` since that's what they
+   * were before the schema change. New rows declare it explicitly. See
+   * audit/links/reviewed.tsv header for the full definitions.
+   *
+   * Forwards-compat: rows written under the old three-state vocabulary
+   * (`ai-assisted`, `ai-proposed`) are normalised to `ai` at parse time so
+   * the schema migration doesn't require touching every old row.
+   */
+  kind: ReviewKind;
   notes: string;
+}
+
+/**
+ * Recognised values in the kind column. Includes the legacy three-state
+ * spellings so old rows still parse; the parser folds them into `ai`.
+ */
+const REVIEW_KIND_VALUES: ReadonlySet<string> = new Set([
+  'human',
+  'ai',
+  'ai-assisted',
+  'ai-proposed',
+]);
+
+function normaliseKind(raw: string): ReviewKind {
+  if (raw === 'human') return 'human';
+  return 'ai';
 }
 
 /** Status codes that classify a citation as broken in the UI + audit issue. */
@@ -71,10 +114,38 @@ export const REVIEWS = (() => {
   const map = new Map<string, Review[]>();
   for (const line of reviewedTsv.split('\n')) {
     if (!line || line.startsWith('#') || line.startsWith('id\t')) continue;
-    const [id, date, reviewer, notes] = line.split('\t');
+    const parts = line.split('\t');
+    const [id, date, reviewer] = parts;
     if (!id) continue;
+    // 4-col legacy: id, date, reviewer, notes — kind defaults to 'human'.
+    // 5-col current: id, date, reviewer, kind, notes.
+    //
+    // Disambiguation rule: a 5+ column row is "5-column" iff column 4 is a
+    // recognised kind. If column 4 is NOT a recognised kind, we treat the
+    // row as malformed rather than falling back to legacy parsing — a typo
+    // like `humn` or `ai-asistted` would otherwise silently promote a row
+    // to kind='human' with the column shifted into notes. Loud failure
+    // beats silent misclassification when the whole point of the kind
+    // column is honest provenance.
+    let kind: ReviewKind;
+    let notes: string;
+    if (parts.length >= 5) {
+      if (!REVIEW_KIND_VALUES.has(parts[3])) {
+        console.warn(
+          `[reviewed.tsv] Unrecognised kind "${parts[3]}" on row for "${id}". ` +
+            `Expected one of: ${Array.from(REVIEW_KIND_VALUES).join(', ')}. ` +
+            `Skipping row to avoid silent misclassification.`,
+        );
+        continue;
+      }
+      kind = normaliseKind(parts[3]);
+      notes = parts[4] ?? '';
+    } else {
+      kind = 'human';
+      notes = parts[3] ?? '';
+    }
     if (!map.has(id)) map.set(id, []);
-    map.get(id)!.push({ date, reviewer, notes: notes ?? '' });
+    map.get(id)!.push({ date, reviewer, kind, notes });
   }
   for (const list of map.values()) {
     list.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
@@ -95,16 +166,29 @@ export function isOverdue(source: Source): boolean {
   return new Date() > dueDate;
 }
 
-export type StatusKind = 'broken' | 'overdue' | 'verified';
+export type StatusKind = 'broken' | 'overdue' | 'verified' | 'ai-verified';
 
-/** Combined status classifier — broken takes precedence, then overdue, then verified. */
+/**
+ * Combined status classifier — broken takes precedence, then overdue, then
+ * verified vs ai-verified based on the latest review's kind.
+ *
+ * `ai-verified` means: URL loads, latest review is within the tier window,
+ * but that review was AI-assisted or AI-proposed rather than eyes-on-source
+ * by a human. We render it as a hollow green ring (same color family as
+ * verified, different shape) to signal "same kind of state, just provisional."
+ */
 export function getStatusKind(source: Source): StatusKind {
   if (isBrokenStatus(STATUS_BY_URL.get(source.url))) return 'broken';
   if (isOverdue(source)) return 'overdue';
+  const latest = REVIEWS.get(source.id)?.[0];
+  if (latest && latest.kind === 'ai') return 'ai-verified';
   return 'verified';
 }
 
-const STATUS_PALETTE: Record<StatusKind, { color: string; short: string; long: string }> = {
+const STATUS_PALETTE: Record<
+  StatusKind,
+  { color: string; short: string; long: string; hollow?: boolean }
+> = {
   broken: {
     color: T.accent,
     short: 'Broken',
@@ -113,12 +197,18 @@ const STATUS_PALETTE: Record<StatusKind, { color: string; short: string; long: s
   overdue: {
     color: T.warning,
     short: 'Overdue',
-    long: 'No human review within the tier-specific window. Pick this up during a periodic sweep.',
+    long: 'No review within the tier-specific window. Pick this up during a periodic sweep.',
   },
   verified: {
     color: T.positive,
     short: 'Verified',
     long: 'Loads correctly and has been reviewed by a human within its window.',
+  },
+  'ai-verified': {
+    color: T.positive,
+    short: 'AI-reviewed',
+    long: 'Loads correctly and has been reviewed with AI assistance, but a human has not yet given it a pass.',
+    hollow: true,
   },
 };
 
@@ -142,6 +232,8 @@ export function StatusDot({
 }) {
   const [hover, setHover] = useState(false);
   const palette = STATUS_PALETTE[kind];
+  const hollow = palette.hollow === true;
+  const ringWidth = Math.max(2, Math.round(size / 5));
   return (
     <span
       style={{
@@ -165,7 +257,8 @@ export function StatusDot({
           width: size,
           height: size,
           borderRadius: '50%',
-          background: palette.color,
+          background: hollow ? 'transparent' : palette.color,
+          boxShadow: hollow ? `inset 0 0 0 ${ringWidth}px ${palette.color}` : 'none',
         }}
       />
       {hover && showTooltip && (

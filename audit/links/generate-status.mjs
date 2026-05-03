@@ -131,14 +131,42 @@ for (const line of readFileSync(latestPath, 'utf8').split('\n').slice(1)) {
 // history follows a citation through URL changes. A source can have
 // multiple reviews; we render the latest in the table and expose the
 // count so multi-verified citations get visual credit.
+// 4-col legacy rows: id, date, reviewer, notes — kind defaults to 'human'.
+// 5-col current: id, date, reviewer, kind, notes.
+//
+// Recognised kinds: 'human' or 'ai'. The earlier three-state spellings
+// ('ai-assisted', 'ai-proposed') still parse for backwards compatibility
+// and fold into 'ai'. An unrecognised kind in column 4 is treated as a
+// malformed row and skipped with a loud warning — falling back to legacy
+// parsing on a typo'd kind would silently promote the row to human and
+// shift the column into notes, defeating the whole point of the
+// provenance column.
+const VALID_KINDS = new Set(['human', 'ai', 'ai-assisted', 'ai-proposed']);
+const normaliseKind = (raw) => (raw === 'human' ? 'human' : 'ai');
 const reviewsById = new Map();
 try {
   for (const line of readFileSync(REVIEWED_TSV, 'utf8').split('\n')) {
     if (!line || line.startsWith('#') || line.startsWith('id\t')) continue;
-    const [id, date, reviewer, notes] = line.split('\t');
+    const parts = line.split('\t');
+    const [id, date, reviewer] = parts;
     if (!id) continue;
+    let kind, notes;
+    if (parts.length >= 5) {
+      if (!VALID_KINDS.has(parts[3])) {
+        console.warn(
+          `[reviewed.tsv] Unrecognised kind "${parts[3]}" on row for "${id}". ` +
+            `Expected one of: ${[...VALID_KINDS].join(', ')}. Skipping row.`,
+        );
+        continue;
+      }
+      kind = normaliseKind(parts[3]);
+      notes = parts[4] ?? '';
+    } else {
+      kind = 'human';
+      notes = parts[3] ?? '';
+    }
     if (!reviewsById.has(id)) reviewsById.set(id, []);
-    reviewsById.get(id).push({ date, reviewer, notes: notes ?? '' });
+    reviewsById.get(id).push({ date, reviewer, kind, notes });
   }
 } catch {
   // No reviewed.tsv yet — fine.
@@ -161,6 +189,7 @@ for (const [id, { url, label, tier, addedBy, addedAt }] of sourceMeta) {
     code: s?.code ?? 'unchecked',
     reviewedAt: latest?.date ?? null,
     reviewer: latest?.reviewer ?? null,
+    reviewedKind: latest?.kind ?? null,
     notes: latest?.notes ?? '',
     reviewCount: reviews.length,
     addedBy,
@@ -191,15 +220,20 @@ const statusEmoji = (code) => {
 const reviewMark = (r) => {
   if (!r.reviewedAt) return '—';
   // Show date + ×N badge when multiple reviews exist for this URL.
+  // Prefix with the kind icon: ✅ for human (eyes-on-source) or 🤖 for
+  // AI-assisted reviews. Treating both identically would launder AI
+  // work as the same evidence as a human pass.
   const badge = r.reviewCount > 1 ? ` (${r.reviewCount}×)` : '';
-  return `✅ ${r.reviewedAt}${badge}`;
+  const icon = r.reviewedKind === 'ai' ? '🤖' : '✅';
+  return `${icon} ${r.reviewedAt}${badge}`;
 };
 
 const counts = {
   total: rows.length,
   broken: rows.filter(isBroken).length,
   loaded: rows.filter(isLoaded).length,
-  reviewed: rows.filter((r) => r.reviewedAt).length,
+  reviewedHuman: rows.filter((r) => r.reviewedAt && r.reviewedKind !== 'ai').length,
+  reviewedAi: rows.filter((r) => r.reviewedAt && r.reviewedKind === 'ai').length,
   botBlocked: rows.filter((r) => r.code === '403').length,
 };
 
@@ -219,7 +253,8 @@ lines.push(`| Total cited sources | ${counts.total} |`);
 lines.push(`| 🟢 Loaded (\`200\`/\`3xx\`) | ${counts.loaded} |`);
 lines.push(`| 🔴 Broken (\`404\`/errors) | ${counts.broken} |`);
 lines.push(`| 🔵 Bot-blocked (\`403\`) | ${counts.botBlocked} |`);
-lines.push(`| ✅ Manually reviewed | ${counts.reviewed} |`);
+lines.push(`| ✅ Reviewed (human) | ${counts.reviewedHuman} |`);
+lines.push(`| 🤖 Reviewed (AI) | ${counts.reviewedAi} |`);
 lines.push('');
 lines.push(
   '_Sort order below: broken first, then unreviewed-but-loading, then reviewed. Within each group, alphabetical by label._',
@@ -278,5 +313,5 @@ lines.push('');
 writeFileSync(OUT, lines.join('\n'));
 console.log(`→ Wrote ${OUT}`);
 console.log(
-  `   ${counts.total} sources | ${counts.loaded} loaded | ${counts.broken} broken | ${counts.reviewed} reviewed`,
+  `   ${counts.total} sources | ${counts.loaded} loaded | ${counts.broken} broken | ${counts.reviewedHuman} reviewed (human) | ${counts.reviewedAi} reviewed (AI)`,
 );

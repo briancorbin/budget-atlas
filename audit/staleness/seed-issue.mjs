@@ -266,7 +266,7 @@ function buildBody(overdue, checkedUrls) {
   const lines = [
     `## Overdue source reviews — ${overdue.length} total`,
     ``,
-    `These citations need a human eyeball pass — open the URL, verify the destination still cites what we claim, then append a row to [\`audit/links/reviewed.tsv\`](https://github.com/${REPO}/blob/main/audit/links/reviewed.tsv) describing what you saw. **No AI assistance.**`,
+    `These citations need a human eyeball pass — open the URL, verify the destination still cites what we claim, then append a row to [\`audit/links/reviewed.tsv\`](https://github.com/${REPO}/blob/main/audit/links/reviewed.tsv) with \`kind=human\` describing what you saw. (Eyes-on-source is the whole point of the staleness sweep — that's why human-only here, even though \`kind=ai\` is fine elsewhere in the audit.)`,
     ``,
     `**Use the checkboxes to claim work in progress** — checking a box says "I'm reviewing this." Claim state is preserved across weekly regenerates, so once you check, it stays checked until your review row lands and the item drops off the list.`,
     ``,
