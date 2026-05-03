@@ -52,5 +52,5 @@ export const STD_DEDUCTION_2026: Record<FilingStatus, number> = {
   head: 24150,
 };
 
-/** 2025 wage base used through 2026 SS adjustments; per-person cap. */
-export const SS_WAGE_BASE = 181000;
+/** 2026 SSA Contribution and Benefit Base; per-person cap. */
+export const SS_WAGE_BASE = 184500;
