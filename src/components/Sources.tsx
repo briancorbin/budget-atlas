@@ -426,14 +426,16 @@ function Summary() {
       tooltip: `Approximation flagged honestly rather than dressed up as a hard number — used when no clean source exists for a value the model needs. Re-reviewed every ${TIER_REVIEW_DAYS.estimate} days.`,
     },
   ];
-  // State row: per-source health, split by who did the most recent
+  // Status row: per-source health, split by who did the most recent
   // review. "Human verified" is the gold standard (URL live + eyes-on-
   // source within window); "AI verified" is the same health but the
   // latest pass was AI-flavoured, awaiting a human signoff. The audit's
   // purpose is honesty about what's been verified and how — collapsing
   // these into a single "verified" count would launder AI work as the
-  // same kind of evidence as human review.
-  const state: ReadonlyArray<Stat> = [
+  // same kind of evidence as human review. Heading uses "Status" rather
+  // than "State" to avoid colliding with the dozens of US-state-keyed
+  // citations on this page.
+  const status: ReadonlyArray<Stat> = [
     {
       label: 'Human verified',
       value: SUMMARY.humanVerified,
@@ -477,7 +479,7 @@ function Summary() {
     >
       <StatRow heading="Composition" stats={composition} />
       <div style={{ height: 1, background: T.border, opacity: 0.6 }} />
-      <StatRow heading="State" stats={state} />
+      <StatRow heading="Status" stats={status} />
     </section>
   );
 }
