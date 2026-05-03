@@ -27,8 +27,6 @@ import type { Source } from '@/types';
 import {
   REVIEWS,
   STATUS_BY_URL,
-  STALENESS_THRESHOLDS_DAYS,
-  STALENESS_DEFAULT_DAYS,
   isBrokenStatus,
   isOverdue,
   getStatusKind,
@@ -148,60 +146,40 @@ const SUMMARY = (() => {
     else if (tier === 'reference') reference++;
     else if (tier === 'estimate') estimate++;
   }
-  // Split the reviewed count by kind of latest review so the summary
-  // honestly reflects the level of human involvement, not just "any
-  // review at all." A source whose only review is AI-flavoured should
-  // not be counted next to one with eyes-on-source verification.
-  let reviewedHuman = 0;
-  let reviewedAi = 0;
-  for (const s of ALL_SOURCES) {
-    const latest = REVIEWS.get(s.id)?.[0];
-    if (!latest) continue;
-    if (latest.kind === 'ai') reviewedAi++;
-    else reviewedHuman++;
-  }
-  const reviewed = reviewedHuman + reviewedAi;
-
   // Overdue: tier-aware staleness check. Never-reviewed sources count as
   // overdue from day one — the audit's job is to honestly represent how
   // much human verification has happened, not to soft-start with addedAt
   // as a free pass. See audit/staleness/ for the rolling-issue workflow
   // that surfaces the queue for triage.
-  const today = new Date();
   let overdue = 0;
   let broken = 0;
   for (const s of ALL_SOURCES) {
     if (isBrokenStatus(STATUS_BY_URL.get(s.url))) broken++;
-    const tier = (s as Source & { tier?: string }).tier ?? 'reference';
-    const thresholdDays = STALENESS_THRESHOLDS_DAYS[tier] ?? STALENESS_DEFAULT_DAYS;
-    const latest = REVIEWS.get(s.id)?.[0];
-    if (!latest) {
-      overdue++;
-      continue;
-    }
-    const reviewDate = new Date(latest.date + 'T00:00:00Z');
-    if (Number.isNaN(reviewDate.valueOf())) continue;
-    const dueDate = new Date(reviewDate);
-    dueDate.setUTCDate(dueDate.getUTCDate() + thresholdDays);
-    if (today > dueDate) overdue++;
+    if (isOverdue(s)) overdue++;
   }
 
-  // verified = loading correctly AND reviewed within tier window
-  let verified = 0;
+  // Verified splits by review kind: human-verified (eyes-on-source within
+  // window) vs AI-verified (within window but the latest review was
+  // AI-flavoured, awaiting a human pass). Both require the URL to be live;
+  // broken takes precedence in the per-row classifier.
+  let humanVerified = 0;
+  let aiVerified = 0;
   for (const s of ALL_SOURCES) {
-    if (!isBrokenStatus(STATUS_BY_URL.get(s.url)) && !isOverdue(s)) verified++;
+    if (isBrokenStatus(STATUS_BY_URL.get(s.url))) continue;
+    if (isOverdue(s)) continue;
+    const latest = REVIEWS.get(s.id)?.[0];
+    if (latest?.kind === 'ai') aiVerified++;
+    else humanVerified++;
   }
   return {
     total,
     original,
     reference,
     estimate,
-    reviewed,
-    reviewedHuman,
-    reviewedAi,
     overdue,
     broken,
-    verified,
+    humanVerified,
+    aiVerified,
   };
 })();
 
@@ -414,20 +392,23 @@ function Summary() {
     { label: 'Reference', value: SUMMARY.reference },
     { label: 'Estimate', value: SUMMARY.estimate },
   ];
-  // Review-kind row: how much of our verification came from eyes-on-source
-  // vs AI. The audit's purpose is honesty about what's been verified and
-  // how — collapsing these into a single "reviewed" count would launder AI
-  // work as the same kind of evidence as human review.
-  const reviewKinds: ReadonlyArray<Stat> = [
-    { label: 'Human', value: SUMMARY.reviewedHuman, tone: 'positive' },
-    { label: 'AI', value: SUMMARY.reviewedAi, tone: 'ai' },
-    { label: 'Unreviewed', value: SUMMARY.total - SUMMARY.reviewed },
-  ];
+  // State row: per-source health, split by who did the most recent
+  // review. "Human verified" is the gold standard (URL live + eyes-on-
+  // source within window); "AI verified" is the same health but the
+  // latest pass was AI-flavoured, awaiting a human signoff. The audit's
+  // purpose is honesty about what's been verified and how — collapsing
+  // these into a single "verified" count would launder AI work as the
+  // same kind of evidence as human review.
   const state: ReadonlyArray<Stat> = [
     {
-      label: 'Verified',
-      value: SUMMARY.verified,
-      tone: SUMMARY.verified > 0 ? 'positive' : undefined,
+      label: 'Human verified',
+      value: SUMMARY.humanVerified,
+      tone: SUMMARY.humanVerified > 0 ? 'positive' : undefined,
+    },
+    {
+      label: 'AI verified',
+      value: SUMMARY.aiVerified,
+      tone: SUMMARY.aiVerified > 0 ? 'ai' : undefined,
     },
     {
       label: 'Overdue',
@@ -450,8 +431,6 @@ function Summary() {
       }}
     >
       <StatRow heading="Composition" stats={composition} />
-      <div style={{ height: 1, background: T.border, opacity: 0.6 }} />
-      <StatRow heading="Review kinds" stats={reviewKinds} />
       <div style={{ height: 1, background: T.border, opacity: 0.6 }} />
       <StatRow heading="State" stats={state} />
     </section>
