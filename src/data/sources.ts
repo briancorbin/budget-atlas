@@ -1,0 +1,893 @@
+/**
+ * Citation registry — single source of truth for every URL the model cites.
+ *
+ * Centralizing citations gives us:
+ *
+ *   1. **Clean audits.** `audit/links/check.sh` only checks URLs declared
+ *      here, eliminating noise from non-citation URLs (font CDNs,
+ *      preconnect hints, settings files, etc.).
+ *   2. **One-edit URL updates.** When an agency reorganizes a URL, the fix
+ *      is a single line, propagating everywhere via stable IDs / map keys.
+ *   3. **Type-checked uniqueness.** TypeScript prevents accidental
+ *      duplicate IDs in `SOURCES`.
+ *   4. **README alignment.** The README's Sources section can eventually be
+ *      regenerated from this file — no more drift between data and docs.
+ *
+ * Adding a new citation: pick a stable kebab-case ID, add the entry, then
+ * import it via `SOURCES['the-id']`. Don't define new `Source` literals
+ * outside this file — that defeats the registry's purpose.
+ *
+ * Per-state Source maps (Department of Revenue, SNAP / Medicaid / CHIP
+ * administering agencies) live as named exports below. They're keyed by
+ * `StateCode` rather than promoted to ~200 individual IDs in `SOURCES`,
+ * because the per-state shape is what consumers actually need.
+ *
+ * `tier` is the epistemic weight of the source:
+ *   - `'primary'`   — direct from the agency / data publisher (IRS, BLS, eCFR)
+ *   - `'secondary'` — operational handbook, industry survey, think-tank
+ *                     methodology, state agency landing pages
+ *   - `'editorial'` — approximation flagged honestly rather than dressed up
+ *                     as a hard number
+ */
+
+import type { Source, StateCode } from '@/types';
+
+type SourceWithTier = Source & { readonly tier?: 'primary' | 'secondary' | 'editorial' };
+
+export const SOURCES = {
+  // ── Federal tax & wage base ────────────────────────────────────────────
+  'irs-rev-proc-2025-32': {
+    label: 'IRS Rev. Proc. 2025-32',
+    url: 'https://www.irs.gov/pub/irs-drop/rp-25-32.pdf',
+    date: '2025-10-09',
+    tier: 'primary',
+  },
+  'ssa-wage-base': {
+    label: 'SSA Contribution and Benefit Base',
+    url: 'https://www.ssa.gov/oact/cola/cbb.html',
+    date: '2025',
+    tier: 'primary',
+  },
+
+  // ── City cost-of-living references ─────────────────────────────────────
+  'rentcafe-national': {
+    label: 'RentCafe National Apartment List',
+    url: 'https://www.rentcafe.com/average-rent-market-trends/us/',
+    date: '2026',
+    tier: 'secondary',
+  },
+  'zillow-rent-index': {
+    label: 'Zillow Observed Rent Index',
+    url: 'https://www.zillow.com/research/data/',
+    date: '2026',
+    tier: 'secondary',
+  },
+  'bls-cex': {
+    label: 'BLS Consumer Expenditure Survey',
+    url: 'https://www.bls.gov/cex/',
+    date: '2025',
+    tier: 'primary',
+  },
+  'bls-cex-regional': {
+    label: 'BLS Consumer Expenditure Survey — regional tables',
+    url: 'https://www.bls.gov/cex/tables.htm',
+    date: '2025',
+    tier: 'primary',
+  },
+  'care-com-childcare': {
+    label: 'Care.com Cost of Care Report',
+    url: 'https://www.care.com/c/cost-of-childcare/',
+    date: '2025',
+    tier: 'secondary',
+  },
+  'kff-employer-health-benefits': {
+    label: 'KFF Employer Health Benefits Survey',
+    url: 'https://www.kff.org/health-costs/report/employer-health-benefits-annual-survey/',
+    date: '2025',
+    tier: 'secondary',
+  },
+  'numbeo-cost-of-living': {
+    label: 'Numbeo cost-of-living indices (cross-check)',
+    url: 'https://www.numbeo.com/cost-of-living/',
+    date: '2026',
+    tier: 'secondary',
+  },
+
+  // ── Rent / occupancy methodology ───────────────────────────────────────
+  'hud-handbook-4350-3': {
+    label:
+      'HUD Handbook 4350.3 REV-1, Change 4 — Occupancy Requirements of Subsidized Multifamily Housing Programs',
+    url: 'https://www.hud.gov/hudclips/handbooks/housing-4350-3',
+    date: '2013-11',
+    tier: 'secondary',
+  },
+  'epi-family-budget-calculator': {
+    label: 'EPI Family Budget Calculator — methodology',
+    url: 'https://www.epi.org/resources/budget/budget-factsheets/',
+    date: '2024',
+    tier: 'secondary',
+  },
+  'zillow-rent-by-bedroom': {
+    label: 'Zillow Rent by Bedroom Count',
+    url: 'https://www.zillow.com/research/data/',
+    date: '2025',
+    tier: 'secondary',
+  },
+
+  // ── Statewide-fallback profiles ────────────────────────────────────────
+  'hud-fair-market-rents': {
+    label: 'HUD Fair Market Rents (FY2026)',
+    url: 'https://www.huduser.gov/portal/datasets/fmr.html',
+    date: '2025',
+    tier: 'primary',
+  },
+  'eia-residential': {
+    label: 'EIA Residential Energy Consumption',
+    url: 'https://www.eia.gov/consumption/residential/',
+    date: '2025',
+    tier: 'primary',
+  },
+  'child-care-aware': {
+    label: 'Child Care Aware — Price of Care',
+    url: 'https://www.childcareaware.org/state-fact-sheets/',
+    date: '2025',
+    tier: 'secondary',
+  },
+  'aaa-driving-costs': {
+    label: 'AAA Your Driving Costs',
+    url: 'https://newsroom.aaa.com/auto/your-driving-costs/',
+    date: '2025',
+    tier: 'secondary',
+  },
+
+  // ── Cross-state aggregators ────────────────────────────────────────────
+  'tax-foundation-state-rates': {
+    label: 'Tax Foundation: 2026 State Income Tax Rates and Brackets',
+    url: 'https://taxfoundation.org/data/all/state/state-income-tax-rates/',
+    date: '2026',
+    tier: 'secondary',
+  },
+  'ncsl-state-min-wage': {
+    label: 'NCSL State Minimum Wage Chart',
+    url: 'https://www.ncsl.org/labor-and-employment/state-minimum-wages',
+    date: '2026',
+    tier: 'secondary',
+  },
+
+  // ── Federal poverty / safety-net ───────────────────────────────────────
+  'hhs-poverty-guidelines': {
+    label: 'HHS Poverty Guidelines',
+    url: 'https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines',
+    date: '2025',
+    tier: 'primary',
+  },
+  'usda-snap-eligibility': {
+    label: 'USDA SNAP Eligibility & Benefit Amounts',
+    url: 'https://www.fns.usda.gov/snap/recipient/eligibility',
+    date: '2026',
+    tier: 'primary',
+  },
+  'cbpp-snap-bbce': {
+    label: 'CBPP: SNAP Broad-Based Categorical Eligibility',
+    url: 'https://www.cbpp.org/research/food-assistance/states-have-flexibility-to-expand-snap-categorical-eligibility',
+    date: '2024',
+    tier: 'secondary',
+  },
+  'medicaid-gov': {
+    label: 'Medicaid.gov',
+    url: 'https://www.medicaid.gov/medicaid/index.html',
+    date: '2026',
+    tier: 'primary',
+  },
+  'kff-medicaid-expansion': {
+    label: 'KFF: Status of State Medicaid Expansion Decisions',
+    url: 'https://www.kff.org/medicaid/issue-brief/status-of-state-medicaid-expansion-decisions-interactive-map/',
+    date: '2025',
+    tier: 'secondary',
+  },
+  insurekidsnow: {
+    label: 'InsureKidsNow.gov',
+    url: 'https://www.insurekidsnow.gov',
+    date: '2026',
+    tier: 'primary',
+  },
+  'medicaid-gov-chip-eligibility': {
+    label: 'Medicaid.gov: CHIP Eligibility Levels',
+    url: 'https://www.medicaid.gov/chip/eligibility/index.html',
+    date: '2025',
+    tier: 'primary',
+  },
+} as const satisfies Record<string, SourceWithTier>;
+
+export type SourceId = keyof typeof SOURCES;
+
+/** All non-state-keyed sources as a flat array — useful for iteration. */
+export const ALL_SOURCES: readonly Source[] = Object.values(SOURCES);
+
+// ── Per-state Department of Revenue / Taxation ─────────────────────────
+/**
+ * State income-tax authority. URLs point to each agency's canonical homepage
+ * rather than a specific PDF/page (deep links tend to break across tax years).
+ */
+export const STATE_DOR: Record<StateCode, Source> = {
+  AL: { label: 'Alabama Department of Revenue', url: 'https://revenue.alabama.gov', date: '2026' },
+  AK: {
+    label: 'Alaska Department of Revenue, Tax Division',
+    url: 'https://tax.alaska.gov',
+    date: '2026',
+  },
+  AZ: { label: 'Arizona Department of Revenue', url: 'https://azdor.gov', date: '2026' },
+  AR: {
+    label: 'Arkansas Department of Finance and Administration',
+    url: 'https://www.dfa.arkansas.gov/income-tax',
+    date: '2026',
+  },
+  CA: { label: 'California Franchise Tax Board', url: 'https://www.ftb.ca.gov', date: '2026' },
+  CO: {
+    label: 'Colorado Department of Revenue, Taxation Division',
+    url: 'https://tax.colorado.gov',
+    date: '2026',
+  },
+  CT: {
+    label: 'Connecticut Department of Revenue Services',
+    url: 'https://portal.ct.gov/DRS',
+    date: '2026',
+  },
+  DE: { label: 'Delaware Division of Revenue', url: 'https://revenue.delaware.gov', date: '2026' },
+  FL: { label: 'Florida Department of Revenue', url: 'https://floridarevenue.com', date: '2026' },
+  GA: { label: 'Georgia Department of Revenue', url: 'https://dor.georgia.gov', date: '2026' },
+  HI: { label: 'Hawaii Department of Taxation', url: 'https://tax.hawaii.gov', date: '2026' },
+  ID: { label: 'Idaho State Tax Commission', url: 'https://tax.idaho.gov', date: '2026' },
+  IL: { label: 'Illinois Department of Revenue', url: 'https://tax.illinois.gov', date: '2026' },
+  IN: { label: 'Indiana Department of Revenue', url: 'https://www.in.gov/dor', date: '2026' },
+  IA: { label: 'Iowa Department of Revenue', url: 'https://tax.iowa.gov', date: '2026' },
+  KS: { label: 'Kansas Department of Revenue', url: 'https://www.ksrevenue.gov', date: '2026' },
+  KY: { label: 'Kentucky Department of Revenue', url: 'https://revenue.ky.gov', date: '2026' },
+  LA: {
+    label: 'Louisiana Department of Revenue',
+    url: 'https://revenue.louisiana.gov',
+    date: '2026',
+  },
+  ME: { label: 'Maine Revenue Services', url: 'https://www.maine.gov/revenue', date: '2026' },
+  MD: { label: 'Comptroller of Maryland', url: 'https://www.marylandtaxes.gov', date: '2026' },
+  MA: {
+    label: 'Massachusetts Department of Revenue',
+    url: 'https://www.mass.gov/orgs/massachusetts-department-of-revenue',
+    date: '2026',
+  },
+  MI: {
+    label: 'Michigan Department of Treasury',
+    url: 'https://www.michigan.gov/treasury',
+    date: '2026',
+  },
+  MN: {
+    label: 'Minnesota Department of Revenue',
+    url: 'https://www.revenue.state.mn.us',
+    date: '2026',
+  },
+  MS: { label: 'Mississippi Department of Revenue', url: 'https://www.dor.ms.gov', date: '2026' },
+  MO: { label: 'Missouri Department of Revenue', url: 'https://dor.mo.gov', date: '2026' },
+  MT: { label: 'Montana Department of Revenue', url: 'https://mtrevenue.gov', date: '2026' },
+  NE: {
+    label: 'Nebraska Department of Revenue',
+    url: 'https://revenue.nebraska.gov',
+    date: '2026',
+  },
+  NV: { label: 'Nevada Department of Taxation', url: 'https://tax.nv.gov', date: '2026' },
+  NH: {
+    label: 'New Hampshire Department of Revenue Administration',
+    url: 'https://www.revenue.nh.gov',
+    date: '2026',
+  },
+  NJ: {
+    label: 'New Jersey Division of Taxation',
+    url: 'https://www.nj.gov/treasury/taxation',
+    date: '2026',
+  },
+  NM: {
+    label: 'New Mexico Taxation and Revenue Department',
+    url: 'https://www.tax.newmexico.gov',
+    date: '2026',
+  },
+  NY: {
+    label: 'New York State Department of Taxation and Finance',
+    url: 'https://www.tax.ny.gov',
+    date: '2026',
+  },
+  NC: { label: 'North Carolina Department of Revenue', url: 'https://www.ncdor.gov', date: '2026' },
+  ND: {
+    label: 'North Dakota Office of State Tax Commissioner',
+    url: 'https://www.tax.nd.gov',
+    date: '2026',
+  },
+  OH: { label: 'Ohio Department of Taxation', url: 'https://tax.ohio.gov', date: '2026' },
+  OK: { label: 'Oklahoma Tax Commission', url: 'https://oklahoma.gov/tax.html', date: '2026' },
+  OR: { label: 'Oregon Department of Revenue', url: 'https://www.oregon.gov/dor', date: '2026' },
+  PA: {
+    label: 'Pennsylvania Department of Revenue',
+    url: 'https://www.revenue.pa.gov',
+    date: '2026',
+  },
+  RI: { label: 'Rhode Island Division of Taxation', url: 'https://tax.ri.gov', date: '2026' },
+  SC: { label: 'South Carolina Department of Revenue', url: 'https://dor.sc.gov', date: '2026' },
+  SD: { label: 'South Dakota Department of Revenue', url: 'https://dor.sd.gov', date: '2026' },
+  TN: { label: 'Tennessee Department of Revenue', url: 'https://www.tn.gov/revenue', date: '2026' },
+  TX: {
+    label: 'Texas Comptroller of Public Accounts',
+    url: 'https://comptroller.texas.gov',
+    date: '2026',
+  },
+  UT: { label: 'Utah State Tax Commission', url: 'https://tax.utah.gov', date: '2026' },
+  VT: { label: 'Vermont Department of Taxes', url: 'https://tax.vermont.gov', date: '2026' },
+  VA: {
+    label: 'Virginia Department of Taxation',
+    url: 'https://www.tax.virginia.gov',
+    date: '2026',
+  },
+  WA: { label: 'Washington Department of Revenue', url: 'https://dor.wa.gov', date: '2026' },
+  WV: { label: 'West Virginia Tax Division', url: 'https://tax.wv.gov', date: '2026' },
+  WI: { label: 'Wisconsin Department of Revenue', url: 'https://www.revenue.wi.gov', date: '2026' },
+  WY: { label: 'Wyoming Department of Revenue', url: 'https://revenue.wyo.gov', date: '2026' },
+  DC: { label: 'D.C. Office of Tax and Revenue', url: 'https://otr.cfo.dc.gov', date: '2026' },
+};
+
+// ── Per-state SNAP administering agency ────────────────────────────────
+/**
+ * SNAP program name varies by state — CalFresh in California, OTDA in
+ * New York, DTA in Massachusetts, etc. URLs point to the agency's
+ * SNAP/food-assistance landing page where possible, else the agency
+ * homepage. Subject to occasional reorganization at the state level.
+ */
+export const STATE_SNAP_AGENCY: Record<StateCode, Source> = {
+  AL: {
+    label: 'AL DHR Food Assistance',
+    url: 'https://dhr.alabama.gov/services/food-assistance/',
+    date: '2026',
+  },
+  AK: {
+    label: 'AK DPA SNAP',
+    url: 'http://dhss.alaska.gov/dpa/Pages/snap/default.aspx',
+    date: '2026',
+  },
+  AZ: {
+    label: 'AZ DES Nutrition Assistance',
+    url: 'https://des.az.gov/services/basic-needs/food-assistance/nutrition-assistance',
+    date: '2026',
+  },
+  AR: {
+    label: 'AR DHS SNAP',
+    url: 'https://humanservices.arkansas.gov/divisions-shared-services/county-operations/programs-services/snap/',
+    date: '2026',
+  },
+  CA: { label: 'CalFresh (CA DSS)', url: 'https://www.cdss.ca.gov/calfresh', date: '2026' },
+  CO: { label: 'CO CDHS SNAP', url: 'https://cdhs.colorado.gov/snap', date: '2026' },
+  CT: { label: 'CT DSS SNAP', url: 'https://portal.ct.gov/DSS/SNAP/SNAP', date: '2026' },
+  DE: {
+    label: 'DE DHSS Food Benefits',
+    url: 'https://dhss.delaware.gov/dss/foodstamps.html',
+    date: '2026',
+  },
+  FL: {
+    label: 'FL DCF Food Assistance',
+    url: 'https://www.myflfamilies.com/services/public-assistance/food-assistance',
+    date: '2026',
+  },
+  GA: {
+    label: 'GA DHS Food Stamps',
+    url: 'https://dhs.georgia.gov/services/food-stamps',
+    date: '2026',
+  },
+  HI: { label: 'HI DHS SNAP', url: 'https://humanservices.hawaii.gov/bessd/snap-2/', date: '2026' },
+  ID: {
+    label: 'ID DHW Food Stamps',
+    url: 'https://healthandwelfare.idaho.gov/services-programs/food-assistance/food-stamps-snap',
+    date: '2026',
+  },
+  IL: {
+    label: 'IL DHS SNAP',
+    url: 'https://www.dhs.state.il.us/page.aspx?item=30357',
+    date: '2026',
+  },
+  IN: { label: 'IN FSSA SNAP', url: 'https://www.in.gov/fssa/dfr/snap/', date: '2026' },
+  IA: {
+    label: 'IA HHS Food Assistance',
+    url: 'https://hhs.iowa.gov/programs/welcome-iowa-snap',
+    date: '2026',
+  },
+  KS: {
+    label: 'KS DCF Food Assistance',
+    url: 'https://www.dcf.ks.gov/services/Pages/Food-Assistance.aspx',
+    date: '2026',
+  },
+  KY: {
+    label: 'KY DCBS SNAP',
+    url: 'https://www.chfs.ky.gov/agencies/dcbs/dfs/Pages/snap.aspx',
+    date: '2026',
+  },
+  LA: { label: 'LA DCFS SNAP', url: 'https://www.dcfs.louisiana.gov/page/snap', date: '2026' },
+  ME: {
+    label: 'ME DHHS Food Supplement',
+    url: 'https://www.maine.gov/dhhs/ofi/programs-services/food-supplement',
+    date: '2026',
+  },
+  MD: {
+    label: 'MD DHS Food Supplement',
+    url: 'https://dhs.maryland.gov/food-supplement-program/',
+    date: '2026',
+  },
+  MA: {
+    label: 'MA DTA SNAP',
+    url: 'https://www.mass.gov/snap-benefits-formerly-food-stamps',
+    date: '2026',
+  },
+  MI: {
+    label: 'MI MDHHS Food Assistance',
+    url: 'https://www.michigan.gov/mdhhs/assistance-programs/food-assistance',
+    date: '2026',
+  },
+  MN: {
+    label: 'MN DHS SNAP',
+    url: 'https://mn.gov/dhs/people-we-serve/adults/economic-assistance/food-nutrition/programs-and-services/supplemental-nutrition-program.jsp',
+    date: '2026',
+  },
+  MS: {
+    label: 'MS DHS SNAP',
+    url: 'https://www.mdhs.ms.gov/economic-assistance/snap/',
+    date: '2026',
+  },
+  MO: {
+    label: 'MO DSS Food Stamp Program',
+    url: 'https://dss.mo.gov/fsd/food-stamps/',
+    date: '2026',
+  },
+  MT: { label: 'MT DPHHS SNAP', url: 'https://dphhs.mt.gov/hcsd/snap', date: '2026' },
+  NE: {
+    label: 'NE DHHS SNAP',
+    url: 'https://dhhs.ne.gov/Pages/Economic-Assistance-SNAP.aspx',
+    date: '2026',
+  },
+  NV: { label: 'NV DWSS SNAP', url: 'https://dwss.nv.gov/SNAP/SNAP_Home/', date: '2026' },
+  NH: {
+    label: 'NH DHHS Food Stamp',
+    url: 'https://www.dhhs.nh.gov/programs-services/medicaid/food-stamp-program',
+    date: '2026',
+  },
+  NJ: { label: 'NJ SNAP (DHS)', url: 'https://www.nj.gov/humanservices/njsnap/', date: '2026' },
+  NM: {
+    label: 'NM HCA SNAP',
+    url: 'https://www.hca.nm.gov/lookingforassistance/snap/',
+    date: '2026',
+  },
+  NY: { label: 'NY OTDA SNAP', url: 'https://otda.ny.gov/programs/snap/', date: '2026' },
+  NC: {
+    label: 'NC DHHS Food and Nutrition Services',
+    url: 'https://www.ncdhhs.gov/divisions/social-services/food-and-nutrition-services-food-stamps',
+    date: '2026',
+  },
+  ND: { label: 'ND HHS SNAP', url: 'https://www.hhs.nd.gov/snap', date: '2026' },
+  OH: {
+    label: 'OH ODJFS Food Assistance',
+    url: 'https://jfs.ohio.gov/family-services-and-assistance/cash-and-food-assistance/food-assistance',
+    date: '2026',
+  },
+  OK: { label: 'OK DHS SNAP', url: 'https://oklahoma.gov/okdhs/services/sfn.html', date: '2026' },
+  OR: {
+    label: 'OR ODHS SNAP',
+    url: 'https://www.oregon.gov/odhs/food/Pages/default.aspx',
+    date: '2026',
+  },
+  PA: {
+    label: 'PA DHS SNAP',
+    url: 'https://www.dhs.pa.gov/Services/Assistance/Pages/SNAP.aspx',
+    date: '2026',
+  },
+  RI: {
+    label: 'RI DHS SNAP',
+    url: 'https://dhs.ri.gov/programs-and-services/supplemental-nutrition-assistance-program-snap',
+    date: '2026',
+  },
+  SC: { label: 'SC DSS SNAP', url: 'https://dss.sc.gov/snap/', date: '2026' },
+  SD: { label: 'SD DSS Food Stamps', url: 'https://dss.sd.gov/foodstamps/', date: '2026' },
+  TN: {
+    label: 'TN DHS SNAP',
+    url: 'https://www.tn.gov/humanservices/for-families/supplemental-nutrition-assistance-program-snap.html',
+    date: '2026',
+  },
+  TX: {
+    label: 'TX HHSC SNAP',
+    url: 'https://www.hhs.texas.gov/services/food/snap-food-benefits',
+    date: '2026',
+  },
+  UT: {
+    label: 'UT DWS Food Stamps',
+    url: 'https://jobs.utah.gov/customereducation/services/foodstamps/index.html',
+    date: '2026',
+  },
+  VT: {
+    label: '3SquaresVT (VT DCF)',
+    url: 'https://dcf.vermont.gov/benefits/3SquaresVT',
+    date: '2026',
+  },
+  VA: { label: 'VA DSS SNAP', url: 'https://www.dss.virginia.gov/benefit/snap.cgi', date: '2026' },
+  WA: {
+    label: 'WA DSHS Basic Food',
+    url: 'https://www.dshs.wa.gov/esa/community-services-offices/basic-food',
+    date: '2026',
+  },
+  WV: {
+    label: 'WV DHHR SNAP',
+    url: 'https://dhhr.wv.gov/bcf/Services/Pages/SNAP.aspx',
+    date: '2026',
+  },
+  WI: {
+    label: 'FoodShare Wisconsin (DHS)',
+    url: 'https://www.dhs.wisconsin.gov/foodshare/index.htm',
+    date: '2026',
+  },
+  WY: {
+    label: 'WY DFS Food Stamps',
+    url: 'https://dfs.wyo.gov/assistance-programs/food-and-nutrition/',
+    date: '2026',
+  },
+  DC: { label: 'DC DHS SNAP', url: 'https://dhs.dc.gov/service/snap-food-stamps', date: '2026' },
+};
+
+// ── Per-state Medicaid administering agency ────────────────────────────
+/**
+ * Many states bundle Medicaid + CHIP under one agency; some have distinct
+ * CHIP brands (Florida KidCare, Georgia PeachCare, NY Child Health Plus,
+ * MI MIChild, etc.).
+ */
+export const STATE_MEDICAID_AGENCY: Record<StateCode, Source> = {
+  AL: { label: 'Alabama Medicaid Agency', url: 'https://medicaid.alabama.gov', date: '2026' },
+  AK: {
+    label: 'Alaska DHSS Health Care Services',
+    url: 'http://dhss.alaska.gov/dhcs/Pages/default.aspx',
+    date: '2026',
+  },
+  AZ: { label: 'AHCCCS (AZ Medicaid)', url: 'https://www.azahcccs.gov/', date: '2026' },
+  AR: {
+    label: 'AR DHS Medical Services',
+    url: 'https://humanservices.arkansas.gov/divisions-shared-services/medical-services/',
+    date: '2026',
+  },
+  CA: {
+    label: 'Medi-Cal (CA DHCS)',
+    url: 'https://www.dhcs.ca.gov/services/medi-cal',
+    date: '2026',
+  },
+  CO: { label: 'CO HCPF (Health First Colorado)', url: 'https://hcpf.colorado.gov/', date: '2026' },
+  CT: {
+    label: 'HUSKY Health (CT DSS)',
+    url: 'https://portal.ct.gov/dss/health-and-home-care/husky-health-program',
+    date: '2026',
+  },
+  DE: { label: 'DE DMMA Medicaid', url: 'https://dhss.delaware.gov/dhss/dmma/', date: '2026' },
+  FL: {
+    label: 'FL Agency for Health Care Administration',
+    url: 'https://ahca.myflorida.com/',
+    date: '2026',
+  },
+  GA: {
+    label: 'GA Medicaid (Dept of Community Health)',
+    url: 'https://medicaid.georgia.gov',
+    date: '2026',
+  },
+  HI: { label: 'Med-QUEST (HI DHS)', url: 'https://medquest.hawaii.gov/', date: '2026' },
+  ID: {
+    label: 'ID DHW Medicaid',
+    url: 'https://healthandwelfare.idaho.gov/services-programs/medicaid-health',
+    date: '2026',
+  },
+  IL: {
+    label: 'IL HFS Medical Programs',
+    url: 'https://hfs.illinois.gov/medicalclients.html',
+    date: '2026',
+  },
+  IN: { label: 'IN FSSA Medicaid', url: 'https://www.in.gov/medicaid/', date: '2026' },
+  IA: { label: 'Iowa Medicaid (Iowa HHS)', url: 'https://hhs.iowa.gov/medicaid', date: '2026' },
+  KS: { label: 'KanCare (KS Medicaid)', url: 'https://kancare.ks.gov/', date: '2026' },
+  KY: {
+    label: 'KY Medicaid (DMS)',
+    url: 'https://www.chfs.ky.gov/agencies/dms/Pages/default.aspx',
+    date: '2026',
+  },
+  LA: { label: 'LA Medicaid', url: 'https://www.medicaid.la.gov/', date: '2026' },
+  ME: {
+    label: 'MaineCare',
+    url: 'https://www.maine.gov/dhhs/ofi/programs-services/mainecare',
+    date: '2026',
+  },
+  MD: {
+    label: 'Maryland Medicaid',
+    url: 'https://health.maryland.gov/mmcp/Pages/Home.aspx',
+    date: '2026',
+  },
+  MA: { label: 'MassHealth', url: 'https://www.mass.gov/masshealth', date: '2026' },
+  MI: {
+    label: 'MI MDHHS Medicaid',
+    url: 'https://www.michigan.gov/mdhhs/assistance-programs/medicaid',
+    date: '2026',
+  },
+  MN: {
+    label: 'MN Health Care Programs (DHS)',
+    url: 'https://mn.gov/dhs/people-we-serve/adults/health-care/health-care-programs/',
+    date: '2026',
+  },
+  MS: { label: 'MS Division of Medicaid', url: 'https://medicaid.ms.gov/', date: '2026' },
+  MO: { label: 'MO HealthNet (DSS)', url: 'https://dss.mo.gov/mhd/', date: '2026' },
+  MT: {
+    label: 'MT Healthcare Programs (DPHHS)',
+    url: 'https://dphhs.mt.gov/MontanaHealthcarePrograms',
+    date: '2026',
+  },
+  NE: { label: 'NE DHHS Medicaid', url: 'https://dhhs.ne.gov/Pages/Medicaid.aspx', date: '2026' },
+  NV: { label: 'NV DHCFP (Medicaid)', url: 'https://dhcfp.nv.gov/', date: '2026' },
+  NH: {
+    label: 'NH Medicaid (DHHS)',
+    url: 'https://www.dhhs.nh.gov/programs-services/medicaid',
+    date: '2026',
+  },
+  NJ: { label: 'NJ FamilyCare', url: 'https://www.njfamilycare.org/', date: '2026' },
+  NM: {
+    label: 'NM HCA Medicaid',
+    url: 'https://www.hca.nm.gov/lookingforinformation/medicaid/',
+    date: '2026',
+  },
+  NY: {
+    label: 'NY Medicaid (DOH)',
+    url: 'https://www.health.ny.gov/health_care/medicaid/',
+    date: '2026',
+  },
+  NC: { label: 'NC Medicaid (NCDHHS)', url: 'https://medicaid.ncdhhs.gov/', date: '2026' },
+  ND: { label: 'ND Medicaid', url: 'https://www.hhs.nd.gov/medicaid', date: '2026' },
+  OH: { label: 'Ohio Medicaid', url: 'https://medicaid.ohio.gov/', date: '2026' },
+  OK: { label: 'SoonerCare (OK HCA)', url: 'https://www.okhca.org/', date: '2026' },
+  OR: {
+    label: 'Oregon Health Plan',
+    url: 'https://www.oregon.gov/oha/hsd/ohp/Pages/index.aspx',
+    date: '2026',
+  },
+  PA: {
+    label: 'PA DHS Medical Assistance',
+    url: 'https://www.dhs.pa.gov/Services/Assistance/Pages/Medical-Assistance-Health-Care.aspx',
+    date: '2026',
+  },
+  RI: {
+    label: 'RI Medicaid (EOHHS)',
+    url: 'https://eohhs.ri.gov/consumer/medicaid-information',
+    date: '2026',
+  },
+  SC: { label: 'Healthy Connections (SC DHHS)', url: 'https://msp.scdhhs.gov/', date: '2026' },
+  SD: { label: 'SD Medicaid', url: 'https://dss.sd.gov/medicaid/', date: '2026' },
+  TN: { label: 'TennCare', url: 'https://www.tn.gov/tenncare.html', date: '2026' },
+  TX: {
+    label: 'TX HHSC Medicaid & CHIP',
+    url: 'https://www.hhs.texas.gov/services/health/medicaid-chip',
+    date: '2026',
+  },
+  UT: { label: 'UT Medicaid', url: 'https://medicaid.utah.gov/', date: '2026' },
+  VT: {
+    label: 'Green Mountain Care (VT)',
+    url: 'https://www.greenmountaincare.org/',
+    date: '2026',
+  },
+  VA: { label: 'Cover Virginia / DMAS', url: 'https://www.dmas.virginia.gov/', date: '2026' },
+  WA: {
+    label: 'Apple Health (WA HCA)',
+    url: 'https://www.hca.wa.gov/health-care-services-supports/apple-health-medicaid-coverage',
+    date: '2026',
+  },
+  WV: { label: 'WV Medicaid (BMS)', url: 'https://dhhr.wv.gov/bms/', date: '2026' },
+  WI: {
+    label: 'BadgerCare Plus (WI DHS)',
+    url: 'https://www.dhs.wisconsin.gov/badgercareplus/',
+    date: '2026',
+  },
+  WY: { label: 'WY Medicaid', url: 'https://health.wyo.gov/healthcarefin/medicaid/', date: '2026' },
+  DC: { label: 'DC Department of Health Care Finance', url: 'https://dhcf.dc.gov/', date: '2026' },
+};
+
+// ── Per-state CHIP administering agency / brand ────────────────────────
+/**
+ * Where there's a separate CHIP brand (Florida KidCare, GA PeachCare, NY
+ * Child Health Plus, etc.) we cite that page; otherwise the state Medicaid
+ * agency.
+ */
+export const STATE_CHIP_AGENCY: Record<StateCode, Source> = {
+  AL: { label: 'ALL Kids (AL CHIP)', url: 'https://www.allkids.org/', date: '2026' },
+  AK: {
+    label: 'Denali KidCare (AK CHIP)',
+    url: 'http://dhss.alaska.gov/dhcs/Pages/denalikidcare/default.aspx',
+    date: '2026',
+  },
+  AZ: {
+    label: 'KidsCare (AHCCCS)',
+    url: 'https://www.azahcccs.gov/Members/GetCovered/Categories/kidscare.html',
+    date: '2026',
+  },
+  AR: {
+    label: 'ARKids First',
+    url: 'https://humanservices.arkansas.gov/about-dhs/dco/programs-services/arkids-first/',
+    date: '2026',
+  },
+  CA: {
+    label: 'Medi-Cal for Kids',
+    url: 'https://www.dhcs.ca.gov/services/medi-cal',
+    date: '2026',
+  },
+  CO: {
+    label: 'Child Health Plan Plus (CHP+)',
+    url: 'https://hcpf.colorado.gov/child-health-plan-plus',
+    date: '2026',
+  },
+  CT: {
+    label: 'HUSKY B (CT CHIP)',
+    url: 'https://portal.ct.gov/dss/health-and-home-care/husky-health-program',
+    date: '2026',
+  },
+  DE: {
+    label: 'Delaware Healthy Children Program',
+    url: 'https://dhss.delaware.gov/dhss/dhcq/dhcp.html',
+    date: '2026',
+  },
+  FL: { label: 'Florida KidCare', url: 'https://www.floridakidcare.org/', date: '2026' },
+  GA: {
+    label: 'PeachCare for Kids',
+    url: 'https://medicaid.georgia.gov/programs/peachcare-kids',
+    date: '2026',
+  },
+  HI: { label: 'Med-QUEST (HI CHIP)', url: 'https://medquest.hawaii.gov/', date: '2026' },
+  ID: {
+    label: 'ID CHIP',
+    url: 'https://healthandwelfare.idaho.gov/services-programs/medicaid-health',
+    date: '2026',
+  },
+  IL: {
+    label: 'All Kids (IL)',
+    url: 'https://hfs.illinois.gov/medicalclients/allkids.html',
+    date: '2026',
+  },
+  IN: {
+    label: 'Hoosier Healthwise',
+    url: 'https://www.in.gov/medicaid/members/health-coverage-programs/programs-by-name/hoosier-healthwise/',
+    date: '2026',
+  },
+  IA: {
+    label: 'Hawki (IA CHIP)',
+    url: 'https://hhs.iowa.gov/programs/welcome-iowa-hawki',
+    date: '2026',
+  },
+  KS: { label: 'KanCare (KS CHIP)', url: 'https://kancare.ks.gov/', date: '2026' },
+  KY: { label: 'KCHIP', url: 'https://kynect.ky.gov/benefits/', date: '2026' },
+  LA: { label: 'LaCHIP', url: 'https://ldh.la.gov/page/lachip', date: '2026' },
+  ME: {
+    label: 'CubCare (MaineCare)',
+    url: 'https://www.maine.gov/dhhs/ofi/programs-services/mainecare',
+    date: '2026',
+  },
+  MD: {
+    label: 'Maryland Children’s Health Program',
+    url: 'https://health.maryland.gov/mmcp/chp/',
+    date: '2026',
+  },
+  MA: { label: 'MassHealth (children)', url: 'https://www.mass.gov/masshealth', date: '2026' },
+  MI: {
+    label: 'MIChild',
+    url: 'https://www.michigan.gov/mdhhs/assistance-programs/medicaid/michild',
+    date: '2026',
+  },
+  MN: {
+    label: 'MinnesotaCare',
+    url: 'https://mn.gov/dhs/people-we-serve/adults/health-care/health-care-programs/programs-and-services/minnesotacare.jsp',
+    date: '2026',
+  },
+  MS: {
+    label: 'MS CHIP',
+    url: 'https://medicaid.ms.gov/programs/childrens-health-insurance-program/',
+    date: '2026',
+  },
+  MO: {
+    label: 'MO HealthNet for Kids',
+    url: 'https://dss.mo.gov/mhd/participants/pages/mhdkids.htm',
+    date: '2026',
+  },
+  MT: {
+    label: 'Healthy Montana Kids',
+    url: 'https://dphhs.mt.gov/HealthyMontanaKids',
+    date: '2026',
+  },
+  NE: {
+    label: 'Kids Connection (NE)',
+    url: 'https://dhhs.ne.gov/Pages/Kids-Connection.aspx',
+    date: '2026',
+  },
+  NV: {
+    label: 'Nevada Check Up',
+    url: 'https://dwss.nv.gov/Health_Care/Nevada_Check_Up/',
+    date: '2026',
+  },
+  NH: {
+    label: 'NH Healthy Kids',
+    url: 'https://www.dhhs.nh.gov/programs-services/medicaid',
+    date: '2026',
+  },
+  NJ: { label: 'NJ FamilyCare (kids)', url: 'https://www.njfamilycare.org/', date: '2026' },
+  NM: {
+    label: 'NM Centennial Care (kids)',
+    url: 'https://www.hca.nm.gov/lookingforinformation/medicaid/',
+    date: '2026',
+  },
+  NY: {
+    label: 'Child Health Plus',
+    url: 'https://www.health.ny.gov/health_care/child_health_plus/',
+    date: '2026',
+  },
+  NC: {
+    label: 'NC Health Choice for Children',
+    url: 'https://medicaid.ncdhhs.gov/beneficiaries/health-choice-children',
+    date: '2026',
+  },
+  ND: {
+    label: 'Healthy Steps (ND CHIP)',
+    url: 'https://www.hhs.nd.gov/medicaid/healthy-steps',
+    date: '2026',
+  },
+  OH: {
+    label: 'Ohio Medicaid for Children',
+    url: 'https://medicaid.ohio.gov/families-and-individuals/coverage/coverage-for-children-and-pregnant-women',
+    date: '2026',
+  },
+  OK: { label: 'SoonerCare (OK CHIP)', url: 'https://www.okhca.org/', date: '2026' },
+  OR: {
+    label: 'Oregon Health Plan (kids)',
+    url: 'https://www.oregon.gov/oha/hsd/ohp/Pages/index.aspx',
+    date: '2026',
+  },
+  PA: { label: 'PA CHIP', url: 'https://www.chipcoverspakids.com/', date: '2026' },
+  RI: {
+    label: 'RIte Care (RI Medicaid for kids)',
+    url: 'https://eohhs.ri.gov/consumer/medicaid-information',
+    date: '2026',
+  },
+  SC: { label: 'Healthy Connections (SC, kids)', url: 'https://msp.scdhhs.gov/', date: '2026' },
+  SD: { label: 'SD CHIP', url: 'https://dss.sd.gov/medicaid/', date: '2026' },
+  TN: {
+    label: 'CoverKids',
+    url: 'https://www.tn.gov/tenncare/members-applicants/coverkids.html',
+    date: '2026',
+  },
+  TX: {
+    label: 'Texas CHIP',
+    url: 'https://www.hhs.texas.gov/services/health/medicaid-chip/programs/childrens-health-insurance-program-chip',
+    date: '2026',
+  },
+  UT: { label: 'UT CHIP', url: 'https://chip.utah.gov/', date: '2026' },
+  VT: { label: 'Dr. Dynasaur', url: 'https://www.greenmountaincare.org/dr-dynasaur', date: '2026' },
+  VA: {
+    label: 'FAMIS (VA CHIP)',
+    url: 'https://coverva.dmas.virginia.gov/learn/programs/famis',
+    date: '2026',
+  },
+  WA: {
+    label: 'Apple Health for Kids',
+    url: 'https://www.hca.wa.gov/health-care-services-supports/apple-health-medicaid-coverage/free-or-low-cost-health-care',
+    date: '2026',
+  },
+  WV: { label: 'WVCHIP', url: 'https://chip.wv.gov/', date: '2026' },
+  WI: {
+    label: 'BadgerCare Plus (WI, kids)',
+    url: 'https://www.dhs.wisconsin.gov/badgercareplus/',
+    date: '2026',
+  },
+  WY: {
+    label: 'Kid Care CHIP',
+    url: 'https://health.wyo.gov/healthcarefin/kidcare/',
+    date: '2026',
+  },
+  DC: {
+    label: 'DC Healthy Families',
+    url: 'https://dhcf.dc.gov/page/dc-healthy-families',
+    date: '2026',
+  },
+};

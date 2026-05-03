@@ -32,16 +32,12 @@ URLS_FILE=$(mktemp)
 RAW_FILE=$(mktemp)
 trap 'rm -f "$URLS_FILE" "$RAW_FILE"' EXIT
 
-echo "→ Extracting URLs from codebase..."
-grep -rEho 'https?://[^ )"`'"'"'<>]+' \
-  --include='*.ts' --include='*.tsx' --include='*.md' \
-  --include='*.json' --include='*.html' --include='*.svg' \
-  --exclude-dir=node_modules --exclude-dir=.yarn --exclude-dir=dist \
-  --exclude-dir=results --exclude-dir=.claude --exclude-dir=.git \
-  "$ROOT" \
-  | grep -vE '^http://localhost|^http://127\.0\.0\.1|^http://www\.w3\.org' \
-  | grep -vE '^https?://fonts\.googleapis\.com|^https?://fonts\.gstatic\.com' \
-  | sed 's/&amp;/\&/g' \
+echo "→ Extracting URLs from src/data/sources.ts (the citation registry)..."
+# Only check the citation registry. Non-citation URLs in the codebase (font CDN
+# preconnects, repo references, build artifacts, settings files, etc.) are
+# deliberately excluded by sourcing this from one place rather than greping
+# the whole tree. See src/data/sources.ts for the registry rationale.
+grep -Eo 'https?://[^ )"`'"'"'<>]+' "$ROOT/src/data/sources.ts" \
   | sort -u > "$URLS_FILE"
 
 COUNT=$(wc -l < "$URLS_FILE" | tr -d ' ')

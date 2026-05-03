@@ -1,18 +1,11 @@
 import type { FilingStatus, Source, TaxBracket } from '@/types';
+import { SOURCES } from './sources';
 
 /** Citation for federal income-tax brackets and standard deductions (TY 2026). */
-export const FEDERAL_TAX_SOURCE: Source = {
-  label: 'IRS Rev. Proc. 2025-32',
-  url: 'https://www.irs.gov/pub/irs-drop/rp-25-32.pdf',
-  date: '2025-10-09',
-};
+export const FEDERAL_TAX_SOURCE: Source = SOURCES['irs-rev-proc-2025-32'];
 
 /** Citation for the Social Security wage base. */
-export const SS_WAGE_BASE_SOURCE: Source = {
-  label: 'SSA Contribution and Benefit Base',
-  url: 'https://www.ssa.gov/oact/cola/cbb.html',
-  date: '2025',
-};
+export const SS_WAGE_BASE_SOURCE: Source = SOURCES['ssa-wage-base'];
 
 /**
  * 2026 federal income tax brackets per IRS Rev. Proc. 2025-32 / OBBBA.

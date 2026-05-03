@@ -1,4 +1,5 @@
 import type { Source } from '@/types';
+import { SOURCES } from './sources';
 
 /**
  * 2025 HHS Poverty Guidelines (48 contiguous states + DC). 2026 figures
@@ -40,8 +41,4 @@ export function fplPct(grossIncome: number, householdSize: number): number {
   return grossIncome / base;
 }
 
-export const POVERTY_SOURCE: Source = {
-  label: 'HHS Poverty Guidelines',
-  url: 'https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines',
-  date: '2025',
-};
+export const POVERTY_SOURCE: Source = SOURCES['hhs-poverty-guidelines'];

@@ -1,21 +1,14 @@
 import type { FilingStatus, Source, StateCode, StateInfo, TaxBracket } from '@/types';
+import { SOURCES, STATE_DOR } from './sources';
 
 /**
  * Cross-state aggregator (still used in the page footer as a convenient
  * cross-reference). Per-state authoritative sources live on each StateInfo
  * via `taxSource` and are used in the bracket walkthrough.
  */
-export const STATE_TAX_SOURCE: Source = {
-  label: 'Tax Foundation: 2026 State Income Tax Rates and Brackets',
-  url: 'https://taxfoundation.org/data/all/state/state-income-tax-rates/',
-  date: '2026',
-};
+export const STATE_TAX_SOURCE: Source = SOURCES['tax-foundation-state-rates'];
 
-export const STATE_MIN_WAGE_SOURCE: Source = {
-  label: 'NCSL State Minimum Wage Chart',
-  url: 'https://www.ncsl.org/labor-and-employment/state-minimum-wages',
-  date: '2026',
-};
+export const STATE_MIN_WAGE_SOURCE: Source = SOURCES['ncsl-state-min-wage'];
 
 /**
  * State income tax brackets and standard deductions for tax year 2026
@@ -59,133 +52,6 @@ function uniform(brackets: readonly TaxBracket[]): Record<FilingStatus, readonly
 function singleStd(amount: number): Record<FilingStatus, number> {
   return { single: amount, married: amount, head: amount };
 }
-
-/**
- * Per-state Department of Revenue / Taxation citations. URLs point to each
- * agency's canonical homepage rather than a specific PDF/page (deep links
- * tend to break across tax years). Date stamps the model year.
- */
-const STATE_DOR: Record<StateCode, Source> = {
-  AL: { label: 'Alabama Department of Revenue', url: 'https://revenue.alabama.gov', date: '2026' },
-  AK: {
-    label: 'Alaska Department of Revenue, Tax Division',
-    url: 'https://tax.alaska.gov',
-    date: '2026',
-  },
-  AZ: { label: 'Arizona Department of Revenue', url: 'https://azdor.gov', date: '2026' },
-  AR: {
-    label: 'Arkansas Department of Finance and Administration',
-    url: 'https://www.dfa.arkansas.gov/income-tax',
-    date: '2026',
-  },
-  CA: { label: 'California Franchise Tax Board', url: 'https://www.ftb.ca.gov', date: '2026' },
-  CO: {
-    label: 'Colorado Department of Revenue, Taxation Division',
-    url: 'https://tax.colorado.gov',
-    date: '2026',
-  },
-  CT: {
-    label: 'Connecticut Department of Revenue Services',
-    url: 'https://portal.ct.gov/DRS',
-    date: '2026',
-  },
-  DE: { label: 'Delaware Division of Revenue', url: 'https://revenue.delaware.gov', date: '2026' },
-  FL: { label: 'Florida Department of Revenue', url: 'https://floridarevenue.com', date: '2026' },
-  GA: { label: 'Georgia Department of Revenue', url: 'https://dor.georgia.gov', date: '2026' },
-  HI: { label: 'Hawaii Department of Taxation', url: 'https://tax.hawaii.gov', date: '2026' },
-  ID: { label: 'Idaho State Tax Commission', url: 'https://tax.idaho.gov', date: '2026' },
-  IL: { label: 'Illinois Department of Revenue', url: 'https://tax.illinois.gov', date: '2026' },
-  IN: { label: 'Indiana Department of Revenue', url: 'https://www.in.gov/dor', date: '2026' },
-  IA: { label: 'Iowa Department of Revenue', url: 'https://tax.iowa.gov', date: '2026' },
-  KS: { label: 'Kansas Department of Revenue', url: 'https://www.ksrevenue.gov', date: '2026' },
-  KY: { label: 'Kentucky Department of Revenue', url: 'https://revenue.ky.gov', date: '2026' },
-  LA: {
-    label: 'Louisiana Department of Revenue',
-    url: 'https://revenue.louisiana.gov',
-    date: '2026',
-  },
-  ME: { label: 'Maine Revenue Services', url: 'https://www.maine.gov/revenue', date: '2026' },
-  MD: { label: 'Comptroller of Maryland', url: 'https://www.marylandtaxes.gov', date: '2026' },
-  MA: {
-    label: 'Massachusetts Department of Revenue',
-    url: 'https://www.mass.gov/orgs/massachusetts-department-of-revenue',
-    date: '2026',
-  },
-  MI: {
-    label: 'Michigan Department of Treasury',
-    url: 'https://www.michigan.gov/treasury',
-    date: '2026',
-  },
-  MN: {
-    label: 'Minnesota Department of Revenue',
-    url: 'https://www.revenue.state.mn.us',
-    date: '2026',
-  },
-  MS: { label: 'Mississippi Department of Revenue', url: 'https://www.dor.ms.gov', date: '2026' },
-  MO: { label: 'Missouri Department of Revenue', url: 'https://dor.mo.gov', date: '2026' },
-  MT: { label: 'Montana Department of Revenue', url: 'https://mtrevenue.gov', date: '2026' },
-  NE: {
-    label: 'Nebraska Department of Revenue',
-    url: 'https://revenue.nebraska.gov',
-    date: '2026',
-  },
-  NV: { label: 'Nevada Department of Taxation', url: 'https://tax.nv.gov', date: '2026' },
-  NH: {
-    label: 'New Hampshire Department of Revenue Administration',
-    url: 'https://www.revenue.nh.gov',
-    date: '2026',
-  },
-  NJ: {
-    label: 'New Jersey Division of Taxation',
-    url: 'https://www.nj.gov/treasury/taxation',
-    date: '2026',
-  },
-  NM: {
-    label: 'New Mexico Taxation and Revenue Department',
-    url: 'https://www.tax.newmexico.gov',
-    date: '2026',
-  },
-  NY: {
-    label: 'New York State Department of Taxation and Finance',
-    url: 'https://www.tax.ny.gov',
-    date: '2026',
-  },
-  NC: { label: 'North Carolina Department of Revenue', url: 'https://www.ncdor.gov', date: '2026' },
-  ND: {
-    label: 'North Dakota Office of State Tax Commissioner',
-    url: 'https://www.tax.nd.gov',
-    date: '2026',
-  },
-  OH: { label: 'Ohio Department of Taxation', url: 'https://tax.ohio.gov', date: '2026' },
-  OK: { label: 'Oklahoma Tax Commission', url: 'https://oklahoma.gov/tax.html', date: '2026' },
-  OR: { label: 'Oregon Department of Revenue', url: 'https://www.oregon.gov/dor', date: '2026' },
-  PA: {
-    label: 'Pennsylvania Department of Revenue',
-    url: 'https://www.revenue.pa.gov',
-    date: '2026',
-  },
-  RI: { label: 'Rhode Island Division of Taxation', url: 'https://tax.ri.gov', date: '2026' },
-  SC: { label: 'South Carolina Department of Revenue', url: 'https://dor.sc.gov', date: '2026' },
-  SD: { label: 'South Dakota Department of Revenue', url: 'https://dor.sd.gov', date: '2026' },
-  TN: { label: 'Tennessee Department of Revenue', url: 'https://www.tn.gov/revenue', date: '2026' },
-  TX: {
-    label: 'Texas Comptroller of Public Accounts',
-    url: 'https://comptroller.texas.gov',
-    date: '2026',
-  },
-  UT: { label: 'Utah State Tax Commission', url: 'https://tax.utah.gov', date: '2026' },
-  VT: { label: 'Vermont Department of Taxes', url: 'https://tax.vermont.gov', date: '2026' },
-  VA: {
-    label: 'Virginia Department of Taxation',
-    url: 'https://www.tax.virginia.gov',
-    date: '2026',
-  },
-  WA: { label: 'Washington Department of Revenue', url: 'https://dor.wa.gov', date: '2026' },
-  WV: { label: 'West Virginia Tax Division', url: 'https://tax.wv.gov', date: '2026' },
-  WI: { label: 'Wisconsin Department of Revenue', url: 'https://www.revenue.wi.gov', date: '2026' },
-  WY: { label: 'Wyoming Department of Revenue', url: 'https://revenue.wyo.gov', date: '2026' },
-  DC: { label: 'D.C. Office of Tax and Revenue', url: 'https://otr.cfo.dc.gov', date: '2026' },
-};
 
 export const STATES: Record<StateCode, StateInfo> = {
   // ── No income tax ──────────────────────────────────────────────────────

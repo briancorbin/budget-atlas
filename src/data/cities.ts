@@ -1,4 +1,5 @@
 import type { CityInfo, Source, StateCode } from '@/types';
+import { SOURCES } from './sources';
 
 /**
  * City cost profiles. Numbers approximate 2025–26 medians from the sources
@@ -10,32 +11,12 @@ import type { CityInfo, Source, StateCode } from '@/types';
 
 /** Aggregated citations for city-level cost-of-living figures. */
 export const CITY_COL_SOURCES: readonly Source[] = [
-  {
-    label: 'RentCafe National Apartment List',
-    url: 'https://www.rentcafe.com/average-rent-market-trends/us/',
-    date: '2026',
-  },
-  {
-    label: 'Zillow Observed Rent Index',
-    url: 'https://www.zillow.com/research/data/',
-    date: '2026',
-  },
-  { label: 'BLS Consumer Expenditure Survey', url: 'https://www.bls.gov/cex/', date: '2025' },
-  {
-    label: 'Care.com Cost of Care Report',
-    url: 'https://www.care.com/c/cost-of-childcare/',
-    date: '2025',
-  },
-  {
-    label: 'KFF Employer Health Benefits Survey',
-    url: 'https://www.kff.org/health-costs/report/employer-health-benefits-annual-survey/',
-    date: '2025',
-  },
-  {
-    label: 'Numbeo cost-of-living indices (cross-check)',
-    url: 'https://www.numbeo.com/cost-of-living/',
-    date: '2026',
-  },
+  SOURCES['rentcafe-national'],
+  SOURCES['zillow-rent-index'],
+  SOURCES['bls-cex'],
+  SOURCES['care-com-childcare'],
+  SOURCES['kff-employer-health-benefits'],
+  SOURCES['numbeo-cost-of-living'],
 ];
 export const CITIES: Record<string, CityInfo> = {
   nyc: {
@@ -389,55 +370,18 @@ export const CITIES: Record<string, CityInfo> = {
  * UI ("approx.") rather than fake-citing.
  */
 export const RENT_LOGIC_SOURCES: readonly Source[] = [
-  {
-    label:
-      'HUD Handbook 4350.3 REV-1, Change 4 — Occupancy Requirements of Subsidized Multifamily Housing Programs',
-    url: 'https://www.hud.gov/hudclips/handbooks/housing-4350-3',
-    date: '2013-11',
-  },
-  {
-    label: 'EPI Family Budget Calculator — methodology',
-    url: 'https://www.epi.org/resources/budget/budget-factsheets/',
-    date: '2024',
-  },
-  {
-    label: 'Zillow Rent by Bedroom Count',
-    url: 'https://www.zillow.com/research/data/',
-    date: '2025',
-  },
+  SOURCES['hud-handbook-4350-3'],
+  SOURCES['epi-family-budget-calculator'],
+  SOURCES['zillow-rent-by-bedroom'],
 ];
 
 export const STATE_DEFAULT_SOURCES: readonly Source[] = [
-  {
-    label: 'HUD Fair Market Rents (FY2026)',
-    url: 'https://www.huduser.gov/portal/datasets/fmr.html',
-    date: '2025',
-  },
-  {
-    label: 'BLS Consumer Expenditure Survey — regional',
-    url: 'https://www.bls.gov/cex/tables.htm',
-    date: '2025',
-  },
-  {
-    label: 'EIA Residential Energy Consumption',
-    url: 'https://www.eia.gov/consumption/residential/',
-    date: '2025',
-  },
-  {
-    label: 'Child Care Aware — Price of Care',
-    url: 'https://www.childcareaware.org/state-fact-sheets/',
-    date: '2025',
-  },
-  {
-    label: 'KFF Employer Health Benefits — state averages',
-    url: 'https://www.kff.org/health-costs/report/employer-health-benefits-annual-survey/',
-    date: '2025',
-  },
-  {
-    label: 'AAA Your Driving Costs',
-    url: 'https://newsroom.aaa.com/auto/your-driving-costs/',
-    date: '2025',
-  },
+  SOURCES['hud-fair-market-rents'],
+  SOURCES['bls-cex-regional'],
+  SOURCES['eia-residential'],
+  SOURCES['child-care-aware'],
+  SOURCES['kff-employer-health-benefits'],
+  SOURCES['aaa-driving-costs'],
 ];
 
 /**

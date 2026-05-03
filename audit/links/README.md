@@ -4,7 +4,7 @@ Reproducible audit of every external URL cited from the codebase — does it sti
 
 ## How it works
 
-1. **`check.sh`** extracts every `http(s)://` URL from source files (`.ts`, `.tsx`, `.md`, `.json`, `.html`, `.svg`) excluding build artifacts, hits each with curl, and writes a dated TSV to `results/`.
+1. **`check.sh`** extracts every `http(s)://` URL from [`src/data/sources.ts`](../../src/data/sources.ts) — the citation registry — hits each with curl, and writes a dated TSV to `results/`. Other URLs in the codebase (font CDN preconnects, repo links, build artifacts) aren't checked: only declared citations are auditable, by design.
 2. **`reviewed.tsv`** is a hand-maintained log of human reviews — one row per URL where a person has actually opened the link and confirmed the destination still cites what we claim. The script joins these into the output.
 3. **`results/<date>.tsv`** captures the union: machine status (does it load?) + human review state (did someone verify the content?).
 
