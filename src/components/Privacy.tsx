@@ -48,6 +48,9 @@ export function Privacy({ onBack }: { onBack: () => void }) {
         <NoEmbeds />
         <ChildrensPrivacy />
         <NoDataToReturn />
+        <NoAITraining />
+        <SiteShutdown />
+        <OpenSource />
         <SecurityDisclosure />
         <FuturePromise />
         <Contact />
@@ -552,6 +555,61 @@ function NoDataToReturn() {
         to access, correct, port, or delete your data is one we can honor immediately and trivially
         — by confirming there is nothing to act on. If you'd still like that confirmation in
         writing, ask using the contact below.
+      </p>
+    </section>
+  );
+}
+
+function NoAITraining() {
+  return (
+    <section style={{ marginBottom: 40 }}>
+      <SectionTitle kicker="AI training">Your activity isn't fed to AI models</SectionTitle>
+      <p style={proseStyle}>
+        We don't license, sell, share, or otherwise hand your activity on this site to anyone — AI
+        training pipelines included. Because nothing about your visit is collected in the first
+        place (see the analytics section above for the one narrow exception, which is cookieless
+        aggregate page-view data), there is nothing to license, even if a request came in.
+      </p>
+      <p style={proseStyle}>
+        The site itself does not call any AI APIs at runtime. The model that produces a budget is
+        plain TypeScript running in your browser; no LLM, no external inference service, no
+        prompt-with-your-data anywhere in the stack.
+      </p>
+    </section>
+  );
+}
+
+function SiteShutdown() {
+  return (
+    <section style={{ marginBottom: 40 }}>
+      <SectionTitle kicker="If the site goes away">Nothing of yours persists</SectionTitle>
+      <p style={proseStyle}>
+        If The Budget Atlas ever goes offline — domain expires, hosting changes, project winds down
+        — nothing about you persists anywhere, because nothing about you was ever stored. There is
+        no database to migrate, no user list to back up, no archive to leak. Closing the tab is
+        already the most complete deletion.
+      </p>
+    </section>
+  );
+}
+
+function OpenSource() {
+  return (
+    <section style={{ marginBottom: 40 }}>
+      <SectionTitle kicker="Verifiable">Every claim here is checkable</SectionTitle>
+      <p style={proseStyle}>
+        The full source code for this site lives at{' '}
+        <a href={GITHUB_URL} target="_blank" rel="noreferrer" style={linkStyle}>
+          github.com/TheBudgetAtlas/thebudgetatlas
+        </a>
+        . You don't have to take our word for any of the claims on this page — clone the repo and
+        grep it. There is no proprietary backend, no closed-source bundle, no hidden analytics layer
+        that the public can't see. The same code that produces the site you're reading is the code
+        in that repo.
+      </p>
+      <p style={proseStyle}>
+        Found something on this page that contradicts what's actually in the codebase? That's a bug,
+        and we'd want to hear about it via the contact below.
       </p>
     </section>
   );
