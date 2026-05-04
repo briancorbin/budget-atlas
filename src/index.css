@@ -10,14 +10,11 @@ body {
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Fraunces SOFT axis: pin to 30 so display type matches the rendering
-   * the site has shipped with since day one. (The original Google Fonts
-   * URL specified `SOFT@30..100`, excluding the font's intrinsic default
-   * of 0, so the browser clamped to 30. Self-hosting now ships the full
-   * 0..100 range, where the default falls back to 0 — sharper, slightly
-   * different. This pins it back.) Other fonts ignore unknown axes, so
-   * setting this globally is safe. */
-  font-variation-settings: 'SOFT' 30;
+  /* Make Fraunces use its optical-sizing axis so display headlines render
+   * at opsz~64 (thinner, more elegant) instead of the body-text default
+   * opsz=14 (thicker, denser). `font-optical-sizing: auto` is the modern
+   * default in most browsers but stating it explicitly avoids surprises. */
+  font-optical-sizing: auto;
 }
 
 body {
