@@ -360,3 +360,15 @@ state-snap-ks	2026-05-03	briancorbin	human	dcf.ks.gov is genuinely unreachable f
 
 # 2026-05-04: MN SNAP correction — partial revert of batch 1 fix.
 state-snap-mn	2026-05-04	briancorbin	ai	Correction to earlier batch 1 fix. The original URL had a wrong slug ("...supplemental-nutrition-program.jsp" instead of "...supplemental-nutrition-assistance-program.jsp") which made it 404. Batch 1 fixed both the slug AND changed the domain from mn.gov/dhs to dhs.state.mn.us — but dhs.state.mn.us isn't reachable. The slug fix alone was correct; reverting the domain back to mn.gov/dhs while keeping the corrected slug. Verified via WebFetch: page loads at mn.gov/dhs/.../supplemental-nutrition-assistance-program.jsp.
+
+# 2026-05-04: KS state-network outage — independently verified.
+# Brian + a separate human (different network) both confirmed they can't
+# reach any KS state subdomain from regular browsers. Not an audit-tool
+# bot-block; the entire KS state web infrastructure appears to be down
+# (server outage / DNS misconfiguration / firewall / certificate issue —
+# unclear from outside). URLs kept as-is so the audit keeps surfacing
+# them; these rows record that the unreachability has been investigated
+# and reproduced manually, not silently accepted.
+state-dor-ks	2026-05-04	briancorbin	human	ksrevenue.gov is unreachable from regular browsers (verified by Brian + an independent second user on a different network) — not an audit-UA bot-block. Same KS state-network outage that's affecting dcf.ks.gov / kancare.ks.gov. URL unchanged; will revisit when KS publishes a working endpoint.
+state-medicaid-ks	2026-05-04	briancorbin	human	kancare.ks.gov is unreachable from regular browsers (verified by Brian + an independent second user on a different network) — not an audit-UA bot-block. Same KS state-network outage. URL unchanged.
+state-chip-ks	2026-05-04	briancorbin	human	kancare.ks.gov is unreachable from regular browsers (verified by Brian + an independent second user on a different network) — not an audit-UA bot-block. Same KS state-network outage. KS bundles CHIP under KanCare alongside Medicaid, so same target URL as state-medicaid-ks. URL unchanged.
