@@ -19,7 +19,10 @@ export const theme = {
 } as const;
 
 export const fonts = {
-  display: 'Fraunces, ui-serif, Georgia, serif',
+  // "Fraunces Variable" is the family name shipped by @fontsource-variable/fraunces
+  // (full.css axes: opsz + wght + SOFT, matching the original Google Fonts request).
+  // "Fraunces" kept as fallback in case a user already has the static face installed.
+  display: '"Fraunces Variable", Fraunces, ui-serif, Georgia, serif',
   body: '"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif',
   mono: '"IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace',
 } as const;

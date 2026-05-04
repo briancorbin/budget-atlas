@@ -3,10 +3,13 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 
 // Self-hosted fonts via @fontsource — no Google Fonts CDN.
-// Fraunces (display): variable font covers all weights + opsz axis we use.
-// IBM Plex Sans (body): weights 300 / 400 / 500 / 600.
+// Fraunces (display): variable font with full opsz + wght + SOFT axes
+//   (matches the original Google Fonts request); italic face included so
+//   the masthead's italic h1 renders correctly.
+// IBM Plex Sans (body): weights 300 / 400 / 500 / 600 + 400-italic.
 // IBM Plex Mono (mono): weights 300 / 400 / 500.
-import '@fontsource-variable/fraunces/index.css';
+import '@fontsource-variable/fraunces/full.css';
+import '@fontsource-variable/fraunces/full-italic.css';
 import '@fontsource/ibm-plex-sans/300.css';
 import '@fontsource/ibm-plex-sans/400.css';
 import '@fontsource/ibm-plex-sans/500.css';
