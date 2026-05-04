@@ -208,7 +208,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Add an "I own" toggle that swaps rent for full PITI plus HOA and a 1%/yr maintenance reserve. State-specific property tax (TX ~1.6%, NJ ~2.2%, HI ~0.3%). Owning often looks cheaper monthly until you net out maintenance and the down-payment opportunity cost.',
   },
   {
-    id: 22,
+    id: 126,
     title: 'Guided assistance for applying to benefit programs',
     category: 'Benefits & safety net',
     status: 'planned',
