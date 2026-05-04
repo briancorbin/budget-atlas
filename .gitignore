@@ -56,3 +56,7 @@ Thumbs.db
 # Claude Code local settings & scratch
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+# Parallel-session worktrees that Claude Code creates ad hoc — not part
+# of the main repo and shouldn't be committed (git treats nested clones
+# as submodules by default).
+.claude/worktrees/

@@ -17,7 +17,7 @@ import prettierConfig from 'eslint-config-prettier';
 export default tseslint.config(
   // Ignore generated and vendored output. Everything else is fair game.
   {
-    ignores: ['dist/**', 'build/**', 'node_modules/**', '.vite/**'],
+    ignores: ['dist/**', 'build/**', 'node_modules/**', '.vite/**', '.claude/**'],
   },
 
   // Base JS recommendations.

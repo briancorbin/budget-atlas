@@ -974,7 +974,7 @@ const RAW_STATE_SNAP_AGENCY: Record<StateCode, SourceLiteral> = {
   },
   NY: {
     label: 'NY OTDA SNAP',
-    url: 'https://otda.ny.gov/programs/snap/',
+    url: 'https://www.ny.gov/services/apply-snap',
     date: '2026',
     tier: 'primary',
     addedBy: 'briancorbin',
@@ -1284,7 +1284,7 @@ const RAW_STATE_MEDICAID_AGENCY: Record<StateCode, SourceLiteral> = {
   },
   LA: {
     label: 'LA Medicaid',
-    url: 'https://www.medicaid.la.gov/',
+    url: 'https://ldh.la.gov/medicaid',
     date: '2026',
     tier: 'primary',
     addedBy: 'briancorbin',
@@ -1570,7 +1570,7 @@ export const STATE_MEDICAID_AGENCY: Record<StateCode, Source> = withStateIds(
 const RAW_STATE_CHIP_AGENCY: Record<StateCode, SourceLiteral> = {
   AL: {
     label: 'ALL Kids (AL CHIP)',
-    url: 'https://www.allkids.org/',
+    url: 'https://www.alabamapublichealth.gov/allkids/index.html',
     date: '2026',
     tier: 'primary',
     addedBy: 'briancorbin',
@@ -1866,7 +1866,7 @@ const RAW_STATE_CHIP_AGENCY: Record<StateCode, SourceLiteral> = {
   },
   PA: {
     label: 'PA CHIP',
-    url: 'https://www.chipcoverspakids.com/',
+    url: 'https://www.pa.gov/agencies/dhs/resources/chip.html',
     date: '2026',
     tier: 'primary',
     addedBy: 'briancorbin',
@@ -1898,7 +1898,7 @@ const RAW_STATE_CHIP_AGENCY: Record<StateCode, SourceLiteral> = {
   },
   TN: {
     label: 'CoverKids',
-    url: 'https://www.tn.gov/tenncare/members-applicants/coverkids.html',
+    url: 'https://www.tn.gov/tenncare/members-applicants/learn-more-apply/redirect-coverkids.html',
     date: '2026',
     tier: 'primary',
     addedBy: 'briancorbin',

@@ -198,7 +198,10 @@ for (const [id, { url, label, tier, addedBy, addedAt }] of sourceMeta) {
 }
 
 // Sort: broken first, then unreviewed-and-loading, then reviewed.
-const isBroken = (r) => /^(?:404|000|ERR|999)$/.test(r.code);
+// 999 excluded — it's an anti-bot status code (LinkedIn-style refusal)
+// not a real broken page. Categorised under bot-blocked alongside 403,
+// matching the status-code table in audit/links/README.md.
+const isBroken = (r) => /^(?:404|000|ERR)$/.test(r.code);
 const isLoaded = (r) => /^2\d\d|3\d\d$/.test(r.code);
 const sortKey = (r) => {
   if (isBroken(r)) return 0;
@@ -234,7 +237,7 @@ const counts = {
   loaded: rows.filter(isLoaded).length,
   reviewedHuman: rows.filter((r) => r.reviewedAt && r.reviewedKind !== 'ai').length,
   reviewedAi: rows.filter((r) => r.reviewedAt && r.reviewedKind === 'ai').length,
-  botBlocked: rows.filter((r) => r.code === '403').length,
+  botBlocked: rows.filter((r) => r.code === '403' || r.code === '999').length,
 };
 
 const lines = [];
@@ -252,7 +255,7 @@ lines.push('| --- | ---: |');
 lines.push(`| Total cited sources | ${counts.total} |`);
 lines.push(`| 🟢 Loaded (\`200\`/\`3xx\`) | ${counts.loaded} |`);
 lines.push(`| 🔴 Broken (\`404\`/errors) | ${counts.broken} |`);
-lines.push(`| 🔵 Bot-blocked (\`403\`) | ${counts.botBlocked} |`);
+lines.push(`| 🔵 Bot-blocked (\`403\`/\`999\`) | ${counts.botBlocked} |`);
 lines.push(`| ✅ Reviewed (human) | ${counts.reviewedHuman} |`);
 lines.push(`| 🤖 Reviewed (AI) | ${counts.reviewedAi} |`);
 lines.push('');

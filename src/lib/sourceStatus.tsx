@@ -75,7 +75,12 @@ function normaliseKind(raw: string): ReviewKind {
 }
 
 /** Status codes that classify a citation as broken in the UI + audit issue. */
-export const BROKEN_STATUS_CODES = new Set(['404', '000', '000ERR', 'ERR', '999']);
+// 999 is excluded — it's an anti-bot signal (LinkedIn, several state .gov
+// sites use it to refuse automated traffic). The page is usually fine in a
+// real browser, so categorising it as "broken" produces false positives in
+// the count. It belongs alongside 403 in the bot-blocked bucket. Matches
+// the status-code interpretation table in audit/links/README.md.
+export const BROKEN_STATUS_CODES = new Set(['404', '000', '000ERR', 'ERR']);
 
 export function isBrokenStatus(status: string | undefined): boolean {
   if (!status) return false;
