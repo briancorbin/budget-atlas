@@ -365,9 +365,53 @@ function HostingNote() {
         Cloudflare retains them according to their own retention windows.
       </p>
       <p style={proseStyle}>
-        We have <strong style={{ color: T.ink }}>not</strong> enabled any other Cloudflare product
-        analytics — no Cloudflare Insights, no Real User Monitoring beyond the cookieless Web
-        Analytics described above, no advertising or audience tooling.
+        We have <strong style={{ color: T.ink }}>not</strong> enabled any other Cloudflare
+        observability or audience product. Specifically:
+      </p>
+      <ul
+        style={{
+          ...proseStyle,
+          paddingLeft: 24,
+          marginBottom: 16,
+        }}
+      >
+        <li style={{ marginBottom: 6 }}>
+          No{' '}
+          <a
+            href="https://developers.cloudflare.com/analytics/browser-insights/"
+            target="_blank"
+            rel="noreferrer"
+            style={linkStyle}
+          >
+            Browser Insights
+          </a>{' '}
+          (Cloudflare's older auto-injected page-timing beacon, now mostly folded into Web
+          Analytics).
+        </li>
+        <li style={{ marginBottom: 6 }}>
+          No{' '}
+          <a
+            href="https://developers.cloudflare.com/rum/"
+            target="_blank"
+            rel="noreferrer"
+            style={linkStyle}
+          >
+            Real User Monitoring (RUM)
+          </a>{' '}
+          beyond the cookieless Web Analytics described above.
+        </li>
+        <li style={{ marginBottom: 6 }}>
+          No advertising, audience-targeting, or marketing-attribution tooling from Cloudflare or
+          anyone else.
+        </li>
+      </ul>
+      <p style={proseStyle}>
+        You can verify this yourself: open <code>thebudgetatlas.com</code> in your browser, open
+        DevTools → Network tab, filter by <code>cloudflare</code>, and reload. The only third-party
+        request the page makes is the Web Analytics beacon at{' '}
+        <code>static.cloudflareinsights.com/beacon.min.js</code>. If you see anything else from a
+        Cloudflare hostname, that's a beacon we haven't accounted for and we'd want to hear about
+        it.
       </p>
     </section>
   );
