@@ -116,9 +116,7 @@ if (missing.length === 0) {
   if (added > 0) parts.push(`${added} row(s) appended`);
   if (rotated > 0) parts.push(`${rotated} row(s) rotated to archive`);
   const summary = parts.length ? `; ${parts.join(', ')}` : '';
-  console.log(
-    `✓ All ${baseRows.length} base rows preserved${summary}.${archiveNote}`,
-  );
+  console.log(`✓ All ${baseRows.length} base rows preserved${summary}.${archiveNote}`);
   process.exit(0);
 }
 
