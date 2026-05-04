@@ -253,7 +253,16 @@ function Analytics() {
         >
           here
         </a>
-        ; their privacy commitments for it are{' '}
+        , the exact data-collection and reporting behavior is documented{' '}
+        <a
+          href="https://developers.cloudflare.com/web-analytics/data-metrics/data-origin-and-collection/#data-collection-and-reporting"
+          target="_blank"
+          rel="noreferrer"
+          style={linkStyle}
+        >
+          here
+        </a>
+        , and their privacy commitments for it are{' '}
         <a
           href="https://blog.cloudflare.com/privacy-first-web-analytics/#what-does-privacy-first-mean"
           target="_blank"
