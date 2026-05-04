@@ -365,33 +365,9 @@ function HostingNote() {
         Cloudflare retains them according to their own retention windows.
       </p>
       <p style={proseStyle}>
-        We have <strong style={{ color: T.ink }}>not</strong> enabled any other Cloudflare
-        observability or audience product. Specifically:
+        We have <strong style={{ color: T.ink }}>not</strong> enabled any advertising,
+        audience-targeting, or marketing-attribution tooling — from Cloudflare or anyone else.
       </p>
-      <ul
-        style={{
-          ...proseStyle,
-          paddingLeft: 24,
-          marginBottom: 16,
-        }}
-      >
-        <li style={{ marginBottom: 6 }}>
-          No{' '}
-          <a
-            href="https://developers.cloudflare.com/speed/observatory/rum-beacon/"
-            target="_blank"
-            rel="noreferrer"
-            style={linkStyle}
-          >
-            Real User Monitoring (RUM)
-          </a>{' '}
-          beyond the cookieless Web Analytics described above.
-        </li>
-        <li style={{ marginBottom: 6 }}>
-          No advertising, audience-targeting, or marketing-attribution tooling from Cloudflare or
-          anyone else.
-        </li>
-      </ul>
       <p style={proseStyle}>
         You can verify this yourself: open <code>thebudgetatlas.com</code> in your browser, open
         DevTools → Network tab, filter by <code>cloudflare</code>, and reload. The only third-party
