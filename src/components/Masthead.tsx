@@ -167,7 +167,7 @@ export function Masthead() {
           fontWeight: 500,
         }}
       >
-        Static site · No accounts · No tracking · No data leaves your browser ·{' '}
+        Static site · No accounts · No personal data · Cookieless aggregate analytics ·{' '}
         <a
           href="/privacy"
           onClick={(e) => {

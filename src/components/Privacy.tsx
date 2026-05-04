@@ -38,7 +38,7 @@ export function Privacy({ onBack }: { onBack: () => void }) {
         <Header onBack={onBack} />
         <Intro />
         <NoBackend />
-        <NoTracking />
+        <Analytics />
         <NoCookiesNoStorage />
         <ExternalLinks />
         <HostingNote />
@@ -114,13 +114,18 @@ function Intro() {
         Privacy, in one page.
       </h1>
       <p style={proseStyle}>
-        The short version: <strong style={{ color: T.ink }}>this is a static website</strong>. There
-        is no backend, no database, no analytics, no accounts, no forms, no cookies, no tracking.
-        Nothing you input — your income, location, household — is ever sent anywhere.
+        The short version: <strong style={{ color: T.ink }}>this is a static website</strong>. No
+        backend, no database, no accounts, no forms, no cookies. Nothing you input — your income,
+        location, household — is ever sent anywhere.
       </p>
       <p style={proseStyle}>
-        The longer version is below. If anything here ever changes, this page changes first and
-        we'll make it loud and clear.
+        We do run one piece of aggregate, cookieless analytics (Cloudflare Web Analytics) so we know
+        roughly how many people are using the site and whether it's loading well. It does not track
+        you, fingerprint you, see your inputs, or follow you across sites. The exact details — what
+        it collects, what it doesn't, and how to verify or block it — are below.
+      </p>
+      <p style={proseStyle}>
+        If anything here ever changes, this page changes first and we'll make it loud and clear.
       </p>
     </section>
   );
@@ -134,7 +139,7 @@ function NoBackend() {
         The Budget Atlas runs entirely in your browser. The site is built as a static bundle (HTML,
         CSS, JavaScript) and served from{' '}
         <a
-          href="https://www.cloudflare.com/web-analytics/"
+          href="https://workers.cloudflare.com/"
           target="_blank"
           rel="noreferrer"
           style={linkStyle}
@@ -152,32 +157,130 @@ function NoBackend() {
   );
 }
 
-function NoTracking() {
+function Analytics() {
+  const cellStyle = {
+    padding: '8px 12px',
+    fontSize: rem(14),
+    borderBottom: `1px solid ${T.border}`,
+    verticalAlign: 'top' as const,
+  };
+  const headStyle = {
+    ...cellStyle,
+    fontWeight: 600,
+    color: T.inkMuted,
+    fontSize: rem(11),
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase' as const,
+    borderBottom: `2px solid ${T.ink}`,
+  };
   return (
     <section style={{ marginBottom: 40 }}>
-      <SectionTitle kicker="What we don't do">No analytics, no tracking</SectionTitle>
-      <p style={proseStyle}>We do not run any of the following:</p>
-      <ul
+      <SectionTitle kicker="What we run">Aggregate analytics, no personal data</SectionTitle>
+      <p style={proseStyle}>
+        We use{' '}
+        <a
+          href="https://www.cloudflare.com/web-analytics/"
+          target="_blank"
+          rel="noreferrer"
+          style={linkStyle}
+        >
+          Cloudflare Web Analytics
+        </a>{' '}
+        — a cookieless, privacy-first analytics tool — so we can see roughly how many people are
+        using the site and whether it's loading well. It is the lightest-touch product-analytics
+        option we know of short of running nothing.
+      </p>
+      <p style={proseStyle}>Here's what it does and doesn't do, in plain language:</p>
+      <table
         style={{
-          ...proseStyle,
-          paddingLeft: 24,
+          width: '100%',
+          maxWidth: 680,
+          borderCollapse: 'collapse',
+          fontFamily: fonts.body,
           marginBottom: 16,
         }}
       >
-        <li style={{ marginBottom: 6 }}>
-          Google Analytics, Plausible, Mixpanel, Amplitude, Segment, PostHog, Hotjar, Fathom, Heap,
-          FullStory, or any other product-analytics tool.
-        </li>
-        <li style={{ marginBottom: 6 }}>Session replay, heatmap, or scroll-tracking tools.</li>
-        <li style={{ marginBottom: 6 }}>A/B testing or feature-flagging services.</li>
-        <li style={{ marginBottom: 6 }}>
-          Tag managers, pixels, or third-party advertising scripts.
-        </li>
-        <li style={{ marginBottom: 6 }}>Custom telemetry or "phone-home" requests of our own.</li>
-      </ul>
+        <thead>
+          <tr>
+            <th style={{ ...headStyle, textAlign: 'left', width: '50%' }}>What it collects</th>
+            <th style={{ ...headStyle, textAlign: 'left' }}>What it does NOT collect</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style={cellStyle}>
+              URL path of pages viewed (e.g. <code>/sources</code>)
+            </td>
+            <td style={cellStyle}>
+              Your IP address (stripped at the Cloudflare edge before logging)
+            </td>
+          </tr>
+          <tr>
+            <td style={cellStyle}>Referrer (the previous URL, if any)</td>
+            <td style={cellStyle}>Cookies — none are set</td>
+          </tr>
+          <tr>
+            <td style={cellStyle}>Browser + OS (e.g. "Chrome 124 on macOS")</td>
+            <td style={cellStyle}>
+              Personal identifiers, account data, email — none exist on this site
+            </td>
+          </tr>
+          <tr>
+            <td style={cellStyle}>Country, derived from IP then discarded</td>
+            <td style={cellStyle}>Precise geolocation — only country-level</td>
+          </tr>
+          <tr>
+            <td style={cellStyle}>Screen size bucket (e.g. "desktop"/"mobile")</td>
+            <td style={cellStyle}>Canvas, audio, font, or other browser fingerprinting</td>
+          </tr>
+          <tr>
+            <td style={cellStyle}>Page-load performance (Core Web Vitals: LCP, INP, CLS)</td>
+            <td style={cellStyle}>Anything you type — incomes, locations, household details</td>
+          </tr>
+          <tr>
+            <td style={cellStyle}>A short-lived (~30 min) random token for visit deduplication</td>
+            <td style={cellStyle}>Cross-site tracking — the token doesn't persist or follow you</td>
+          </tr>
+        </tbody>
+      </table>
       <p style={proseStyle}>
-        We don't know how many people visit, what city you picked, what scenario you ran, or whether
-        you came back. By design.
+        Cloudflare's documentation on the product is{' '}
+        <a
+          href="https://developers.cloudflare.com/web-analytics/"
+          target="_blank"
+          rel="noreferrer"
+          style={linkStyle}
+        >
+          here
+        </a>
+        ; their privacy commitments for it are{' '}
+        <a
+          href="https://blog.cloudflare.com/privacy-first-web-analytics/"
+          target="_blank"
+          rel="noreferrer"
+          style={linkStyle}
+        >
+          documented publicly
+        </a>
+        .
+      </p>
+      <p style={proseStyle}>
+        <strong style={{ color: T.ink }}>Verifying or blocking it.</strong> The analytics beacon is
+        a script loaded from <code>static.cloudflareinsights.com/beacon.min.js</code>. You can
+        confirm it's the only third-party request the page makes by opening your browser's DevTools
+        → Network tab. If you'd rather it didn't load, blocking that hostname in any ad-blocker,
+        uBlock Origin, or your <code>/etc/hosts</code> file disables it cleanly with no impact on
+        the rest of the site.
+      </p>
+      <p style={proseStyle}>
+        <strong style={{ color: T.ink }}>What we don't run:</strong> Google Analytics, Plausible,
+        Mixpanel, Amplitude, Segment, PostHog, Hotjar, Fathom, Heap, FullStory, session replay,
+        heatmaps, A/B testing, tag managers, pixels, advertising scripts, or any custom telemetry of
+        our own. The code that runs this site is open source and{' '}
+        <a href={`${GITHUB_URL}`} target="_blank" rel="noreferrer" style={linkStyle}>
+          on GitHub
+        </a>{' '}
+        — you can grep it yourself.
       </p>
     </section>
   );
@@ -238,8 +341,9 @@ function HostingNote() {
     <section style={{ marginBottom: 40 }}>
       <SectionTitle kicker="Hosting">A note about Cloudflare</SectionTitle>
       <p style={proseStyle}>
-        The site is hosted on Cloudflare Workers. As an edge host, Cloudflare may log requests (IP,
-        timestamp, URL path, user-agent) for operational and abuse-prevention purposes per their{' '}
+        The site is hosted on Cloudflare Workers and uses Cloudflare Web Analytics (covered in
+        detail above). Beyond those two, Cloudflare also retains operational edge logs (IP address,
+        timestamp, URL path, user-agent) for abuse-prevention and reliability per their{' '}
         <a
           href="https://www.cloudflare.com/privacypolicy/"
           target="_blank"
@@ -248,12 +352,13 @@ function HostingNote() {
         >
           standard privacy policy
         </a>
-        . We don't ingest, query, or use those logs. Cloudflare retains them according to their own
-        retention windows, not ours.
+        . Those edge logs are Cloudflare's, not ours — we don't ingest, query, or use them.
+        Cloudflare retains them according to their own retention windows.
       </p>
       <p style={proseStyle}>
-        We do not have Cloudflare Web Analytics, Cloudflare Insights, or any other Cloudflare
-        product analytics enabled.
+        We have <strong style={{ color: T.ink }}>not</strong> enabled any other Cloudflare product
+        analytics — no Cloudflare Insights, no Real User Monitoring beyond the cookieless Web
+        Analytics described above, no advertising or audience tooling.
       </p>
     </section>
   );
