@@ -3,7 +3,7 @@ import { navigate } from '@/lib/nav';
 import { SectionTitle } from './ui';
 
 const GITHUB_URL = 'https://github.com/TheBudgetAtlas/thebudgetatlas';
-const CONTACT_EMAIL = 'brian@thebudgetatlas.com';
+const CONTACT_EMAIL = 'privacy@thebudgetatlas.com';
 
 const proseStyle = {
   fontSize: rem(16),
