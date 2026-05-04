@@ -28,6 +28,14 @@ OUT="$OUTDIR/$DATE.tsv"
 REVIEWS="$DIR/reviewed.tsv"
 mkdir -p "$OUTDIR"
 
+# UA tradeoff documented honestly: the identifying audit UA gets refused
+# by some state-agency sites (false-positive 000ERR / 403 / 999), while
+# browser-spoofing UAs get refused by some federal sites (medicaid.gov,
+# dhs.state.mn.us reject them on TLS handshake). No single UA wins for
+# everyone, so we keep the honest audit identity and accept that a
+# handful of state agencies will produce false-positive failures —
+# those get caught and resolved with kind=human reviewed.tsv rows
+# noting "verified live in browser" rather than fought over via UA games.
 UA="Mozilla/5.0 (compatible; BudgetAtlas-link-audit; +https://github.com/TheBudgetAtlas/thebudgetatlas)"
 
 URLS_FILE=$(mktemp)

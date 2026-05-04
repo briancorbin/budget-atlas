@@ -902,7 +902,7 @@ const RAW_STATE_SNAP_AGENCY: Record<StateCode, SourceLiteral> = {
   },
   MN: {
     label: 'MN DHS SNAP',
-    url: 'https://dhs.state.mn.us/people-we-serve/adults/economic-assistance/food-nutrition/programs-and-services/supplemental-nutrition-assistance-program.jsp',
+    url: 'https://mn.gov/dhs/people-we-serve/adults/economic-assistance/food-nutrition/programs-and-services/supplemental-nutrition-assistance-program.jsp',
     date: '2026',
     tier: 'primary',
     addedBy: 'briancorbin',

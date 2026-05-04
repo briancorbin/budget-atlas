@@ -201,7 +201,12 @@ for (const [id, { url, label, tier, addedBy, addedAt }] of sourceMeta) {
 // 999 excluded — it's an anti-bot status code (LinkedIn-style refusal)
 // not a real broken page. Categorised under bot-blocked alongside 403,
 // matching the status-code table in audit/links/README.md.
-const isBroken = (r) => /^(?:404|000|ERR)$/.test(r.code);
+//
+// Match must align with src/lib/sourceStatus.tsx:BROKEN_STATUS_CODES so
+// the script's count and the /sources page count agree. `000ERR` is the
+// concatenation curl produces when the http_code is 000 (no response)
+// AND the command exits non-zero (network error) — counts as broken.
+const isBroken = (r) => /^(?:404|000|000ERR|ERR)$/.test(r.code);
 const isLoaded = (r) => /^2\d\d|3\d\d$/.test(r.code);
 const sortKey = (r) => {
   if (isBroken(r)) return 0;
