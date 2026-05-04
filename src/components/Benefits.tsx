@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import type { BudgetResult, Source } from '@/types';
 import { theme as T, fonts, rem } from '@/theme';
 import { fmt } from '@/lib/format';
@@ -189,27 +190,46 @@ function Card({
   onToggle: () => void;
 }) {
   const eligible = eligibility.eligible;
+  // Categorically eligible (passes the program's income test) but the
+  // calculated benefit is $0 — most often SNAP under a state's BBCE rule.
+  // The household is on paper qualified for the program, yet receives no
+  // actual aid. This is editorially important — surface it loudly.
+  const phantomEligible = eligible && eligibility.monthlyBenefit === 0;
+  const actionable = eligible && !phantomEligible;
   const handleClick = () => {
-    if (eligible) onToggle();
+    if (actionable) onToggle();
   };
+
+  // Burnt-orange warning palette, used for the phantom-eligible state.
+  // Border + tinted background pull the card out of the row at a glance.
+  const phantomBorderColor = T.warning;
+  const phantomTint = 'rgba(184, 116, 43, 0.06)';
 
   return (
     <div
       role="button"
-      tabIndex={eligible ? 0 : -1}
+      tabIndex={actionable ? 0 : -1}
       onClick={handleClick}
       onKeyDown={(e) => {
-        if (eligible && (e.key === 'Enter' || e.key === ' ')) {
+        if (actionable && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
           onToggle();
         }
       }}
       style={{
         padding: '16px 18px',
-        background: claimed ? T.ink : T.surface,
+        background: claimed
+          ? T.ink
+          : phantomEligible
+            ? phantomTint
+            : T.surface,
         color: claimed ? T.bg : T.ink,
-        border: `1px solid ${claimed ? T.ink : T.border}`,
-        cursor: eligible ? 'pointer' : 'not-allowed',
+        border: claimed
+          ? `1px solid ${T.ink}`
+          : phantomEligible
+            ? `1.5px solid ${phantomBorderColor}`
+            : `1px solid ${T.border}`,
+        cursor: actionable ? 'pointer' : 'not-allowed',
         opacity: eligible ? 1 : 0.55,
         transition: 'all 0.15s',
         position: 'relative',
@@ -238,7 +258,11 @@ function Card({
           <span>{meta.name}</span>
           <CiteGroup sources={sources} />
         </div>
-        <EligibilityBadge eligible={eligible} claimed={claimed} />
+        <EligibilityBadge
+          eligible={eligible}
+          claimed={claimed}
+          phantomEligible={phantomEligible}
+        />
       </div>
 
       <div
@@ -274,21 +298,14 @@ function Card({
             {meta.appliesTo}
           </div>
         </>
-      ) : eligible ? (
+      ) : phantomEligible ? (
         // Categorically eligible (passes the program's income test) but the
         // calculated benefit phases to $0 — most often SNAP under a state's
-        // BBCE rule, where the household qualifies on gross income but
-        // 30% of net income exceeds the maximum benefit. Render this as
-        // an explanation, not "~$0/mo", which reads as a bug.
-        <div
-          style={{
-            fontSize: rem(12),
-            color: claimed ? T.bgAlt : T.inkMuted,
-            lineHeight: 1.5,
-          }}
-        >
-          Eligible, but the calculated benefit phases to $0 at this income.
-        </div>
+        // BBCE rule. The household is "on the rolls" yet receives no actual
+        // aid. The badge already says "Eligible · $0"; here we surface the
+        // editorial framing as a click-to-reveal popover so the card stays
+        // compact, with a short tag visible by default.
+        <PhantomEligibilityNote programName={meta.name} claimed={claimed} />
       ) : (
         <div style={{ fontSize: rem(12), color: T.inkMuted, lineHeight: 1.5 }}>
           {eligibility.reason}
@@ -314,7 +331,15 @@ function Card({
   );
 }
 
-function EligibilityBadge({ eligible, claimed }: { eligible: boolean; claimed: boolean }) {
+function EligibilityBadge({
+  eligible,
+  claimed,
+  phantomEligible,
+}: {
+  eligible: boolean;
+  claimed: boolean;
+  phantomEligible: boolean;
+}) {
   if (claimed) {
     return (
       <span
@@ -332,6 +357,26 @@ function EligibilityBadge({ eligible, claimed }: { eligible: boolean; claimed: b
         }}
       >
         ✓ Claimed
+      </span>
+    );
+  }
+  if (phantomEligible) {
+    return (
+      <span
+        style={{
+          fontSize: rem(10),
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: T.bg,
+          background: T.warning,
+          padding: '2px 6px',
+          borderRadius: 2,
+          fontFamily: fonts.body,
+          fontWeight: 700,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Eligible · $0
       </span>
     );
   }
@@ -366,5 +411,94 @@ function EligibilityBadge({ eligible, claimed }: { eligible: boolean; claimed: b
     >
       Not eligible
     </span>
+  );
+}
+
+/**
+ * Click-to-reveal explanation for the phantom-eligibility state. The
+ * trigger reads "Phantom eligibility" with a dotted underline (matching
+ * the citation-popover affordance pattern); clicking opens a small
+ * floating panel beneath it with the editorial explanation. Click outside
+ * or press Escape to dismiss. e.stopPropagation prevents the click from
+ * bubbling to the card-level role=button handler.
+ */
+function PhantomEligibilityNote({
+  programName,
+  claimed,
+}: {
+  programName: string;
+  claimed: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((o) => !o);
+        }}
+        aria-expanded={open}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+          fontFamily: fonts.body,
+          fontSize: rem(12),
+          fontWeight: 600,
+          color: claimed ? T.bg : T.warning,
+          textDecoration: 'underline',
+          textDecorationStyle: 'dotted',
+          textUnderlineOffset: 3,
+          letterSpacing: '0.02em',
+        }}
+      >
+        Phantom eligibility
+      </button>
+      {open && (
+        <div
+          role="dialog"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            left: 0,
+            zIndex: 5,
+            width: 280,
+            padding: '10px 12px',
+            background: T.surface,
+            border: `1px solid ${T.warning}`,
+            borderRadius: 4,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+            fontSize: rem(12),
+            lineHeight: 1.5,
+            color: T.ink,
+            fontStyle: 'normal',
+          }}
+        >
+          On paper this household qualifies for {programName} — but the
+          calculated benefit phases to $0 once 30% of net income exceeds
+          the maximum benefit. Eligibility without aid.
+        </div>
+      )}
+    </div>
   );
 }

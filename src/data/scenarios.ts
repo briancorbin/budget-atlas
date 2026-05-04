@@ -44,6 +44,17 @@ export const SCENARIOS: Scenario[] = [
     takeaway: 'Net federal tax goes negative — refundable credits exceed withholding',
   },
   {
+    id: 'admin_cmh_bbce',
+    label: 'Office admin · single mom of 2 · Columbus',
+    income: 46000,
+    filing: 'head',
+    city: 'cmh',
+    kids: 2,
+    lifestyle: 'moderate',
+    takeaway:
+      "Eligible for SNAP under Ohio's 185% BBCE rule — but the calculated benefit phases to $0",
+  },
+  {
     id: 'cohab_bk',
     label: 'Cohabitating creatives · 2 incomes · Brooklyn',
     income: 78000,
