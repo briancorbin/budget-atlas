@@ -10,6 +10,11 @@ body {
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Make Fraunces use its optical-sizing axis so display headlines render
+   * at opsz~64 (thinner, more elegant) instead of the body-text default
+   * opsz=14 (thicker, denser). `font-optical-sizing: auto` is the modern
+   * default in most browsers but stating it explicitly avoids surprises. */
+  font-optical-sizing: auto;
 }
 
 body {

@@ -9,13 +9,10 @@
   no neighboring kerning to fight.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
-  <!-- Google Fonts import so browsers viewing this SVG directly render with
-       the right faces. rsvg-convert ignores @import and falls back to
-       system fontconfig (where these fonts are installed locally), so PNG
-       renders remain unaffected. -->
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;1,500&amp;family=IBM+Plex+Mono:wght@400&amp;family=IBM+Plex+Sans:wght@500&amp;display=swap');
-  </style>
+  <!-- No web-font @import: keeping this SVG free of third-party network
+       requests. rsvg-convert uses system fontconfig (locally installed
+       Fraunces / IBM Plex Sans / Mono) for PNG renders. Browsers viewing
+       this SVG source directly will fall back to system fonts. -->
   <!-- Cream bg + thin ink rules top and bottom -->
   <rect width="1200" height="630" fill="#F4EFE3"/>
   <rect x="0" y="0" width="1200" height="6" fill="#1B1815"/>

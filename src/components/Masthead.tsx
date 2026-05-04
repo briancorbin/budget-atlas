@@ -107,6 +107,22 @@ export function Masthead() {
           >
             Roadmap →
           </a>
+          <a
+            href="/privacy"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/privacy');
+            }}
+            style={{
+              color: T.accent,
+              textDecoration: 'none',
+              fontWeight: 600,
+              borderBottom: `1px solid ${T.border}`,
+              paddingBottom: 1,
+            }}
+          >
+            Privacy →
+          </a>
         </nav>
       </div>
       <h1
@@ -140,6 +156,34 @@ export function Masthead() {
         Plug in an income, a place, a family. See where the money goes — what's left for the future,
         the trip, the splurge — and the help a household at that income may already qualify for.
         Built on 2026 IRS brackets, state tax data, BLS price indices, and real rents.
+      </div>
+      <div
+        style={{
+          marginTop: 16,
+          fontSize: rem(11),
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: T.inkMuted,
+          fontWeight: 500,
+        }}
+      >
+        Static site · No accounts · No personal data · Cookieless aggregate analytics ·{' '}
+        <a
+          href="/privacy"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate('/privacy');
+          }}
+          style={{
+            color: T.accent,
+            textDecoration: 'none',
+            fontWeight: 600,
+            borderBottom: `1px solid ${T.border}`,
+            paddingBottom: 1,
+          }}
+        >
+          Details
+        </a>
       </div>
     </div>
   );

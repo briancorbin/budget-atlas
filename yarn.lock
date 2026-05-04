@@ -284,6 +284,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fontsource-variable/fraunces@npm:^5.2.9":
+  version: 5.2.9
+  resolution: "@fontsource-variable/fraunces@npm:5.2.9"
+  checksum: 10c0/c78ee94ceb7e65f40246a64b90419ed30ad09c34c248cb407e75e99877dfd6b75424091b39d3327948f972f28c07e180dfe887c98a680b1a16638726a79e12c6
+  languageName: node
+  linkType: hard
+
+"@fontsource/ibm-plex-mono@npm:^5.2.7":
+  version: 5.2.7
+  resolution: "@fontsource/ibm-plex-mono@npm:5.2.7"
+  checksum: 10c0/b104ae0f8054def5e6edca395f9c41d9a15b17ceeea522573b1ef223311bfa0d8f0fe3e2d3a56ecea59ff3e3ceee571e16d1ee942093bac97a66c3b8a72eaca3
+  languageName: node
+  linkType: hard
+
+"@fontsource/ibm-plex-sans@npm:^5.2.8":
+  version: 5.2.8
+  resolution: "@fontsource/ibm-plex-sans@npm:5.2.8"
+  checksum: 10c0/3cdb45d9dd54f9b4ec0d5912215bbc5ef5a89cea99cc28d46fa5cf6ebee457f94183f42be5994b61b6cdacec0fe67d697b6642678823dc0cc7e7b58180e86211
+  languageName: node
+  linkType: hard
+
 "@humanfs/core@npm:^0.19.2":
   version: 0.19.2
   resolution: "@humanfs/core@npm:0.19.2"
@@ -924,6 +945,9 @@ __metadata:
   resolution: "budget-atlas@workspace:."
   dependencies:
     "@eslint/js": "npm:^10.0.1"
+    "@fontsource-variable/fraunces": "npm:^5.2.9"
+    "@fontsource/ibm-plex-mono": "npm:^5.2.7"
+    "@fontsource/ibm-plex-sans": "npm:^5.2.8"
     "@types/node": "npm:^25.6.0"
     "@types/react": "npm:^19.2.14"
     "@types/react-dom": "npm:^19.2.3"
