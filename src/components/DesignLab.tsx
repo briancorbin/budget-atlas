@@ -13,7 +13,7 @@
  * single page — for now this is the lighter-weight option.
  */
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { theme as T, fonts, rem } from '@/theme';
 import { Cite } from './ui';
 import type { Source } from '@/types';
@@ -24,16 +24,66 @@ import type { ReviewKind } from '@/lib/sourceStatus';
  * build navigation; the main column maps over it to render. Adding a
  * new iteration topic means adding one row + writing one component.
  */
-const LAB_SECTIONS: ReadonlyArray<{
+/**
+ * `status: 'open'` means we're still iterating; the section sorts to the
+ * top of the sidebar. `status: 'decided'` means a choice has shipped and
+ * the section is kept around as a record. `decidedAs` is the short label
+ * of the winning variation, surfaced in the status banner.
+ */
+type LabSectionStatus = 'open' | 'decided';
+interface LabSection {
   readonly id: string;
   readonly nav: string;
   readonly count: number;
   readonly Component: React.ComponentType;
-}> = [
-  { id: 'rows', nav: 'Sources row — kind pill', count: 9, Component: SectionRowVariations },
-  { id: 'summary', nav: 'Summary stats', count: 3, Component: SectionSummaryVariations },
-  { id: 'popover', nav: 'Citation popover', count: 3, Component: SectionPopoverVariations },
-  { id: 'tiers', nav: 'Source tier naming', count: 9, Component: SectionTierNaming },
+  readonly status: LabSectionStatus;
+  readonly decidedAs?: string;
+  readonly decidedNote?: string;
+}
+const LAB_SECTIONS: ReadonlyArray<LabSection> = [
+  {
+    id: 'share',
+    nav: 'Share-link affordance',
+    count: 4,
+    Component: SectionShareAffordance,
+    status: 'open',
+  },
+  {
+    id: 'rows',
+    nav: 'Sources row — kind pill',
+    count: 9,
+    Component: SectionRowVariations,
+    status: 'decided',
+    decidedAs: 'V9 hollow-green indicator',
+    decidedNote: 'Shipped via PR #124.',
+  },
+  {
+    id: 'summary',
+    nav: 'Summary stats',
+    count: 4,
+    Component: SectionSummaryVariations,
+    status: 'decided',
+    decidedAs: 'V4 — Composition (tier) + Status (health × kind)',
+    decidedNote: 'Synthesized from V1–V3 rather than picking one outright.',
+  },
+  {
+    id: 'popover',
+    nav: 'Citation popover',
+    count: 3,
+    Component: SectionPopoverVariations,
+    status: 'decided',
+    decidedAs: 'V3 — kind suffix (H / AI / AI-P) on the date',
+    decidedNote: 'Shipped via PR #119.',
+  },
+  {
+    id: 'tiers',
+    nav: 'Source tier naming',
+    count: 1,
+    Component: SectionTierNaming,
+    status: 'decided',
+    decidedAs: 'Primary / Reference / Commercial · green / slate-blue / gold',
+    decidedNote: 'Shipped via PR #125. Picker preloads to these names; iterate to compare.',
+  },
 ];
 
 export function DesignLab({ onBack }: { onBack: () => void }) {
@@ -77,6 +127,7 @@ export function DesignLab({ onBack }: { onBack: () => void }) {
             }}
           />
           <main style={{ flex: 1, minWidth: 0 }}>
+            <SectionStatusBanner section={current} />
             <current.Component />
           </main>
         </div>
@@ -91,11 +142,13 @@ function initialSection(): string {
 }
 
 /**
- * Sticky sidebar listing every lab section. Click a row to switch the
- * main column to that section — only one section renders at a time so
- * the page stays scoped to whatever iteration topic you're focused on.
+ * Sticky sidebar listing every lab section, grouped into two stacks:
+ * 'Open for discussion' on top (still iterating), 'Decided' below
+ * (shipped, kept as a record). Click a row to switch the main column.
  */
 function Sidebar({ selected, onSelect }: { selected: string; onSelect: (id: string) => void }) {
+  const open = LAB_SECTIONS.filter((s) => s.status === 'open');
+  const decided = LAB_SECTIONS.filter((s) => s.status === 'decided');
   return (
     <nav
       aria-label="Design lab sections"
@@ -108,6 +161,31 @@ function Sidebar({ selected, onSelect }: { selected: string; onSelect: (id: stri
         fontSize: rem(13),
       }}
     >
+      <SidebarGroup heading="Open for discussion" sections={open} selected={selected} onSelect={onSelect} />
+      {decided.length > 0 && (
+        <div style={{ marginTop: 24 }}>
+          <SidebarGroup heading="Decided" sections={decided} selected={selected} onSelect={onSelect} muted />
+        </div>
+      )}
+    </nav>
+  );
+}
+
+function SidebarGroup({
+  heading,
+  sections,
+  selected,
+  onSelect,
+  muted,
+}: {
+  heading: string;
+  sections: ReadonlyArray<LabSection>;
+  selected: string;
+  onSelect: (id: string) => void;
+  muted?: boolean;
+}) {
+  return (
+    <>
       <div
         style={{
           fontSize: rem(10),
@@ -119,10 +197,10 @@ function Sidebar({ selected, onSelect }: { selected: string; onSelect: (id: stri
           paddingLeft: 12,
         }}
       >
-        Sections
+        {heading}
       </div>
       <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-        {LAB_SECTIONS.map((s) => {
+        {sections.map((s) => {
           const isActive = selected === s.id;
           return (
             <li key={s.id}>
@@ -140,7 +218,7 @@ function Sidebar({ selected, onSelect }: { selected: string; onSelect: (id: stri
                   border: 'none',
                   borderLeft: isActive ? `2px solid ${T.accent}` : `2px solid ${T.border}`,
                   background: isActive ? T.bgAlt : 'transparent',
-                  color: isActive ? T.ink : T.inkSoft,
+                  color: isActive ? T.ink : muted ? T.inkMuted : T.inkSoft,
                   fontFamily: 'inherit',
                   fontSize: 'inherit',
                   fontWeight: isActive ? 600 : 400,
@@ -149,7 +227,14 @@ function Sidebar({ selected, onSelect }: { selected: string; onSelect: (id: stri
                   cursor: 'pointer',
                 }}
               >
-                <span>{s.nav}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6 }}>
+                  {s.status === 'decided' && (
+                    <span aria-hidden style={{ color: T.inkMuted, fontSize: rem(10) }}>
+                      ✓
+                    </span>
+                  )}
+                  <span>{s.nav}</span>
+                </span>
                 <span
                   style={{
                     fontFamily: fonts.mono,
@@ -165,7 +250,92 @@ function Sidebar({ selected, onSelect }: { selected: string; onSelect: (id: stri
           );
         })}
       </ul>
-    </nav>
+    </>
+  );
+}
+
+/**
+ * Shown above each section in the main column. Open sections get a soft
+ * "still iterating" banner; decided sections get a green "shipped" banner
+ * with the winning variation surfaced so the lab serves as a permanent
+ * record of what we picked and why.
+ */
+function SectionStatusBanner({ section }: { section: LabSection }) {
+  if (section.status === 'open') {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '8px 14px',
+          marginBottom: 20,
+          background: T.bgAlt,
+          border: `1px dashed ${T.border}`,
+          borderRadius: 4,
+          fontSize: rem(12),
+          color: T.inkSoft,
+          letterSpacing: '0.02em',
+        }}
+      >
+        <span
+          style={{
+            display: 'inline-block',
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            border: `1.5px solid ${T.accent}`,
+            background: 'transparent',
+          }}
+          aria-hidden
+        />
+        <strong style={{ color: T.ink, fontWeight: 600 }}>Open for discussion</strong>
+        <span>· no decision shipped yet</span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '8px 14px',
+        marginBottom: 20,
+        background: 'rgba(45, 80, 22, 0.08)',
+        border: `1px solid rgba(45, 80, 22, 0.4)`,
+        borderRadius: 4,
+        fontSize: rem(12),
+        color: T.inkSoft,
+        letterSpacing: '0.02em',
+        flexWrap: 'wrap',
+      }}
+    >
+      <span
+        style={{
+          display: 'inline-block',
+          width: 8,
+          height: 8,
+          borderRadius: '50%',
+          background: 'rgb(45, 80, 22)',
+        }}
+        aria-hidden
+      />
+      <strong style={{ color: T.ink, fontWeight: 600 }}>Decided</strong>
+      {section.decidedAs && (
+        <>
+          <span>·</span>
+          <span style={{ color: T.ink }}>{section.decidedAs}</span>
+        </>
+      )}
+      {section.decidedNote && (
+        <>
+          <span>·</span>
+          <span>{section.decidedNote}</span>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -337,6 +507,7 @@ function SectionRowVariations() {
       <Variation
         title="V9 — V6 + V8 (hollow ring AND labeled verb)"
         description="Belt-and-suspenders: hollow green ring for AI-only at the dot, plus the explicit 'AI reviewed' / 'Human reviewed' verb in the metadata line. Two reinforcing signals — redundant if you trust either one alone, robust if you don't."
+        decided
       >
         <RowSetV9 />
       </Variation>
@@ -930,10 +1101,17 @@ function SectionSummaryVariations() {
   return (
     <Section
       heading="/sources summary block — kind breakdown"
-      subhead="Variations on how the per-kind counts surface alongside Composition and State."
+      subhead="Variations on how the per-kind counts surface alongside Composition and State. The shipped design (V4) borrows from several of these explorations rather than picking one outright; V1–V3 are kept as a record of the alternatives that informed it."
     >
       <Variation
-        title="V1 — Three rows: Composition / Review kinds / State (current)"
+        title="V4 — Composition (tier) + Status (health × kind), as shipped"
+        description="Two rows: Composition splits the tier mix (Primary / Reference / Commercial); Status splits per-source health by who did the latest review (Human verified / AI verified / Overdue / Broken). Mirrors what /sources renders today."
+        decided
+      >
+        <SummaryV4 />
+      </Variation>
+      <Variation
+        title="V1 — Three rows: Composition / Review kinds / State"
         description="Mirrors Composition's shape. Each row has 4 cells."
       >
         <SummaryV1 />
@@ -951,6 +1129,26 @@ function SectionSummaryVariations() {
         <SummaryV3 />
       </Variation>
     </Section>
+  );
+}
+
+function SummaryV4() {
+  return (
+    <SummaryShell>
+      <StatRow heading="Composition">
+        <Stat label="Total cited" value={229} />
+        <Stat label="Primary" value={92} tone="positive" />
+        <Stat label="Reference" value={123} tone="reference" />
+        <Stat label="Commercial" value={14} tone="commercial" />
+      </StatRow>
+      <Divider />
+      <StatRow heading="Status">
+        <Stat label="Human verified" value={5} tone="positive" />
+        <Stat label="AI verified" value={171} tone="ai" />
+        <Stat label="Overdue" value={53} tone="warning" />
+        <Stat label="Broken" value={0} tone="broken" />
+      </StatRow>
+    </SummaryShell>
   );
 }
 
@@ -1064,7 +1262,7 @@ function SectionPopoverVariations() {
     >
       <Variation
         title="V1 — Live popover from the actual component (uses real REVIEWS data)"
-        description="The current, shipped behavior — kind pill rendered for non-human rows. None of the ALL_SOURCES references in this lab match a real review id, so no kind appears here yet."
+        description="Kind pill rendered for non-human rows. None of the ALL_SOURCES references in this lab match a real review id, so no kind appears here yet."
       >
         <p style={{ fontSize: rem(13), color: T.inkSoft, marginBottom: 12 }}>
           Here is a citation: <Cite source={SYNTHETIC_ROWS[0].source} /> — click it to see the
@@ -1079,7 +1277,8 @@ function SectionPopoverVariations() {
       </Variation>
       <Variation
         title="V3 — Kind as a tiny suffix character (H / AI / AI-P) prefixing the date"
-        description="Maximum compactness; legible at a glance once you learn the codes."
+        description="Maximum compactness; legible at a glance once you learn the codes. Shipped as the production behavior."
+        decided
       >
         <PopoverMockV3 />
       </Variation>
@@ -1190,28 +1389,61 @@ function PopoverMockV3() {
  * picking abstractly.
  */
 const TIER_COLORS = {
-  /** Forest green — Original / Primary tier, the editorial "positive" tone. */
-  green: { bg: 'rgba(45, 80, 22, 0.12)', fg: T.positive },
-  /** Editorial red — the original Reference color. Reads as "warning." */
-  red: { bg: 'rgba(166, 38, 28, 0.10)', fg: T.accent },
-  /** Muted warm brown (inkSoft). Neutral metadata color. */
-  inkSoft: { bg: 'rgba(90, 79, 66, 0.12)', fg: T.inkSoft },
-  /** Olive (chart palette #5C5C2D). Distinctive, editorial. */
-  olive: { bg: 'rgba(92, 92, 45, 0.14)', fg: '#5C5C2D' },
-  /** Warm brown (chart palette #7A4E2A). Slightly richer than inkSoft. */
-  brown: { bg: 'rgba(122, 78, 42, 0.14)', fg: '#7A4E2A' },
-  /** Slate-blue (aiAccent). Currently used for the bottom tier. */
-  slateBlue: { bg: 'rgba(62, 90, 122, 0.16)', fg: T.aiAccent },
-  /** Burnt orange (warning). Currently used for Estimate. */
-  amber: { bg: 'rgba(184, 116, 43, 0.18)', fg: T.warning },
-  /** Teal (chart palette #3A6E6E). Cool, editorial, distinct from slate-blue. */
-  teal: { bg: 'rgba(58, 110, 110, 0.14)', fg: '#3A6E6E' },
-  /** Mauve / wine (chart palette #8A4A6E). Warm, distinctive. */
-  mauve: { bg: 'rgba(138, 74, 110, 0.13)', fg: '#8A4A6E' },
-  /** Warm gray (inkMuted). Even more neutral than inkSoft. */
-  warmGray: { bg: 'rgba(133, 120, 106, 0.14)', fg: T.inkMuted },
-  /** Deep gold — somewhere between olive and amber. Custom shade. */
-  gold: { bg: 'rgba(154, 130, 50, 0.15)', fg: '#7A6628' },
+  green: {
+    bg: 'rgba(45, 80, 22, 0.12)',
+    fg: T.positive,
+    description: 'Forest green — editorial "positive" tone. Reads as authoritative / trusted.',
+  },
+  red: {
+    bg: 'rgba(166, 38, 28, 0.10)',
+    fg: T.accent,
+    description: 'Editorial red — past Reference color. Reads as "warning"; pulls focus.',
+  },
+  inkSoft: {
+    bg: 'rgba(90, 79, 66, 0.12)',
+    fg: T.inkSoft,
+    description: 'Muted warm brown — neutral metadata color, recedes visually.',
+  },
+  olive: {
+    bg: 'rgba(92, 92, 45, 0.14)',
+    fg: '#5C5C2D',
+    description: 'Olive (chart palette #5C5C2D). Distinctive, editorial, slightly rustic.',
+  },
+  brown: {
+    bg: 'rgba(122, 78, 42, 0.14)',
+    fg: '#7A4E2A',
+    description: 'Warm brown (chart palette #7A4E2A). Slightly richer than inkSoft.',
+  },
+  slateBlue: {
+    bg: 'rgba(62, 90, 122, 0.16)',
+    fg: T.aiAccent,
+    description: 'Slate-blue (aiAccent). Cool, supporting tone — also used for AI provenance.',
+  },
+  amber: {
+    bg: 'rgba(184, 116, 43, 0.18)',
+    fg: T.warning,
+    description: 'Burnt orange (warning). Past Estimate color; reads as "caution".',
+  },
+  teal: {
+    bg: 'rgba(58, 110, 110, 0.14)',
+    fg: '#3A6E6E',
+    description: 'Teal (chart palette #3A6E6E). Cool and editorial; distinct from slate-blue.',
+  },
+  mauve: {
+    bg: 'rgba(138, 74, 110, 0.13)',
+    fg: '#8A4A6E',
+    description: 'Mauve / wine (chart palette #8A4A6E). Warm, distinctive, slightly playful.',
+  },
+  warmGray: {
+    bg: 'rgba(133, 120, 106, 0.14)',
+    fg: T.inkMuted,
+    description: 'Warm gray (inkMuted). Even more neutral than inkSoft; nearly background-tier.',
+  },
+  gold: {
+    bg: 'rgba(154, 130, 50, 0.15)',
+    fg: '#7A6628',
+    description: 'Deep gold — between olive and amber. Reads as commercial / aggregated without alarm.',
+  },
 } as const;
 type TierColorKey = keyof typeof TIER_COLORS;
 
@@ -1223,231 +1455,127 @@ type TierColorKey = keyof typeof TIER_COLORS;
  */
 type TierRole = 'tier1' | 'tier2' | 'tier3';
 
-interface TierCandidate {
-  readonly key: string;
-  readonly title: string;
-  readonly description: string;
-  readonly tiers: ReadonlyArray<{
-    readonly label: string;
-    readonly role: TierRole;
-    readonly meaning: string;
-  }>;
-}
+/**
+ * Stable per-role meaning. Whatever name we pick for a tier, what it
+ * represents semantically doesn't change — Primary is the publisher of the
+ * underlying data, Reference is a peer-respected interpretation one step
+ * removed, Commercial/Aggregator-style sources are commercial / crowd-sourced
+ * data products. Captured in one place so the live preview reads coherently
+ * regardless of which name the picker has selected.
+ */
+const TIER_MEANINGS: Record<TierRole, string> = {
+  tier1:
+    'Publisher of the underlying data or rule. Federal agencies + state agencies on their own programs.',
+  tier2:
+    'Peer-respected third-party interpretation, methodology document, or original research-org survey.',
+  tier3:
+    'Commercial or crowd-sourced data product — methodology proprietary or community-driven.',
+};
 
-const TIER_CANDIDATES: readonly TierCandidate[] = [
-  {
-    key: 'current',
-    title: 'A — Current: Original / Reference / Estimate',
-    description:
-      'Status quo. Reference is a catch-all spanning handbooks, surveys, research orgs, commercial aggregators, and state agency portals. Estimate is unused (zero rows). The familiar baseline.',
-    tiers: [
-      { label: 'Original', role: 'tier1', meaning: 'Direct from the agency or data publisher.' },
-      {
-        label: 'Reference',
-        role: 'tier2',
-        meaning:
-          'Everything else — handbooks, surveys, research, commercial aggregators, agency portals.',
-      },
-      {
-        label: 'Estimate',
-        role: 'tier3',
-        meaning: 'Approximations flagged honestly. (Currently unused.)',
-      },
-    ],
-  },
-  {
-    key: 'option-c',
-    title: 'B — Primary / Reference / Aggregator',
-    description:
-      'Domain-fitted. Drops Estimate, narrows Reference to peer-respected interpretation, adds Aggregator as an honest name for commercial / crowd-sourced data products. "Aggregator" is accurate but slightly jargon-y.',
-    tiers: [
-      {
-        label: 'Primary',
-        role: 'tier1',
-        meaning:
-          'Publisher of the underlying data or rule. Includes federal agencies + state agencies on their own programs.',
-      },
-      {
-        label: 'Reference',
-        role: 'tier2',
-        meaning:
-          'Peer-respected third-party interpretation, methodology document, or original research-org survey.',
-      },
-      {
-        label: 'Aggregator',
-        role: 'tier3',
-        meaning:
-          'Commercial or crowd-sourced data product — methodology proprietary or community-driven.',
-      },
-    ],
-  },
-  {
-    key: 'commercial',
-    title: 'B2 — Primary / Reference / Commercial',
-    description:
-      'Same shape as B but the third tier reads as plain English. "Commercial" cleanly covers Zillow / RentCafe / Care.com; mild stretch for Numbeo (free, crowd-sourced — but ad-supported and runs a paid product side, so defensible).',
-    tiers: [
-      {
-        label: 'Primary',
-        role: 'tier1',
-        meaning:
-          'Publisher of the underlying data or rule. Includes federal agencies + state agencies on their own programs.',
-      },
-      {
-        label: 'Reference',
-        role: 'tier2',
-        meaning:
-          'Peer-respected third-party interpretation, methodology document, or original research-org survey.',
-      },
-      {
-        label: 'Commercial',
-        role: 'tier3',
-        meaning:
-          'For-profit data product or commercially-supported community site. Methodology proprietary or self-reported.',
-      },
-    ],
-  },
-  {
-    key: 'industry',
-    title: 'B3 — Primary / Reference / Industry',
-    description:
-      'Same shape as B/B2 but the third tier sidesteps the "is Numbeo really commercial?" debate. "Industry" reads as "from the industry side rather than government/research" — neutral, fits all four (Zillow, RentCafe, Care.com, Numbeo) without exceptions.',
-    tiers: [
-      {
-        label: 'Primary',
-        role: 'tier1',
-        meaning:
-          'Publisher of the underlying data or rule. Includes federal agencies + state agencies on their own programs.',
-      },
-      {
-        label: 'Reference',
-        role: 'tier2',
-        meaning:
-          'Peer-respected third-party interpretation, methodology document, or original research-org survey.',
-      },
-      {
-        label: 'Industry',
-        role: 'tier3',
-        meaning:
-          'Industry-side data product or community site. Methodology proprietary or self-reported, not peer-reviewed.',
-      },
-    ],
-  },
-  {
-    key: 'pst-strict',
-    title: 'C — Primary / Secondary / Tertiary (academic, strict)',
-    description:
-      'Canonical academic taxonomy applied strictly — Primary = produces own data, Secondary = interprets primaries, Tertiary = compiles. Most things end up Primary (~225 / ~3 / ~3). Loses the trust gradient.',
-    tiers: [
-      {
-        label: 'Primary',
-        role: 'tier1',
-        meaning: 'Produces the data themselves. IRS, BLS, KFF surveys, Zillow, Care.com.',
-      },
-      {
-        label: 'Secondary',
-        role: 'tier2',
-        meaning: 'Interprets primary sources. EPI, CBPP, HUD Handbook.',
-      },
-      {
-        label: 'Tertiary',
-        role: 'tier3',
-        meaning: 'Compiles primaries/secondaries. Tax Foundation, NCSL, Numbeo.',
-      },
-    ],
-  },
-  {
-    key: 'trust-explicit',
-    title: 'D — High / Medium / Low trust',
-    description:
-      "Names the dimension explicitly. Pro: instantly clear what the gradient measures. Con: feels survey-rating-y; sounds like we're grading sources rather than describing their relationship to the data.",
-    tiers: [
-      {
-        label: 'High trust',
-        role: 'tier1',
-        meaning: 'Agency / statutory text / publisher of record.',
-      },
-      {
-        label: 'Medium trust',
-        role: 'tier2',
-        meaning: 'Peer-respected research with public methodology.',
-      },
-      {
-        label: 'Low trust',
-        role: 'tier3',
-        meaning: 'Commercial or crowd-sourced — proprietary methodology.',
-      },
-    ],
-  },
-  {
-    key: 'tier-numeric',
-    title: 'E — Tier 1 / Tier 2 / Tier 3',
-    description:
-      'Numeric. Low cognitive load (no vocabulary to learn) but no semantic content either — every reader has to look up what each number means.',
-    tiers: [
-      { label: 'Tier 1', role: 'tier1', meaning: 'Agency / statutory / publisher of record.' },
-      {
-        label: 'Tier 2',
-        role: 'tier2',
-        meaning: 'Peer-respected research / handbook / methodology.',
-      },
-      { label: 'Tier 3', role: 'tier3', meaning: 'Commercial or crowd-sourced aggregator.' },
-    ],
-  },
-  {
-    key: 'role-based',
-    title: 'F — Publisher / Research / Aggregator',
-    description:
-      "Role-based naming. Each tier names the kind of organisation behind the source. 'Publisher' is more specific than 'Primary' (a state DOR is both a Publisher and a Primary); 'Research' captures the middle tier's actual character.",
-    tiers: [
-      {
-        label: 'Publisher',
-        role: 'tier1',
-        meaning: 'Government agency or statutory authority producing the data/rule.',
-      },
-      {
-        label: 'Research',
-        role: 'tier2',
-        meaning: 'Peer-respected research org or methodology document.',
-      },
-      {
-        label: 'Aggregator',
-        role: 'tier3',
-        meaning: 'Commercial or crowd-sourced data product.',
-      },
-    ],
-  },
-  {
-    key: 'sector-based',
-    title: 'G — Government / Research / Commercial',
-    description:
-      "Sector-based naming. Maps cleanly to who produces each tier. Slight downside: KFF is a non-profit research org that happens to publish surveys — does that fit 'Research'? Yes, but worth noting the boundaries can blur.",
-    tiers: [
-      {
-        label: 'Government',
-        role: 'tier1',
-        meaning: 'Federal or state agency / statutory text.',
-      },
-      {
-        label: 'Research',
-        role: 'tier2',
-        meaning: 'Non-profit research org, peer-respected methodology.',
-      },
-      {
-        label: 'Commercial',
-        role: 'tier3',
-        meaning: 'For-profit data products and crowd-sourced sites.',
-      },
-    ],
-  },
-];
+/**
+ * Candidate names for each tier role plus a one-line tradeoff for each.
+ * The picker walks these lists; the description surfaces both as a native
+ * hover title AND as inline help text for whichever option is currently
+ * picked, so the rationale is visible without hovering.
+ */
+interface NameOption {
+  readonly name: string;
+  readonly description: string;
+}
+const TIER_NAME_OPTIONS: Record<TierRole, ReadonlyArray<NameOption>> = {
+  tier1: [
+    {
+      name: 'Primary',
+      description:
+        'Standard term for the source closest to the data — agency / statutory text / publisher of record.',
+    },
+    {
+      name: 'Original',
+      description:
+        'Past terminology. Emphasizes that this tier produces the data themselves.',
+    },
+    {
+      name: 'Source',
+      description: 'Generic but clear — these are the source of the data, not an interpreter.',
+    },
+    {
+      name: 'Authoritative',
+      description: 'Highlights the trust dimension explicitly. Slightly grandiose.',
+    },
+  ],
+  tier2: [
+    {
+      name: 'Reference',
+      description:
+        'Peer-respected third-party interpretation, methodology document, or research-org survey.',
+    },
+    {
+      name: 'Secondary',
+      description: 'Academic taxonomy — interprets primaries. Loses the trust gradient.',
+    },
+    {
+      name: 'Curated',
+      description: 'Emphasizes editorial selection over raw aggregation.',
+    },
+    {
+      name: 'Interpretive',
+      description: 'Names the act of interpreting primary data. Slightly clinical.',
+    },
+  ],
+  tier3: [
+    {
+      name: 'Commercial',
+      description:
+        'Plain English — for-profit data products. Mild stretch for Numbeo (free + ad-supported, paid product side).',
+    },
+    {
+      name: 'Aggregator',
+      description: 'Accurate domain term but slightly jargon-y.',
+    },
+    {
+      name: 'Industry',
+      description:
+        "Sidesteps the 'is Numbeo really commercial?' debate. Neutral; reads as 'industry-side, not government / research.'",
+    },
+    {
+      name: 'Estimate',
+      description: 'Past terminology. Implies approximation; currently unused (zero rows).',
+    },
+    {
+      name: 'Tertiary',
+      description: 'Academic taxonomy. Numeric tier without semantic content.',
+    },
+    {
+      name: 'Vendor',
+      description: 'Names the kind of organization. Slightly transactional.',
+    },
+  ],
+};
+
+/**
+ * What's actually in production today (`tier?: 'primary' | 'reference' |
+ * 'commercial'` in src/types.ts). The picker initializes here; a "Reset to
+ * shipped" button in the picker chrome snaps back to it.
+ */
+const SHIPPED_NAMES: Record<TierRole, string> = {
+  tier1: 'Primary',
+  tier2: 'Reference',
+  tier3: 'Commercial',
+};
+
 
 type RoleColors = Record<TierRole, TierColorKey>;
 
+/**
+ * Defaults match the shipped palette in src/data/sources.ts:
+ * primary = green, reference = slate-blue, commercial = gold. The picker
+ * preloads here so a fresh visit to the lab shows what production looks
+ * like; tweak swatches above to compare alternatives.
+ */
 const DEFAULT_ROLE_COLORS: RoleColors = {
   tier1: 'green',
-  tier2: 'inkSoft',
-  tier3: 'slateBlue',
+  tier2: 'slateBlue',
+  tier3: 'gold',
 };
 
 const ROLE_LABELS: Record<TierRole, string> = {
@@ -1457,33 +1585,261 @@ const ROLE_LABELS: Record<TierRole, string> = {
 };
 
 function SectionTierNaming() {
-  // Picked-color state per role — drives every candidate's rendering. Swap
-  // colors at the top of the section and watch them flow through every
-  // candidate at once. Way faster than hand-editing each candidate object.
+  // Names + colors are picked independently per tier role. The section
+  // renders two cards above the pickers: a static record of what shipped
+  // (always present, marked decided) and a live preview that reflects the
+  // current picker state. The live preview never carries the `decided`
+  // flag — it stays anchored to the right of the shipped card regardless
+  // of whether the picks happen to match shipped, so the layout doesn't
+  // jump as you compare alternatives.
   const [colors, setColors] = useState<RoleColors>(DEFAULT_ROLE_COLORS);
+  const [names, setNames] = useState<Record<TierRole, string>>(SHIPPED_NAMES);
+
+  const namesShipped =
+    names.tier1 === SHIPPED_NAMES.tier1 &&
+    names.tier2 === SHIPPED_NAMES.tier2 &&
+    names.tier3 === SHIPPED_NAMES.tier3;
+  const colorsShipped =
+    colors.tier1 === DEFAULT_ROLE_COLORS.tier1 &&
+    colors.tier2 === DEFAULT_ROLE_COLORS.tier2 &&
+    colors.tier3 === DEFAULT_ROLE_COLORS.tier3;
+
   return (
     <Section
-      heading="Source tier — naming candidates"
-      subhead="Iterating on the labels in src/data/sources.ts before committing to a refactor. Click a swatch in the picker below to swap the color for that tier role — every candidate re-renders together so you can compare colors against multiple naming schemes at once."
+      heading="Source tier — naming + color picker"
+      subhead="The card on the left is what we shipped; the card on the right reflects the current pickers. Tweak names and colors below to compare alternatives — the layout stays put."
     >
-      <div style={{ gridColumn: '1 / -1' }}>
-        <ColorPickerRow colors={colors} onChange={setColors} />
+      <Variation
+        title="Shipped — what we selected"
+        description="A static record of the production tier scheme."
+        decided
+      >
+        <TierLivePreview names={SHIPPED_NAMES} colors={DEFAULT_ROLE_COLORS} />
+      </Variation>
+      <Variation
+        title="Live preview"
+        description="Every change to the pickers below re-renders this preview."
+      >
+        <TierLivePreview names={names} colors={colors} />
+      </Variation>
+      <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <NamePickerRow
+          names={names}
+          onChange={setNames}
+          matchesShipped={namesShipped}
+          onResetShipped={() => setNames(SHIPPED_NAMES)}
+        />
+        <ColorPickerRow
+          colors={colors}
+          onChange={setColors}
+          matchesShipped={colorsShipped}
+          onResetShipped={() => setColors(DEFAULT_ROLE_COLORS)}
+        />
       </div>
-      {TIER_CANDIDATES.map((c) => (
-        <Variation key={c.key} title={c.title} description={c.description}>
-          <TierCandidatePreview candidate={c} colors={colors} />
-        </Variation>
-      ))}
     </Section>
+  );
+}
+
+function TierLivePreview({
+  names,
+  colors,
+}: {
+  names: Record<TierRole, string>;
+  colors: RoleColors;
+}) {
+  const roles: ReadonlyArray<TierRole> = ['tier1', 'tier2', 'tier3'];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {roles.map((role) => {
+          const preset = TIER_COLORS[colors[role]];
+          return <Pill key={role} bg={preset.bg} fg={preset.fg} label={names[role]} />;
+        })}
+      </div>
+      <ul
+        style={{ margin: 0, paddingLeft: 16, color: T.inkSoft, fontSize: rem(12), lineHeight: 1.5 }}
+      >
+        {roles.map((role) => {
+          const nameOpt = TIER_NAME_OPTIONS[role].find((o) => o.name === names[role]);
+          // Prefer the picked name's connotation; fall back to the stable
+          // role meaning if the name isn't one of the candidates (shouldn't
+          // happen via the picker, but guards against future direct edits).
+          const description = nameOpt?.description ?? TIER_MEANINGS[role];
+          return (
+            <li key={role} style={{ marginBottom: 4 }}>
+              <span style={{ color: TIER_COLORS[colors[role]].fg, fontWeight: 700 }}>
+                {names[role]}
+              </span>{' '}
+              — {description}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function NamePickerRow({
+  names,
+  onChange,
+  matchesShipped,
+  onResetShipped,
+}: {
+  names: Record<TierRole, string>;
+  onChange: (n: Record<TierRole, string>) => void;
+  matchesShipped: boolean;
+  onResetShipped: () => void;
+}) {
+  return (
+    <div
+      style={{
+        border: `1px solid ${T.border}`,
+        background: T.surface,
+        borderRadius: 4,
+        padding: 16,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 14,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 8,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div
+          style={{
+            fontSize: rem(11),
+            textTransform: 'uppercase',
+            letterSpacing: '0.18em',
+            color: T.inkMuted,
+            fontWeight: 600,
+          }}
+        >
+          Name picker — drives the live preview
+        </div>
+        <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 12 }}>
+          {matchesShipped && (
+            <span
+              style={{
+                fontSize: rem(10),
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                fontWeight: 600,
+                color: 'rgb(45, 80, 22)',
+              }}
+            >
+              ✓ Matches shipped
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={onResetShipped}
+            disabled={matchesShipped}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              padding: 0,
+              cursor: matchesShipped ? 'default' : 'pointer',
+              fontFamily: fonts.body,
+              fontSize: rem(11),
+              color: matchesShipped ? T.inkMuted : T.inkSoft,
+              textDecoration: matchesShipped ? 'none' : 'underline',
+              textDecorationStyle: 'dotted',
+              textUnderlineOffset: 3,
+              letterSpacing: '0.02em',
+            }}
+          >
+            Reset to shipped
+          </button>
+        </div>
+      </div>
+      {(Object.keys(ROLE_LABELS) as TierRole[]).map((role) => {
+        const activeOption = TIER_NAME_OPTIONS[role].find((o) => o.name === names[role]);
+        return (
+          <div key={role} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <span
+                style={{ minWidth: 110, fontSize: rem(12), fontWeight: 600, color: T.inkSoft }}
+              >
+                {ROLE_LABELS[role]}
+              </span>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {TIER_NAME_OPTIONS[role].map((option) => {
+                  const isActive = names[role] === option.name;
+                  const isShipped = SHIPPED_NAMES[role] === option.name;
+                  return (
+                    <button
+                      key={option.name}
+                      type="button"
+                      onClick={() => onChange({ ...names, [role]: option.name })}
+                      aria-pressed={isActive}
+                      title={option.description}
+                      style={{
+                        cursor: 'pointer',
+                        border: isActive ? `2px solid ${T.ink}` : `1px solid ${T.border}`,
+                        background: isActive ? T.bgAlt : T.bg,
+                        color: T.ink,
+                        padding: '4px 10px',
+                        borderRadius: 2,
+                        fontFamily: fonts.body,
+                        fontSize: rem(12),
+                        fontWeight: isActive ? 600 : 400,
+                        letterSpacing: '0.02em',
+                        display: 'inline-flex',
+                        alignItems: 'baseline',
+                        gap: 4,
+                      }}
+                    >
+                      {option.name}
+                      {isShipped && (
+                        <span
+                          aria-label="shipped"
+                          title="Shipped value"
+                          style={{ color: 'rgb(45, 80, 22)', fontSize: rem(10) }}
+                        >
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {activeOption && (
+              <div
+                style={{
+                  paddingLeft: 122,
+                  fontSize: rem(11),
+                  color: T.inkMuted,
+                  fontStyle: 'italic',
+                  lineHeight: 1.4,
+                }}
+              >
+                {activeOption.description}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
 function ColorPickerRow({
   colors,
   onChange,
+  matchesShipped,
+  onResetShipped,
 }: {
   colors: RoleColors;
   onChange: (c: RoleColors) => void;
+  matchesShipped: boolean;
+  onResetShipped: () => void;
 }) {
   const presetKeys = Object.keys(TIER_COLORS) as TierColorKey[];
   return (
@@ -1493,7 +1849,6 @@ function ColorPickerRow({
         background: T.surface,
         borderRadius: 4,
         padding: 16,
-        marginBottom: 8,
         display: 'flex',
         flexDirection: 'column',
         gap: 14,
@@ -1501,95 +1856,134 @@ function ColorPickerRow({
     >
       <div
         style={{
-          fontSize: rem(11),
-          textTransform: 'uppercase',
-          letterSpacing: '0.18em',
-          color: T.inkMuted,
-          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 8,
+          flexWrap: 'wrap',
         }}
       >
-        Color picker — drives every candidate below
-      </div>
-      {(Object.keys(ROLE_LABELS) as TierRole[]).map((role) => (
         <div
-          key={role}
-          style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}
+          style={{
+            fontSize: rem(11),
+            textTransform: 'uppercase',
+            letterSpacing: '0.18em',
+            color: T.inkMuted,
+            fontWeight: 600,
+          }}
         >
-          <span
+          Color picker — drives the live preview
+        </div>
+        <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 12 }}>
+          {matchesShipped && (
+            <span
+              style={{
+                fontSize: rem(10),
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                fontWeight: 600,
+                color: 'rgb(45, 80, 22)',
+              }}
+            >
+              ✓ Matches shipped
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={onResetShipped}
+            disabled={matchesShipped}
             style={{
-              minWidth: 110,
-              fontSize: rem(12),
-              fontWeight: 600,
-              color: T.inkSoft,
+              background: 'transparent',
+              border: 'none',
+              padding: 0,
+              cursor: matchesShipped ? 'default' : 'pointer',
+              fontFamily: fonts.body,
+              fontSize: rem(11),
+              color: matchesShipped ? T.inkMuted : T.inkSoft,
+              textDecoration: matchesShipped ? 'none' : 'underline',
+              textDecorationStyle: 'dotted',
+              textUnderlineOffset: 3,
+              letterSpacing: '0.02em',
             }}
           >
-            {ROLE_LABELS[role]}
-          </span>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {presetKeys.map((k) => {
-              const isActive = colors[role] === k;
-              const preset = TIER_COLORS[k];
-              return (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => onChange({ ...colors, [role]: k })}
-                  aria-pressed={isActive}
-                  title={k}
-                  style={{
-                    cursor: 'pointer',
-                    border: isActive ? `2px solid ${T.ink}` : `1px solid ${T.border}`,
-                    background: preset.bg,
-                    color: preset.fg,
-                    padding: '4px 10px',
-                    borderRadius: 2,
-                    fontFamily: fonts.mono,
-                    fontSize: rem(10),
-                    fontWeight: 700,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {k}
-                </button>
-              );
-            })}
-          </div>
+            Reset to shipped
+          </button>
         </div>
-      ))}
-    </div>
-  );
-}
-
-function TierCandidatePreview({
-  candidate,
-  colors,
-}: {
-  candidate: TierCandidate;
-  colors: RoleColors;
-}) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* Pill row — see the labels in their actual visual context. */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {candidate.tiers.map((t) => {
-          const preset = TIER_COLORS[colors[t.role]];
-          return <Pill key={t.label} bg={preset.bg} fg={preset.fg} label={t.label} />;
-        })}
       </div>
-      {/* Per-tier meaning. */}
-      <ul
-        style={{ margin: 0, paddingLeft: 16, color: T.inkSoft, fontSize: rem(12), lineHeight: 1.5 }}
-      >
-        {candidate.tiers.map((t) => (
-          <li key={t.label} style={{ marginBottom: 4 }}>
-            <span style={{ color: TIER_COLORS[colors[t.role]].fg, fontWeight: 700 }}>
-              {t.label}
-            </span>{' '}
-            — {t.meaning}
-          </li>
-        ))}
-      </ul>
+      {(Object.keys(ROLE_LABELS) as TierRole[]).map((role) => {
+        const activeColor = TIER_COLORS[colors[role]];
+        return (
+          <div key={role} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  minWidth: 110,
+                  fontSize: rem(12),
+                  fontWeight: 600,
+                  color: T.inkSoft,
+                }}
+              >
+                {ROLE_LABELS[role]}
+              </span>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {presetKeys.map((k) => {
+                  const isActive = colors[role] === k;
+                  const isShipped = DEFAULT_ROLE_COLORS[role] === k;
+                  const preset = TIER_COLORS[k];
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => onChange({ ...colors, [role]: k })}
+                      aria-pressed={isActive}
+                      title={
+                        isShipped ? `${preset.description} (shipped)` : preset.description
+                      }
+                      style={{
+                        cursor: 'pointer',
+                        border: isActive ? `2px solid ${T.ink}` : `1px solid ${T.border}`,
+                        background: preset.bg,
+                        color: preset.fg,
+                        padding: '4px 10px',
+                        borderRadius: 2,
+                        fontFamily: fonts.mono,
+                        fontSize: rem(10),
+                        fontWeight: 700,
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        display: 'inline-flex',
+                        alignItems: 'baseline',
+                        gap: 4,
+                      }}
+                    >
+                      {k}
+                      {isShipped && (
+                        <span
+                          aria-label="shipped"
+                          style={{ color: 'rgb(45, 80, 22)', fontSize: rem(10) }}
+                        >
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div
+              style={{
+                paddingLeft: 122,
+                fontSize: rem(11),
+                color: T.inkMuted,
+                fontStyle: 'italic',
+                lineHeight: 1.4,
+              }}
+            >
+              {activeColor.description}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1604,6 +1998,10 @@ function Section({
   subhead?: string;
   children: React.ReactNode;
 }) {
+  // Sort decided variations to the front so the chosen design is the first
+  // thing the eye lands on. Variations are JSX children, so we partition on
+  // the `decided` prop of each <Variation> element.
+  const sorted = sortVariationsDecidedFirst(children);
   return (
     <section style={{ marginBottom: 56 }}>
       <h2
@@ -1629,31 +2027,79 @@ function Section({
           gap: 24,
         }}
       >
-        {children}
+        {sorted}
       </div>
     </section>
   );
 }
 
+function sortVariationsDecidedFirst(children: React.ReactNode): React.ReactNode[] {
+  const arr = React.Children.toArray(children);
+  const decided: React.ReactNode[] = [];
+  const rest: React.ReactNode[] = [];
+  for (const child of arr) {
+    if (
+      React.isValidElement<{ decided?: boolean }>(child) &&
+      child.props.decided === true
+    ) {
+      decided.push(child);
+    } else {
+      rest.push(child);
+    }
+  }
+  return [...decided, ...rest];
+}
+
 function Variation({
   title,
   description,
+  decided,
   children,
 }: {
   title: string;
   description?: string;
+  /** Mark this variation as the shipped/selected one. Sorts to the top of the
+   *  section and gets a green-bordered "Selected" badge. */
+  decided?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div
       style={{
-        border: `1px dashed ${T.border}`,
+        border: decided ? `1.5px solid rgb(45, 80, 22)` : `1px dashed ${T.border}`,
+        background: decided ? 'rgba(45, 80, 22, 0.04)' : 'transparent',
         padding: 18,
         borderRadius: 4,
+        boxShadow: decided ? '0 1px 0 rgba(45, 80, 22, 0.08)' : 'none',
       }}
     >
-      <div style={{ fontSize: rem(13), fontWeight: 600, marginBottom: 4, color: T.ink }}>
-        {title}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 8,
+          marginBottom: 4,
+        }}
+      >
+        <div style={{ fontSize: rem(13), fontWeight: 600, color: T.ink }}>{title}</div>
+        {decided && (
+          <span
+            style={{
+              fontSize: rem(10),
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              fontWeight: 600,
+              color: 'rgb(45, 80, 22)',
+              background: 'rgba(45, 80, 22, 0.12)',
+              padding: '2px 8px',
+              borderRadius: 2,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            ✓ Selected
+          </span>
+        )}
       </div>
       {description && (
         <div style={{ fontSize: rem(12), color: T.inkSoft, marginBottom: 16 }}>{description}</div>
@@ -1753,7 +2199,7 @@ function Stat({
 }: {
   label: string;
   value: number;
-  tone?: 'positive' | 'warning' | 'accent';
+  tone?: 'positive' | 'warning' | 'accent' | 'reference' | 'commercial' | 'ai' | 'broken';
   small?: boolean;
 }) {
   const color =
@@ -1763,7 +2209,15 @@ function Stat({
         ? T.warning
         : tone === 'accent'
           ? T.accent
-          : T.ink;
+          : tone === 'reference'
+            ? T.aiAccent
+            : tone === 'commercial'
+              ? T.commercialAccent
+              : tone === 'ai'
+                ? T.aiAccent
+                : tone === 'broken'
+                  ? T.accent
+                  : T.ink;
   return (
     <div style={{ minWidth: small ? 80 : 110 }}>
       <div
@@ -1871,4 +2325,250 @@ function PopoverRow({ children }: { children: React.ReactNode }) {
 
 function PopoverDot({ row }: { row: SyntheticRow }) {
   return <LabStatusDot status={rowStatusV5(row)} size={8} />;
+}
+
+
+// ── Section: Share-link affordance ───────────────────────────────────────
+//
+// The share affordance is a meta action — it copies a URL, it doesn't
+// modify the household model. So it shouldn't compete visually with the
+// input controls. These variations explore quieter placements and styles.
+// Each variation mocks just enough surrounding chrome (the panel header,
+// the lifestyle row) so the placement reads in context.
+
+function SectionShareAffordance() {
+  return (
+    <Section
+      heading="Share-link affordance"
+      subhead="Where the 'Share this view' control lives in the Customize panel and how prominent it should be. It's a meta action (copy a URL) so it shouldn't read as another input."
+    >
+      <Variation
+        title="V1 — Quiet text link in the panel header (current)"
+        description="Sits inline with the 'CUSTOMIZE' label, right-aligned. Dotted underline + arrow. Lowest visual prominence; reads as utility, not input."
+      >
+        <ShareMockHeader variant="quiet-link" />
+      </Variation>
+      <Variation
+        title="V2 — Outlined button on its own row"
+        description="Standalone button at the bottom of the panel, right-aligned. Clear affordance but feels like another control. (Previous prototype.)"
+      >
+        <ShareMockBottom variant="outlined-button" />
+      </Variation>
+      <Variation
+        title="V3 — Accent-colored link inline at end of inputs"
+        description="Tucked at the bottom-right of the lifestyle row. Same dotted underline as V1 but accent-colored to nudge prominence up slightly."
+      >
+        <ShareMockInline />
+      </Variation>
+      <Variation
+        title="V4 — Floating chip pinned to the panel corner"
+        description="Absolute-positioned at the top-right of the panel, hovering above the inputs. Visually distinct, but introduces a free-floating element that doesn't reflow."
+      >
+        <ShareMockChip />
+      </Variation>
+    </Section>
+  );
+}
+
+/** Minimal mock of the panel header row used by V1. */
+function ShareMockHeader({ variant }: { variant: 'quiet-link' }) {
+  return (
+    <PanelShell>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: 18,
+        }}
+      >
+        <div
+          style={{
+            fontSize: rem(11),
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: T.accent,
+            fontWeight: 600,
+          }}
+        >
+          Customize
+        </div>
+        <FakeShareLink tone={variant === 'quiet-link' ? 'soft' : 'soft'} />
+      </div>
+      <FakeInputRow />
+    </PanelShell>
+  );
+}
+
+/** Mock of the panel bottom row used by V2 (standalone button). */
+function ShareMockBottom({ variant }: { variant: 'outlined-button' }) {
+  return (
+    <PanelShell>
+      <PanelHeading />
+      <FakeInputRow />
+      <div style={{ marginTop: 20, display: 'flex', justifyContent: 'flex-end' }}>
+        <button
+          style={{
+            padding: '10px 18px',
+            background: T.bg,
+            color: T.ink,
+            border: `1px solid ${T.border}`,
+            fontFamily: fonts.body,
+            fontSize: rem(13),
+            letterSpacing: '0.04em',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Share this view
+        </button>
+      </div>
+      <span aria-hidden style={{ display: 'none' }}>{variant}</span>
+    </PanelShell>
+  );
+}
+
+/** Mock with the share link tucked at the end of the lifestyle row (V3). */
+function ShareMockInline() {
+  return (
+    <PanelShell>
+      <PanelHeading />
+      <div style={{ marginBottom: 8, fontSize: rem(11), color: T.inkSoft, letterSpacing: '0.05em' }}>
+        LIFESTYLE LEVEL
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 4, flex: 1 }}>
+          {['Modest', 'Moderate', 'Comfortable'].map((l, i) => (
+            <div
+              key={l}
+              style={{
+                flex: 1,
+                padding: '10px',
+                background: i === 1 ? T.ink : T.bg,
+                color: i === 1 ? T.bg : T.ink,
+                border: `1px solid ${i === 1 ? T.ink : T.border}`,
+                fontFamily: fonts.body,
+                fontSize: rem(13),
+                letterSpacing: '0.02em',
+                textAlign: 'center',
+              }}
+            >
+              {l}
+            </div>
+          ))}
+        </div>
+        <FakeShareLink tone="accent" />
+      </div>
+    </PanelShell>
+  );
+}
+
+/** Mock with a floating chip in the panel's top-right corner (V4). */
+function ShareMockChip() {
+  return (
+    <PanelShell relative>
+      <div
+        style={{
+          position: 'absolute',
+          top: 14,
+          right: 14,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '4px 10px',
+          background: T.bgAlt,
+          border: `1px solid ${T.border}`,
+          borderRadius: 999,
+          fontFamily: fonts.body,
+          fontSize: rem(11),
+          color: T.inkSoft,
+          letterSpacing: '0.04em',
+          cursor: 'pointer',
+        }}
+      >
+        Share view ↗
+      </div>
+      <PanelHeading />
+      <FakeInputRow />
+    </PanelShell>
+  );
+}
+
+/** Visual shell that mimics the Customize panel chrome. */
+function PanelShell({ children, relative }: { children: React.ReactNode; relative?: boolean }) {
+  return (
+    <div
+      style={{
+        position: relative ? 'relative' : 'static',
+        background: T.surface,
+        border: `1px solid ${T.border}`,
+        padding: '18px 20px',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function PanelHeading() {
+  return (
+    <div
+      style={{
+        fontSize: rem(11),
+        letterSpacing: '0.18em',
+        textTransform: 'uppercase',
+        color: T.accent,
+        fontWeight: 600,
+        marginBottom: 18,
+      }}
+    >
+      Customize
+    </div>
+  );
+}
+
+/** Cheap stand-in for the dense input grid — just enough to feel real. */
+function FakeInputRow() {
+  return (
+    <div style={{ display: 'flex', gap: 8 }}>
+      {['Modest', 'Moderate', 'Comfortable'].map((l, i) => (
+        <div
+          key={l}
+          style={{
+            flex: 1,
+            padding: '10px',
+            background: i === 1 ? T.ink : T.bg,
+            color: i === 1 ? T.bg : T.ink,
+            border: `1px solid ${i === 1 ? T.ink : T.border}`,
+            fontFamily: fonts.body,
+            fontSize: rem(13),
+            letterSpacing: '0.02em',
+            textAlign: 'center',
+          }}
+        >
+          {l}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FakeShareLink({ tone }: { tone: 'soft' | 'accent' }) {
+  return (
+    <span
+      style={{
+        fontFamily: fonts.body,
+        fontSize: rem(12),
+        color: tone === 'accent' ? T.accent : T.inkSoft,
+        textDecoration: 'underline',
+        textDecorationStyle: 'dotted',
+        textUnderlineOffset: 3,
+        letterSpacing: '0.02em',
+        whiteSpace: 'nowrap',
+        cursor: 'pointer',
+      }}
+    >
+      Share this view ↗
+    </span>
+  );
 }
