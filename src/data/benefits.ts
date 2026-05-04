@@ -30,7 +30,7 @@ export const SNAP_MAX_BENEFIT_2026: Readonly<Record<number, number>> = {
 };
 
 /** Each additional household member beyond 8. */
-export const SNAP_MAX_PER_ADDITIONAL_2026 = 224;
+export const SNAP_MAX_PER_ADDITIONAL_2026 = 218;
 
 /**
  * SNAP gross income limit, expressed as a multiple of FPL. The federal
@@ -103,7 +103,7 @@ export function snapIncomeLimitFpl(state: StateCode): number {
  * to households of 1–3. (Households of 4+ get slightly more; we round.)
  * The earned income deduction (20% of earned income) is also applied.
  */
-export const SNAP_STD_DEDUCTION_2026 = 204;
+export const SNAP_STD_DEDUCTION_2026 = 209;
 
 export const SNAP_SOURCE: Source = SOURCES['usda-snap-eligibility'];
 
