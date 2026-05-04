@@ -208,6 +208,14 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Add an "I own" toggle that swaps rent for full PITI plus HOA and a 1%/yr maintenance reserve. State-specific property tax (TX ~1.6%, NJ ~2.2%, HI ~0.3%). Owning often looks cheaper monthly until you net out maintenance and the down-payment opportunity cost.',
   },
   {
+    id: 131,
+    title: 'Expand cost-of-living schema with full BLS CEX line items',
+    category: 'Cost of living',
+    status: 'planned',
+    summary:
+      'Today CityInfo rolls up cost-of-living into four fields — groceries, utilities, carCost, healthFamily/Single — each citing a single source. BLS Consumer Expenditure Survey publishes ~17 finer-grained line items at four geographic levels (per-MSA, per-state-via-regional-adjustment, per-CEX-division/sub-region, and per-region). Expand the schema across all four levels so every cell in the cost-of-living breakdown traces to a specific CEX row at the most-specific available granularity (city > state > division > region fallback), instead of a rolled-up estimate. Also resolves the per-person × householdSize scaling problem by letting an OECD-style equivalence scale sit on top of per-CU values.',
+  },
+  {
     id: 126,
     title: 'Guided assistance for applying to benefit programs',
     category: 'Benefits & safety net',
