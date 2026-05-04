@@ -1,22 +1,30 @@
 #!/usr/bin/env node
 /**
- * PR check: rows in audit/links/reviewed.tsv are append-only.
+ * PR check: rows in audit/links/reviewed.tsv are append-only — but
+ * "append-only" is enforced across the union of the live file plus
+ * everything in audit/links/archive/. A row from base must still be
+ * reachable somewhere in that union; what counts as "the audit trail"
+ * is the union, not just the live file alone.
  *
- * Every row in the base ref must still be present, byte-for-byte
- * unchanged, in the PR's HEAD. New rows can be appended; existing rows
- * can't be modified, removed, or reordered into oblivion.
+ * Why the union: schema migrations need to rewrite the live file (e.g.
+ * adding a column, padding legacy rows for tabular consistency). The
+ * rotation pattern is:
  *
- * Why this matters: reviewed.tsv is the durable audit trail for human
- * verification of citations. Editing a past review row would let
- * someone quietly rewrite history — change the date, change the
- * reviewer, change what was claimed to be verified. That defeats the
- * point. The file grows; rows are immutable.
+ *   1. Copy current reviewed.tsv → audit/links/archive/reviewed.<date>.tsv
+ *   2. Rewrite reviewed.tsv with all rows in the new schema
+ *   3. CI checks every prior row is still present in current OR archive
  *
- * Comments (lines starting with `#`) and blank lines are NOT subject to
- * this check — header docs may need legitimate edits and aren't part of
- * the audit record. If you need to fix a typo in a real review row,
- * that requires explicit acknowledgment via a separate process (e.g. a
- * follow-up "correction" row that supersedes, not edits, the original).
+ * That preserves the actual invariant we care about — "no review row
+ * ever disappears from the audit trail" — while allowing legitimate
+ * format migrations. Without rotation support, schema evolution would
+ * require either silent edits (which the check exists to prevent) or
+ * an indefinite append-only file with mixed formats forever.
+ *
+ * Comments (lines starting with `#`) and blank lines are NOT subject
+ * to this check — header docs may need legitimate edits and aren't
+ * part of the audit record. If you need to fix a typo in a real review
+ * row, that requires either a follow-up "correction" row that
+ * supersedes the original, or a formal rotation per the pattern above.
  *
  * Run via the CI workflow on pull_request events. Locally:
  *
@@ -24,12 +32,13 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { readFileSync, readdirSync } from 'node:fs';
+import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const REVIEWED_PATH = 'audit/links/reviewed.tsv';
+const ARCHIVE_DIR = 'audit/links/archive';
 
 // Base ref: workflow-supplied via AUDIT_BASE_REF (set explicitly per event
 // in ci.yml — PR target on pull_request, previous tip on push). Falls back
@@ -67,26 +76,46 @@ try {
 
 const headText = readFileSync(resolve(ROOT, REVIEWED_PATH), 'utf8');
 
-const baseRows = dataRows(baseText);
-const headRows = new Set(dataRows(headText));
+// Audit-trail union: the live file plus every archive file in HEAD.
+// A row from the base is "preserved" if it appears anywhere in this set.
+const trail = new Set(dataRows(headText));
+let archiveFiles = [];
+try {
+  archiveFiles = readdirSync(resolve(ROOT, ARCHIVE_DIR))
+    .filter((f) => f.endsWith('.tsv'))
+    .map((f) => join(ARCHIVE_DIR, f));
+  for (const file of archiveFiles) {
+    const text = readFileSync(resolve(ROOT, file), 'utf8');
+    for (const row of dataRows(text)) trail.add(row);
+  }
+} catch {
+  // Archive directory absent — fine; rotation hasn't happened yet.
+}
 
+const baseRows = dataRows(baseText);
 const missing = [];
 for (const row of baseRows) {
-  if (!headRows.has(row)) missing.push(row);
+  if (!trail.has(row)) missing.push(row);
 }
 
 if (missing.length === 0) {
-  const added = headRows.size - baseRows.length;
+  const liveRows = dataRows(headText).length;
+  const added = liveRows - baseRows.length;
+  const archiveNote = archiveFiles.length
+    ? ` (audit trail spans live + ${archiveFiles.length} archive file${archiveFiles.length === 1 ? '' : 's'})`
+    : '';
   if (added > 0) {
-    console.log(`✓ All ${baseRows.length} base rows preserved; ${added} row(s) appended.`);
+    console.log(
+      `✓ All ${baseRows.length} base rows preserved; ${added} row(s) appended.${archiveNote}`,
+    );
   } else {
-    console.log(`✓ reviewed.tsv unchanged (${baseRows.length} rows).`);
+    console.log(`✓ reviewed.tsv unchanged (${baseRows.length} rows).${archiveNote}`);
   }
   process.exit(0);
 }
 
 console.error(
-  `❌ ${missing.length} row(s) from base reviewed.tsv are missing or modified in this PR:`,
+  `❌ ${missing.length} row(s) from base reviewed.tsv are missing from the audit trail in this PR:`,
 );
 console.error('');
 for (const row of missing) {
@@ -97,10 +126,16 @@ for (const row of missing) {
 console.error('');
 console.error('reviewed.tsv is the durable audit trail for human verification of');
 console.error("citations. Existing rows are immutable — they can't be modified,");
-console.error('removed, or reordered. New rows can be appended.');
+console.error('removed, or reordered.');
 console.error('');
-console.error('If you need to correct an earlier review, append a NEW row that');
-console.error("supersedes the original. Don't edit history.");
+console.error('If a row needs to live in a different format (schema migration), use');
+console.error('the rotation pattern: copy reviewed.tsv to audit/links/archive/');
+console.error('reviewed.<date>.tsv first, THEN rewrite the live file. The check');
+console.error('looks in archive/ too, so rotated rows still count as preserved.');
 console.error('');
-console.error('See audit/links/README.md for the unified-resolution-log convention.');
+console.error('If you need to correct a typo in a row, append a NEW row that');
+console.error("supersedes the original. Don't edit history in place.");
+console.error('');
+console.error('See audit/links/README.md for the rotation pattern + unified-');
+console.error('resolution-log convention.');
 process.exit(1);

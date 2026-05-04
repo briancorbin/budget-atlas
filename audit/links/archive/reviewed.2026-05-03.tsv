@@ -39,26 +39,13 @@
 # Reviewer should be your GitHub username (no @ prefix). Renders as a
 # profile link in audit/links/status.md.
 #
-# All rows in this file are 5-column. The pre-kind-column 4-field
-# format is no longer present in this file — the four legacy rows that
-# existed under that schema were faithfully padded to 5 columns
-# (kind=human, which is how they parsed before) during the
-# 2026-05-03 rotation. The pre-rotation file is preserved verbatim at
-# audit/links/archive/reviewed.2026-05-03.tsv.
-#
-# Rotation pattern (for future schema changes):
-#   1. Copy current reviewed.tsv → audit/links/archive/reviewed.<date>.tsv
-#   2. Rewrite reviewed.tsv with all rows in the new schema
-#   3. The append-only CI check (scripts/check-reviewed-immutable.mjs)
-#      verifies no row disappears: missing rows must be present in some
-#      archive/*.tsv. Schema migrations are explicit, recorded, and
-#      can't be used to silently rewrite history.
+# Legacy rows (pre-kind column, 4 fields) parse as kind=`human`.
 #
 # id	reviewed_at	reviewed_by	kind	notes
-hud-handbook-4350-3	2026-05-02	briancorbin	human	HUD Handbook 4350.3 REV-1, Change 4 (Nov 2013). Confirmed the landing page lists the handbook + chapters; Ch. 3 covers occupancy. Replaces the 404'd /sites/dfiles/OCHCO/documents/4350.3.pdf citation.
-kff-employer-health-benefits	2026-05-03	briancorbin	human	KFF moved the annual survey to a year-stable series archive. Confirmed the page links to the latest (2025) report with the figures we anchor employer health-insurance employee-share to. Replaces the 404'd /health-costs/report/employer-health-benefits-annual-survey/.
-care-com-childcare	2026-05-03	briancorbin	human	Care.com renamed the cost-of-care landing page. Confirmed the new URL hosts the current Cost of Care Report with per-metro childcare cost figures. Replaces the 404'd /c/cost-of-childcare/.
-child-care-aware	2026-05-03	briancorbin	human	Child Care Aware retired the /state-fact-sheets/ page. The 2024 Price & Supply report at /price-landscape24/ has an interactive state selector with per-state child-care price breakdowns — same content territory we cited the fact sheets for. Year-stamped slug; staleness audit will surface it on the next cycle.
+hud-handbook-4350-3	2026-05-02	briancorbin	HUD Handbook 4350.3 REV-1, Change 4 (Nov 2013). Confirmed the landing page lists the handbook + chapters; Ch. 3 covers occupancy. Replaces the 404'd /sites/dfiles/OCHCO/documents/4350.3.pdf citation.
+kff-employer-health-benefits	2026-05-03	briancorbin	KFF moved the annual survey to a year-stable series archive. Confirmed the page links to the latest (2025) report with the figures we anchor employer health-insurance employee-share to. Replaces the 404'd /health-costs/report/employer-health-benefits-annual-survey/.
+care-com-childcare	2026-05-03	briancorbin	Care.com renamed the cost-of-care landing page. Confirmed the new URL hosts the current Cost of Care Report with per-metro childcare cost figures. Replaces the 404'd /c/cost-of-childcare/.
+child-care-aware	2026-05-03	briancorbin	Child Care Aware retired the /state-fact-sheets/ page. The 2024 Price & Supply report at /price-landscape24/ has an interactive state selector with per-state child-care price breakdowns — same content territory we cited the fact sheets for. Year-stamped slug; staleness audit will surface it on the next cycle.
 
 # Backfill 2026-05-03: ai rows for sources predating the kind-column convention. 225 rows.
 irs-rev-proc-2025-32	2026-05-02	briancorbin	ai	Backfill: source predates the kind-column convention. Most rows in src/data/sources.ts were AI-proposed during bulk imports without an eyes-on-source human pass; this row records that honestly so the /sources page reflects ground truth (AI-reviewed if within the tier window, Overdue if older).

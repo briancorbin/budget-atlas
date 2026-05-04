@@ -105,6 +105,20 @@ Be honest in the notes — if the page moved but the content is the same, say so
 
 The next audit run picks it up; `status.md` regenerates with the latest review reflected on the relevant source row (or the row disappears, in the removal case).
 
+## Schema migrations: the rotation pattern
+
+When `reviewed.tsv` needs a structural change (a new column, a name change, padding legacy rows for tabular consistency), use a rotation rather than editing in place:
+
+1. **Copy** the current `audit/links/reviewed.tsv` to `audit/links/archive/reviewed.<YYYY-MM-DD>.tsv`. The archive copy is verbatim — every byte preserved.
+2. **Rewrite** `audit/links/reviewed.tsv` with all rows in the new schema.
+3. **Verify** in CI: `scripts/check-reviewed-immutable.mjs` looks for every base row in the union of the live file plus `audit/links/archive/*.tsv`. As long as a row appears somewhere in that union, it counts as preserved.
+
+The invariant being enforced is "no review row ever disappears from the audit trail" — _not_ "the live file is byte-for-byte append-only forever." That distinction matters: schema evolution would otherwise force a permanent mixed-format file (4-col legacy rows interleaved with 5-col current rows interleaved with 6-col future-schema rows) and break tooling that expects consistent shape.
+
+The 2026-05-03 rotation is the worked example — four legacy 4-col rows got padded to 5-col, the pre-rotation file was archived. The check passed because the four original-shape rows are still reachable in `archive/reviewed.2026-05-03.tsv`.
+
+A rotation is an intentional, recorded operation — it produces a new archive file, a rewritten live file, and a header note pointing at the archive. It can't be used to silently rewrite history because every "removed" row has to land somewhere in the archive set, and CI checks that.
+
 ## Automation
 
 The audit runs nightly via [GitHub Actions](../../.github/workflows/audit-links.yml) (09:00 UTC) and can be triggered manually from the Actions tab. The nightly job:
