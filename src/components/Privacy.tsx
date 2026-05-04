@@ -255,7 +255,7 @@ function Analytics() {
         </a>
         ; their privacy commitments for it are{' '}
         <a
-          href="https://blog.cloudflare.com/privacy-first-web-analytics/"
+          href="https://blog.cloudflare.com/privacy-first-web-analytics/#what-does-privacy-first-mean"
           target="_blank"
           rel="noreferrer"
           style={linkStyle}
