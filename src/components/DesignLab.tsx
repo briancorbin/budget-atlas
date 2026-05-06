@@ -2088,8 +2088,7 @@ function Section({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns:
-            columns === 1 ? '1fr' : 'repeat(auto-fit, minmax(420px, 1fr))',
+          gridTemplateColumns: columns === 1 ? '1fr' : 'repeat(auto-fit, minmax(420px, 1fr))',
           gap: 24,
         }}
       >
@@ -2784,16 +2783,9 @@ function SectionCliffAnnotations() {
 /** Renders the variation against the canonical Columbus scenario, which
  *  has all three program cutoffs clustered together — the hard case for
  *  any annotation strategy. */
-function CliffStack({
-  Renderer,
-}: {
-  Renderer: React.ComponentType<CliffScenarioProps>;
-}) {
+function CliffStack({ Renderer }: { Renderer: React.ComponentType<CliffScenarioProps> }) {
   return (
-    <Renderer
-      scenarioLabel="Columbus, OH · HoH · 2 kids · $40K"
-      scenario={CLIFF_SCENARIO_CMH}
-    />
+    <Renderer scenarioLabel="Columbus, OH · HoH · 2 kids · $40K" scenario={CLIFF_SCENARIO_CMH} />
   );
 }
 
@@ -2933,15 +2925,11 @@ function useCliffScenario(scenario: CliffScenario): {
   }, [scenario]);
 }
 
-function ScenarioFrame({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function ScenarioFrame({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: T.surface, border: `1px solid ${T.border}`, padding: '12px 12px 8px' }}>
+    <div
+      style={{ background: T.surface, border: `1px solid ${T.border}`, padding: '12px 12px 8px' }}
+    >
       <div
         style={{
           fontSize: rem(10),
@@ -2999,10 +2987,7 @@ function CliffChartTopLabelsStaggered({ scenarioLabel, scenario }: CliffScenario
   return (
     <ScenarioFrame label={scenarioLabel}>
       <ResponsiveContainer width="100%" height={220}>
-        <LineChart
-          data={points}
-          margin={{ top: 16 + maxRow * 13, right: 16, left: 0, bottom: 8 }}
-        >
+        <LineChart data={points} margin={{ top: 16 + maxRow * 13, right: 16, left: 0, bottom: 8 }}>
           <CartesianGrid stroke={T.border} strokeDasharray="2 4" vertical={false} />
           <XAxis
             dataKey="gross"
@@ -3062,8 +3047,7 @@ function CliffChartTopLabelsStaggered({ scenarioLabel, scenario }: CliffScenario
           <ReferenceDot
             x={currentGross}
             y={
-              points.find((p) => p.gross >= currentGross)?.discretionary ??
-              points[0].discretionary
+              points.find((p) => p.gross >= currentGross)?.discretionary ?? points[0].discretionary
             }
             r={4}
             fill={T.positive}
@@ -3112,14 +3096,7 @@ function CliffChartBottomAxisTags({ scenarioLabel, scenario }: CliffScenarioProp
                 const y = (props.viewBox?.y ?? 0) + (props.viewBox?.height ?? 0);
                 return (
                   <g transform={`translate(${x}, ${y + 6})`}>
-                    <rect
-                      x={-32}
-                      y={0}
-                      width={64}
-                      height={16}
-                      fill={c.color}
-                      rx={2}
-                    />
+                    <rect x={-32} y={0} width={64} height={16} fill={c.color} rx={2} />
                     <text
                       x={0}
                       y={11}
@@ -3147,8 +3124,7 @@ function CliffChartBottomAxisTags({ scenarioLabel, scenario }: CliffScenarioProp
           <ReferenceDot
             x={currentGross}
             y={
-              points.find((p) => p.gross >= currentGross)?.discretionary ??
-              points[0].discretionary
+              points.find((p) => p.gross >= currentGross)?.discretionary ?? points[0].discretionary
             }
             r={4}
             fill={T.positive}
@@ -3230,8 +3206,7 @@ function CliffChartInlineAtDrop({ scenarioLabel, scenario }: CliffScenarioProps)
           <ReferenceDot
             x={currentGross}
             y={
-              points.find((p) => p.gross >= currentGross)?.discretionary ??
-              points[0].discretionary
+              points.find((p) => p.gross >= currentGross)?.discretionary ?? points[0].discretionary
             }
             r={4}
             fill={T.positive}
@@ -3323,8 +3298,7 @@ function CliffChartNumberedMarkers({ scenarioLabel, scenario }: CliffScenarioPro
           <ReferenceDot
             x={currentGross}
             y={
-              points.find((p) => p.gross >= currentGross)?.discretionary ??
-              points[0].discretionary
+              points.find((p) => p.gross >= currentGross)?.discretionary ?? points[0].discretionary
             }
             r={4}
             fill={T.positive}
@@ -3449,8 +3423,7 @@ function CliffChartColorBands({ scenarioLabel, scenario }: CliffScenarioProps) {
           <ReferenceDot
             x={currentGross}
             y={
-              points.find((p) => p.gross >= currentGross)?.discretionary ??
-              points[0].discretionary
+              points.find((p) => p.gross >= currentGross)?.discretionary ?? points[0].discretionary
             }
             r={4}
             fill={T.positive}
@@ -3585,8 +3558,7 @@ function PitChartTintedArea() {
           <ReferenceDot
             x={currentGross}
             y={
-              points.find((p) => p.gross >= currentGross)?.discretionary ??
-              points[0].discretionary
+              points.find((p) => p.gross >= currentGross)?.discretionary ?? points[0].discretionary
             }
             r={4}
             fill={T.positive}
@@ -3668,8 +3640,7 @@ function PitChartColoredSegment() {
           <ReferenceDot
             x={currentGross}
             y={
-              points.find((p) => p.gross >= currentGross)?.discretionary ??
-              points[0].discretionary
+              points.find((p) => p.gross >= currentGross)?.discretionary ?? points[0].discretionary
             }
             r={4}
             fill={T.positive}
@@ -3688,13 +3659,15 @@ function PitChartGhostLine() {
 
   // Running-max series: at each income, the max discretionary seen at any
   // lower income. The gap between this and the actual curve is the pit.
-  const ghostPoints = (() => {
-    let runningMax = -Infinity;
-    return points.map((p) => {
-      runningMax = Math.max(runningMax, p.discretionary);
-      return { gross: p.gross, ghost: runningMax, actual: p.discretionary };
-    });
-  })();
+  const ghostPoints = points.reduce<{ gross: number; ghost: number; actual: number }[]>(
+    (acc, p) => {
+      const prev = acc.length > 0 ? acc[acc.length - 1].ghost : -Infinity;
+      const ghost = Math.max(prev, p.discretionary);
+      acc.push({ gross: p.gross, ghost, actual: p.discretionary });
+      return acc;
+    },
+    [],
+  );
 
   return (
     <ScenarioFrame label="Columbus, OH · HoH · 2 kids · $40K">
@@ -3744,10 +3717,7 @@ function PitChartGhostLine() {
           />
           <ReferenceDot
             x={currentGross}
-            y={
-              ghostPoints.find((p) => p.gross >= currentGross)?.actual ??
-              ghostPoints[0].actual
-            }
+            y={ghostPoints.find((p) => p.gross >= currentGross)?.actual ?? ghostPoints[0].actual}
             r={4}
             fill={T.positive}
             stroke={T.bg}
@@ -3866,8 +3836,7 @@ function PitChartBottomBand() {
           <ReferenceDot
             x={currentGross}
             y={
-              points.find((p) => p.gross >= currentGross)?.discretionary ??
-              points[0].discretionary
+              points.find((p) => p.gross >= currentGross)?.discretionary ?? points[0].discretionary
             }
             r={4}
             fill={T.positive}
@@ -3880,7 +3849,6 @@ function PitChartBottomBand() {
     </ScenarioFrame>
   );
 }
-
 
 // ── Section: compound pit attribution ────────────────────────────────────
 //
@@ -4154,141 +4122,147 @@ function CompoundConfigPanel({
       </div>
       {!collapsed && (
         <>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(120px, 2fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(120px, 1fr) auto',
-          gap: 8,
-          alignItems: 'center',
-          fontSize: rem(11),
-          marginBottom: 6,
-          color: T.inkMuted,
-          letterSpacing: '0.06em',
-          textTransform: 'uppercase',
-        }}
-      >
-        <span>Label</span>
-        <span>Cliff at ($)</span>
-        <span>Drop ($)</span>
-        <span>Color</span>
-        <span />
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {config.programs.map((p) => (
           <div
-            key={p.id}
             style={{
               display: 'grid',
-              gridTemplateColumns: 'minmax(120px, 2fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(120px, 1fr) auto',
+              gridTemplateColumns:
+                'minmax(120px, 2fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(120px, 1fr) auto',
               gap: 8,
               alignItems: 'center',
+              fontSize: rem(11),
+              marginBottom: 6,
+              color: T.inkMuted,
+              letterSpacing: '0.06em',
+              textTransform: 'uppercase',
             }}
           >
-            <input
-              type="text"
-              value={p.label}
-              onChange={(e) => updateProgram(p.id, { label: e.target.value })}
-              style={inputStyle}
-            />
-            <input
-              type="number"
-              step={500}
-              value={p.gross}
-              onChange={(e) => updateProgram(p.id, { gross: Number(e.target.value) || 0 })}
-              style={{ ...inputStyle, fontFamily: fonts.mono }}
-            />
-            <input
-              type="number"
-              step={500}
-              value={p.drop}
-              onChange={(e) => updateProgram(p.id, { drop: Number(e.target.value) || 0 })}
-              style={{ ...inputStyle, fontFamily: fonts.mono }}
-            />
-            <select
-              value={p.color}
-              onChange={(e) => updateProgram(p.id, { color: e.target.value })}
-              style={{ ...inputStyle, paddingRight: 4 }}
-            >
-              {COMPOUND_COLOR_CHOICES.map((c) => (
-                <option key={c.id} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
+            <span>Label</span>
+            <span>Cliff at ($)</span>
+            <span>Drop ($)</span>
+            <span>Color</span>
+            <span />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {config.programs.map((p) => (
+              <div
+                key={p.id}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns:
+                    'minmax(120px, 2fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(120px, 1fr) auto',
+                  gap: 8,
+                  alignItems: 'center',
+                }}
+              >
+                <input
+                  type="text"
+                  value={p.label}
+                  onChange={(e) => updateProgram(p.id, { label: e.target.value })}
+                  style={inputStyle}
+                />
+                <input
+                  type="number"
+                  step={500}
+                  value={p.gross}
+                  onChange={(e) => updateProgram(p.id, { gross: Number(e.target.value) || 0 })}
+                  style={{ ...inputStyle, fontFamily: fonts.mono }}
+                />
+                <input
+                  type="number"
+                  step={500}
+                  value={p.drop}
+                  onChange={(e) => updateProgram(p.id, { drop: Number(e.target.value) || 0 })}
+                  style={{ ...inputStyle, fontFamily: fonts.mono }}
+                />
+                <select
+                  value={p.color}
+                  onChange={(e) => updateProgram(p.id, { color: e.target.value })}
+                  style={{ ...inputStyle, paddingRight: 4 }}
+                >
+                  {COMPOUND_COLOR_CHOICES.map((c) => (
+                    <option key={c.id} value={c.value}>
+                      {c.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => removeProgram(p.id)}
+                  aria-label={`Remove ${p.label}`}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    color: T.inkMuted,
+                    cursor: 'pointer',
+                    fontSize: rem(14),
+                    padding: '0 6px',
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 10 }}>
             <button
               type="button"
-              onClick={() => removeProgram(p.id)}
-              aria-label={`Remove ${p.label}`}
+              onClick={addProgram}
               style={{
-                border: 'none',
-                background: 'transparent',
-                color: T.inkMuted,
+                border: `1px solid ${T.border}`,
+                background: T.bg,
+                color: T.inkSoft,
+                fontFamily: fonts.body,
+                fontSize: rem(12),
+                padding: '4px 10px',
                 cursor: 'pointer',
-                fontSize: rem(14),
-                padding: '0 6px',
               }}
             >
-              ×
+              + Add program
             </button>
           </div>
-        ))}
-      </div>
-      <div style={{ marginTop: 10 }}>
-        <button
-          type="button"
-          onClick={addProgram}
-          style={{
-            border: `1px solid ${T.border}`,
-            background: T.bg,
-            color: T.inkSoft,
-            fontFamily: fonts.body,
-            fontSize: rem(12),
-            padding: '4px 10px',
-            cursor: 'pointer',
-          }}
-        >
-          + Add program
-        </button>
-      </div>
-      <div
-        style={{
-          display: 'flex',
-          gap: 24,
-          alignItems: 'center',
-          marginTop: 14,
-          paddingTop: 12,
-          borderTop: `1px solid ${T.border}`,
-        }}
-      >
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: rem(11) }}>
-          <span style={{ color: T.inkMuted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-            Recovery slope ({config.slope.toFixed(2)} disc per $1 gross)
-          </span>
-          <input
-            type="range"
-            min={0.05}
-            max={1}
-            step={0.05}
-            value={config.slope}
-            onChange={(e) => setConfig((c) => ({ ...c, slope: Number(e.target.value) }))}
-            style={{ width: 220 }}
-          />
-        </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: rem(11) }}>
-          <span style={{ color: T.inkMuted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-            Max gross ({fmtK(config.maxGross)})
-          </span>
-          <input
-            type="range"
-            min={20_000}
-            max={200_000}
-            step={5_000}
-            value={config.maxGross}
-            onChange={(e) => setConfig((c) => ({ ...c, maxGross: Number(e.target.value) }))}
-            style={{ width: 220 }}
-          />
-        </label>
-      </div>
+          <div
+            style={{
+              display: 'flex',
+              gap: 24,
+              alignItems: 'center',
+              marginTop: 14,
+              paddingTop: 12,
+              borderTop: `1px solid ${T.border}`,
+            }}
+          >
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: rem(11) }}>
+              <span
+                style={{ color: T.inkMuted, letterSpacing: '0.06em', textTransform: 'uppercase' }}
+              >
+                Recovery slope ({config.slope.toFixed(2)} disc per $1 gross)
+              </span>
+              <input
+                type="range"
+                min={0.05}
+                max={1}
+                step={0.05}
+                value={config.slope}
+                onChange={(e) => setConfig((c) => ({ ...c, slope: Number(e.target.value) }))}
+                style={{ width: 220 }}
+              />
+            </label>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: rem(11) }}>
+              <span
+                style={{ color: T.inkMuted, letterSpacing: '0.06em', textTransform: 'uppercase' }}
+              >
+                Max gross ({fmtK(config.maxGross)})
+              </span>
+              <input
+                type="range"
+                min={20_000}
+                max={200_000}
+                step={5_000}
+                value={config.maxGross}
+                onChange={(e) => setConfig((c) => ({ ...c, maxGross: Number(e.target.value) }))}
+                style={{ width: 220 }}
+              />
+            </label>
+          </div>
         </>
       )}
     </div>
@@ -4412,13 +4386,15 @@ function CompoundChartSplitStriping({ config }: { config: CompoundConfig }) {
 
 function CompoundChartGhost({ config }: { config: CompoundConfig }) {
   const { points, cliffs, maxGross, currentGross } = useCompoundDemoData(config);
-  const ghostPoints = (() => {
-    let runningMax = -Infinity;
-    return points.map((p) => {
-      runningMax = Math.max(runningMax, p.discretionary);
-      return { gross: p.gross, ghost: runningMax, actual: p.discretionary };
-    });
-  })();
+  const ghostPoints = points.reduce<{ gross: number; ghost: number; actual: number }[]>(
+    (acc, p) => {
+      const prev = acc.length > 0 ? acc[acc.length - 1].ghost : -Infinity;
+      const ghost = Math.max(prev, p.discretionary);
+      acc.push({ gross: p.gross, ghost, actual: p.discretionary });
+      return acc;
+    },
+    [],
+  );
   return (
     <CompoundFrame>
       <ResponsiveContainer width="100%" height={260}>
@@ -4482,13 +4458,15 @@ function CompoundChartGhost({ config }: { config: CompoundConfig }) {
 
 function CompoundChartGhostShaded({ config }: { config: CompoundConfig }) {
   const { points, cliffs, pitZones, maxGross, currentGross } = useCompoundDemoData(config);
-  const ghostPoints = (() => {
-    let runningMax = -Infinity;
-    return points.map((p) => {
-      runningMax = Math.max(runningMax, p.discretionary);
-      return { gross: p.gross, ghost: runningMax, actual: p.discretionary };
-    });
-  })();
+  const ghostPoints = points.reduce<{ gross: number; ghost: number; actual: number }[]>(
+    (acc, p) => {
+      const prev = acc.length > 0 ? acc[acc.length - 1].ghost : -Infinity;
+      const ghost = Math.max(prev, p.discretionary);
+      acc.push({ gross: p.gross, ghost, actual: p.discretionary });
+      return acc;
+    },
+    [],
+  );
   return (
     <CompoundFrame>
       <ResponsiveContainer width="100%" height={260}>
@@ -4624,9 +4602,7 @@ function ImpactBar({
   maxGross: number;
 }) {
   // Build a sorted list of unique breakpoints (zone starts and ends).
-  const breakpoints = Array.from(
-    new Set(zones.flatMap((z) => [z.x1, z.x2])),
-  ).sort((a, b) => a - b);
+  const breakpoints = Array.from(new Set(zones.flatMap((z) => [z.x1, z.x2]))).sort((a, b) => a - b);
 
   // For each [bp[i], bp[i+1]] window, the active set is every zone
   // that contains the window (zone.x1 < bpEnd AND zone.x2 > bpStart).
@@ -4863,9 +4839,7 @@ function CompoundChartBase({
         />
         <ReferenceDot
           x={currentGross}
-          y={
-            points.find((p) => p.gross >= currentGross)?.discretionary ?? points[0].discretionary
-          }
+          y={points.find((p) => p.gross >= currentGross)?.discretionary ?? points[0].discretionary}
           r={4}
           fill={T.positive}
           stroke={T.bg}

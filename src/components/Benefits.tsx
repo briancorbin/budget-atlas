@@ -240,8 +240,7 @@ function Card({
     // Allow unclaim if the card was claimed before Medicaid took over,
     // so the user isn't stuck with a misleading "Claimed" badge.
     (overshadowedByMedicaid && claimed) ||
-    (!overshadowedByMedicaid &&
-      ((eligible && !phantomEligible) || (phantomEligible && claimed)));
+    (!overshadowedByMedicaid && ((eligible && !phantomEligible) || (phantomEligible && claimed)));
   const handleClick = () => {
     if (actionable) onToggle();
   };
@@ -611,23 +610,24 @@ function BetterOptionBadge() {
           >
             Why Medicaid over CHIP
           </div>
-          <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <ul
+            style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}
+          >
             <li>
-              <strong>Covers the whole household</strong> — adults and kids — instead of just
-              the kids' share.
+              <strong>Covers the whole household</strong> — adults and kids — instead of just the
+              kids' share.
             </li>
             <li>
               <strong>Genuinely $0 cost.</strong> CHIP often charges small monthly premiums above
               ~150% FPL (varies by state); Medicaid does not.
             </li>
             <li>
-              <strong>Broader benefits.</strong> Medicaid typically has $0 deductible, $0 copay,
-              and includes dental/vision; CHIP varies more by state.
+              <strong>Broader benefits.</strong> Medicaid typically has $0 deductible, $0 copay, and
+              includes dental/vision; CHIP varies more by state.
             </li>
           </ul>
           <div style={{ marginTop: 6, color: T.inkMuted, fontSize: rem(11) }}>
-            Claiming Medicaid will automatically uncheck CHIP — the kids are covered either
-            way.
+            Claiming Medicaid will automatically uncheck CHIP — the kids are covered either way.
           </div>
         </div>
       )}
@@ -705,11 +705,11 @@ function OvershadowedByMedicaidNote() {
           >
             Why CHIP isn't claimable here
           </div>
-          When a household qualifies for Medicaid, the kids are included in that coverage —
-          they're enrolled in Medicaid, not CHIP. CHIP exists for kids in households that earn
-          too much for Medicaid but not enough for affordable private insurance. Since this
-          household is on Medicaid, CHIP would add zero relief. Unclaim Medicaid above if you
-          want to see CHIP's standalone value at this income.
+          When a household qualifies for Medicaid, the kids are included in that coverage — they're
+          enrolled in Medicaid, not CHIP. CHIP exists for kids in households that earn too much for
+          Medicaid but not enough for affordable private insurance. Since this household is on
+          Medicaid, CHIP would add zero relief. Unclaim Medicaid above if you want to see CHIP's
+          standalone value at this income.
         </div>
       )}
     </div>

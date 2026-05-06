@@ -48,7 +48,7 @@ const METRICS: Record<
     key: 'discretionary',
     unitNoun: 'discretionary',
     description:
-      "What's actually left over each year after taxes and modeled household expenses (rent, groceries, healthcare, childcare, etc.). The most editorial measure — answers \"how much can the household actually spend after the bills are paid?\"",
+      'What\'s actually left over each year after taxes and modeled household expenses (rent, groceries, healthcare, childcare, etc.). The most editorial measure — answers "how much can the household actually spend after the bills are paid?"',
   },
   takeHome: {
     label: 'Take-home',
@@ -56,7 +56,7 @@ const METRICS: Record<
     key: 'takeHome',
     unitNoun: 'take-home',
     description:
-      "Gross income minus federal, state, local, and FICA taxes. Ignores expenses and benefits entirely. Benefit cliffs are invisible on this line — only tax-bracket transitions and EITC/CTC phaseouts bend the curve. Useful for separating what the tax code does from what the safety net does.",
+      'Gross income minus federal, state, local, and FICA taxes. Ignores expenses and benefits entirely. Benefit cliffs are invisible on this line — only tax-bracket transitions and EITC/CTC phaseouts bend the curve. Useful for separating what the tax code does from what the safety net does.',
   },
   takeHomePlusBenefits: {
     label: 'Take-home + benefits',
@@ -64,7 +64,7 @@ const METRICS: Record<
     key: 'takeHomePlusBenefits',
     unitNoun: 'total resources',
     description:
-      "Take-home pay plus the dollar value of every safety-net benefit the household qualifies for (Medicaid, CHIP, SNAP). The total cash + in-kind resources reaching the household. Cliffs here are the same size as on Discretionary — both just drop by the value of the lost program — but the baseline runs higher because benefits stack onto take-home instead of getting netted out against expenses.",
+      'Take-home pay plus the dollar value of every safety-net benefit the household qualifies for (Medicaid, CHIP, SNAP). The total cash + in-kind resources reaching the household. Cliffs here are the same size as on Discretionary — both just drop by the value of the lost program — but the baseline runs higher because benefits stack onto take-home instead of getting netted out against expenses.',
   },
 };
 
@@ -228,9 +228,7 @@ export function CliffCurve({
       const halfWidth = labelHalfWidthDollars(c.shortLabel);
       let row = 0;
       while (
-        placed.some(
-          (p) => p.row === row && Math.abs(p.gross - c.gross) < halfWidth + p.halfWidth,
-        )
+        placed.some((p) => p.row === row && Math.abs(p.gross - c.gross) < halfWidth + p.halfWidth)
       ) {
         row += 1;
       }
@@ -318,132 +316,130 @@ export function CliffCurve({
             }}
           >
             Same household in {cityData.name}, {cityData.state} — sweeping gross income from $0 to{' '}
-            {fmt(maxGross)}. The curve is smooth where the tax code phases things in gradually.
-            The vertical drops are <em>cliffs</em>: a single dollar of additional income
-            disqualifies the household from a program entirely.
+            {fmt(maxGross)}. The curve is smooth where the tax code phases things in gradually. The
+            vertical drops are <em>cliffs</em>: a single dollar of additional income disqualifies
+            the household from a program entirely.
           </div>
           <MetricToggle metric={metric} onChange={setMetric} />
         </div>
 
         <div ref={chartWrapperRef}>
-        <ResponsiveContainer width="100%" height={340}>
-          <LineChart
-            data={points}
-            margin={{
-              top: 20 + Math.max(0, ...cliffs.map((c) => c.labelRow)) * 13,
-              right: 24,
-              left: 8,
-              bottom: 16,
-            }}
-          >
-            <CartesianGrid stroke={T.border} strokeDasharray="2 4" vertical={false} />
-            <XAxis
-              dataKey="gross"
-              type="number"
-              domain={[0, maxGross]}
-              tickFormatter={(v) => `$${Math.round(v / 1000)}K`}
-              stroke={T.inkMuted}
-              tick={{ fontSize: 11, fontFamily: fonts.mono, fill: T.inkSoft }}
-              label={{
-                value: 'Gross household income',
-                position: 'insideBottom',
-                offset: -8,
-                style: {
-                  fontSize: 11,
-                  fill: T.inkMuted,
-                  fontFamily: fonts.body,
-                  letterSpacing: '0.1em',
-                },
+          <ResponsiveContainer width="100%" height={340}>
+            <LineChart
+              data={points}
+              margin={{
+                top: 20 + Math.max(0, ...cliffs.map((c) => c.labelRow)) * 13,
+                right: 24,
+                left: 8,
+                bottom: 16,
               }}
-            />
-            <YAxis
-              tickFormatter={(v) => (v === 0 ? '$0' : `$${Math.round(v / 1000)}K`)}
-              stroke={T.inkMuted}
-              tick={{ fontSize: 11, fontFamily: fonts.mono, fill: T.inkSoft }}
-              width={56}
-            />
-            <Tooltip
-              content={(props) => (
-                <CliffTooltip {...props} cliffs={cliffs} metric={metricMeta} />
-              )}
-            />
-            {pitZones.map((z, i) => (
-              <ReferenceArea
-                key={`pit-${i}`}
-                x1={z.x1}
-                x2={z.x2}
-                fill={T.warning}
-                fillOpacity={0.12}
-                stroke={T.warning}
-                strokeOpacity={0.3}
-                strokeDasharray="2 3"
-              />
-            ))}
-            <ReferenceLine y={0} stroke={T.inkMuted} strokeWidth={1} />
-            {cliffs.map((c) => (
-              <ReferenceLine
-                key={c.id + c.gross}
-                x={c.gross}
-                stroke={c.color}
-                strokeDasharray="3 3"
-                label={(props: { viewBox?: { x?: number; y?: number } }) => {
-                  const x = props.viewBox?.x ?? 0;
-                  const y = props.viewBox?.y ?? 0;
-                  // Label sits in the chart's top margin; for bumped rows
-                  // it's even higher up. The ReferenceLine itself only
-                  // draws inside the plot area, so when row > 0 we add a
-                  // matching dashed connector from the chart top up to
-                  // just below the label so the eye can follow line→label.
-                  const labelY = y - 6 - c.labelRow * 13;
-                  return (
-                    <g>
-                      {c.labelRow > 0 && (
-                        <line
-                          x1={x}
-                          x2={x}
-                          y1={y}
-                          y2={labelY + 2}
-                          stroke={c.color}
-                          strokeDasharray="3 3"
-                          strokeWidth={1}
-                        />
-                      )}
-                      <text
-                        x={x}
-                        y={labelY}
-                        fill={c.color}
-                        fontSize={10}
-                        fontFamily={fonts.body}
-                        textAnchor="middle"
-                      >
-                        {c.shortLabel}
-                      </text>
-                    </g>
-                  );
+            >
+              <CartesianGrid stroke={T.border} strokeDasharray="2 4" vertical={false} />
+              <XAxis
+                dataKey="gross"
+                type="number"
+                domain={[0, maxGross]}
+                tickFormatter={(v) => `$${Math.round(v / 1000)}K`}
+                stroke={T.inkMuted}
+                tick={{ fontSize: 11, fontFamily: fonts.mono, fill: T.inkSoft }}
+                label={{
+                  value: 'Gross household income',
+                  position: 'insideBottom',
+                  offset: -8,
+                  style: {
+                    fontSize: 11,
+                    fill: T.inkMuted,
+                    fontFamily: fonts.body,
+                    letterSpacing: '0.1em',
+                  },
                 }}
               />
-            ))}
-            <Line
-              type="monotone"
-              dataKey={metricMeta.key}
-              stroke={T.ink}
-              strokeWidth={2}
-              dot={false}
-              isAnimationActive={false}
-            />
-            {userPoint && (
-              <ReferenceDot
-                x={userPoint.gross}
-                y={userPoint[metricMeta.key] as number}
-                r={5}
-                fill={T.positive}
-                stroke={T.bg}
-                strokeWidth={2}
-                ifOverflow="visible"
+              <YAxis
+                tickFormatter={(v) => (v === 0 ? '$0' : `$${Math.round(v / 1000)}K`)}
+                stroke={T.inkMuted}
+                tick={{ fontSize: 11, fontFamily: fonts.mono, fill: T.inkSoft }}
+                width={56}
               />
-            )}
-          </LineChart>
-        </ResponsiveContainer>
+              <Tooltip
+                content={(props) => <CliffTooltip {...props} cliffs={cliffs} metric={metricMeta} />}
+              />
+              {pitZones.map((z, i) => (
+                <ReferenceArea
+                  key={`pit-${i}`}
+                  x1={z.x1}
+                  x2={z.x2}
+                  fill={T.warning}
+                  fillOpacity={0.12}
+                  stroke={T.warning}
+                  strokeOpacity={0.3}
+                  strokeDasharray="2 3"
+                />
+              ))}
+              <ReferenceLine y={0} stroke={T.inkMuted} strokeWidth={1} />
+              {cliffs.map((c) => (
+                <ReferenceLine
+                  key={c.id + c.gross}
+                  x={c.gross}
+                  stroke={c.color}
+                  strokeDasharray="3 3"
+                  label={(props: { viewBox?: { x?: number; y?: number } }) => {
+                    const x = props.viewBox?.x ?? 0;
+                    const y = props.viewBox?.y ?? 0;
+                    // Label sits in the chart's top margin; for bumped rows
+                    // it's even higher up. The ReferenceLine itself only
+                    // draws inside the plot area, so when row > 0 we add a
+                    // matching dashed connector from the chart top up to
+                    // just below the label so the eye can follow line→label.
+                    const labelY = y - 6 - c.labelRow * 13;
+                    return (
+                      <g>
+                        {c.labelRow > 0 && (
+                          <line
+                            x1={x}
+                            x2={x}
+                            y1={y}
+                            y2={labelY + 2}
+                            stroke={c.color}
+                            strokeDasharray="3 3"
+                            strokeWidth={1}
+                          />
+                        )}
+                        <text
+                          x={x}
+                          y={labelY}
+                          fill={c.color}
+                          fontSize={10}
+                          fontFamily={fonts.body}
+                          textAnchor="middle"
+                        >
+                          {c.shortLabel}
+                        </text>
+                      </g>
+                    );
+                  }}
+                />
+              ))}
+              <Line
+                type="monotone"
+                dataKey={metricMeta.key}
+                stroke={T.ink}
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={false}
+              />
+              {userPoint && (
+                <ReferenceDot
+                  x={userPoint.gross}
+                  y={userPoint[metricMeta.key] as number}
+                  r={5}
+                  fill={T.positive}
+                  stroke={T.bg}
+                  strokeWidth={2}
+                  ifOverflow="visible"
+                />
+              )}
+            </LineChart>
+          </ResponsiveContainer>
         </div>
 
         <div
@@ -532,10 +528,8 @@ export function CliffCurve({
                   At <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmt(c.gross)}</strong>,
                   losing <strong style={{ color: T.ink, fontStyle: 'normal' }}>{c.label}</strong>{' '}
                   costs roughly{' '}
-                  <strong style={{ color: T.ink, fontStyle: 'normal' }}>
-                    {fmt(c.drop)}/yr
-                  </strong>{' '}
-                  in {metricMeta.unitNoun}.{' '}
+                  <strong style={{ color: T.ink, fontStyle: 'normal' }}>{fmt(c.drop)}/yr</strong> in{' '}
+                  {metricMeta.unitNoun}.{' '}
                   {c.recoveryGross !== null ? (
                     <>
                       The household isn't back to even until they earn{' '}
@@ -546,8 +540,8 @@ export function CliffCurve({
                     </>
                   ) : (
                     <>
-                      The curve doesn't recover within the swept range — the household stays
-                      poorer than they were at {fmt(c.gross)} all the way to {fmt(maxGross)}.
+                      The curve doesn't recover within the swept range — the household stays poorer
+                      than they were at {fmt(c.gross)} all the way to {fmt(maxGross)}.
                     </>
                   )}
                 </li>
@@ -584,13 +578,7 @@ export function CliffCurve({
   );
 }
 
-function MetricToggle({
-  metric,
-  onChange,
-}: {
-  metric: MetricId;
-  onChange: (m: MetricId) => void;
-}) {
+function MetricToggle({ metric, onChange }: { metric: MetricId; onChange: (m: MetricId) => void }) {
   // Track which button is currently hovered/focused so the popover below
   // shows that button's description; null = no popover.
   const [previewing, setPreviewing] = useState<MetricId | null>(null);
