@@ -2984,7 +2984,7 @@ function CliffChartTopLabelsStaggered({ scenarioLabel, scenario }: CliffScenario
 
   // Stagger: each label takes the lowest row where it doesn't overlap any
   // already-placed label at that row.
-  const minSpacing = maxGross * 0.1;
+  const minSpacing = maxGross * 0.05;
   const placed: { gross: number; row: number }[] = [];
   const annotated = cliffs.map((c) => {
     let row = 0;

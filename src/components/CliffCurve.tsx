@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   LineChart,
   Line,
@@ -100,6 +100,23 @@ export function CliffCurve({
 }) {
   const cityData = getCityData(city);
   const householdSize = (hasPartner ? 2 : 1) + kids;
+
+  // Measure the chart wrapper so the label-stagger math can convert
+  // pixel-width estimates of each label into gross-dollar minSpacing.
+  // Without this we'd be picking a hand-tuned fraction of maxGross that
+  // either over- or under-bumps depending on label text and sweep range.
+  const chartWrapperRef = useRef<HTMLDivElement | null>(null);
+  const [chartWidthPx, setChartWidthPx] = useState(640);
+  useEffect(() => {
+    const el = chartWrapperRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width;
+      if (typeof w === 'number' && w > 0) setChartWidthPx(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const allBenefits = useMemo<ReadonlySet<string>>(() => new Set(BENEFIT_IDS), []);
 
   // Which financial measure to plot on the Y axis. Discretionary is the most
@@ -199,21 +216,32 @@ export function CliffCurve({
       .filter((c) => c.gross > 0 && c.gross <= maxGross)
       .sort((a, b) => a.gross - b.gross);
     // Stagger: each label takes the *lowest* row where it doesn't
-    // horizontally overlap any label already placed at that row. So three
-    // close-together labels go (0, 1, 2), but if the third one is actually
-    // far enough from the first, it drops back to row 0 instead of
-    // climbing forever. Two labels far apart both stay at row 0.
-    const minSpacing = maxGross * 0.1;
-    const placed: { gross: number; row: number }[] = [];
+    // horizontally overlap any label already placed at that row. We
+    // compute each label's required horizontal clearance in actual gross
+    // dollars from (a) its rendered pixel width estimate (chars × ~5.5px
+    // at 10px font) and (b) the chart's measured pixel width. The plot
+    // area is narrower than the wrapper because the YAxis eats ~56px on
+    // the left and the right margin eats ~24px; subtract those before
+    // converting. This collapses to per-label clearance instead of a
+    // hand-tuned fraction of maxGross.
+    const plotWidthPx = Math.max(50, chartWidthPx - 56 - 24);
+    const pxPerDollar = plotWidthPx / Math.max(1, maxGross);
+    const labelHalfWidthDollars = (label: string) => (label.length * 5.5 + 8) / 2 / pxPerDollar;
+    const placed: { gross: number; halfWidth: number; row: number }[] = [];
     return visible.map((c) => {
+      const halfWidth = labelHalfWidthDollars(c.shortLabel);
       let row = 0;
-      while (placed.some((p) => p.row === row && Math.abs(p.gross - c.gross) < minSpacing)) {
+      while (
+        placed.some(
+          (p) => p.row === row && Math.abs(p.gross - c.gross) < halfWidth + p.halfWidth,
+        )
+      ) {
         row += 1;
       }
-      placed.push({ gross: c.gross, row });
+      placed.push({ gross: c.gross, halfWidth, row });
       return { ...c, labelRow: row };
     });
-  }, [householdSize, cityData.state, kids, maxGross]);
+  }, [householdSize, cityData.state, kids, maxGross, chartWidthPx]);
 
   const userPoint = useMemo(() => {
     if (currentGross < 0 || currentGross > maxGross) return null;
@@ -301,6 +329,7 @@ export function CliffCurve({
           <MetricToggle metric={metric} onChange={setMetric} />
         </div>
 
+        <div ref={chartWrapperRef}>
         <ResponsiveContainer width="100%" height={340}>
           <LineChart
             data={points}
@@ -419,6 +448,7 @@ export function CliffCurve({
             )}
           </LineChart>
         </ResponsiveContainer>
+        </div>
 
         <div
           style={{
@@ -540,13 +570,12 @@ function MetricToggle({
   metric: MetricId;
   onChange: (m: MetricId) => void;
 }) {
-  // Track which button is currently hovered/focused so the description
-  // line below previews that one — falls back to the active metric.
+  // Track which button is currently hovered/focused so the popover below
+  // shows that button's description; null = no popover.
   const [previewing, setPreviewing] = useState<MetricId | null>(null);
-  const shown = previewing ?? metric;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+    <div style={{ position: 'relative', display: 'inline-block' }}>
       <div role="group" aria-label="Metric to plot" style={{ display: 'inline-flex', gap: 0 }}>
         {(Object.keys(METRICS) as MetricId[]).map((id, i) => {
           const isActive = metric === id;
@@ -560,8 +589,7 @@ function MetricToggle({
               onFocus={() => setPreviewing(id)}
               onBlur={() => setPreviewing(null)}
               aria-pressed={isActive}
-              aria-describedby={`metric-${id}-desc`}
-              title={METRICS[id].description}
+              aria-describedby={previewing === id ? 'metric-popover' : undefined}
               style={{
                 fontFamily: fonts.body,
                 fontSize: rem(11),
@@ -581,22 +609,32 @@ function MetricToggle({
           );
         })}
       </div>
-      <div
-        id={`metric-${shown}-desc`}
-        role="status"
-        aria-live="polite"
-        style={{
-          fontFamily: fonts.body,
-          fontSize: rem(11),
-          color: T.inkMuted,
-          maxWidth: 360,
-          textAlign: 'right',
-          lineHeight: 1.5,
-          fontStyle: 'italic',
-        }}
-      >
-        {METRICS[shown].description}
-      </div>
+      {previewing && (
+        <div
+          id="metric-popover"
+          role="tooltip"
+          style={{
+            position: 'absolute',
+            top: '100%',
+            right: 0,
+            marginTop: 6,
+            maxWidth: 320,
+            padding: '8px 12px',
+            background: T.surface,
+            border: `1px solid ${T.border}`,
+            boxShadow: '0 6px 16px rgba(27, 24, 21, 0.12)',
+            fontFamily: fonts.body,
+            fontSize: rem(11),
+            color: T.inkSoft,
+            lineHeight: 1.5,
+            fontStyle: 'italic',
+            zIndex: 10,
+            pointerEvents: 'none',
+          }}
+        >
+          {METRICS[previewing].description}
+        </div>
+      )}
     </div>
   );
 }
