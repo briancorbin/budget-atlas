@@ -318,18 +318,7 @@ function Card({
       </div>
 
       {overshadowedByMedicaid ? (
-        <div
-          style={{
-            fontSize: rem(12),
-            color: T.inkMuted,
-            lineHeight: 1.5,
-            fontStyle: 'italic',
-          }}
-        >
-          Already covered by Medicaid — when a household qualifies for Medicaid, kids are
-          included in that coverage, so claiming CHIP separately adds nothing. Unclaim Medicaid
-          first if you want to see CHIP's standalone value.
-        </div>
+        <OvershadowedByMedicaidNote />
       ) : eligible && eligibility.monthlyBenefit > 0 ? (
         <>
           <ValueWithDerivation
@@ -640,6 +629,86 @@ function BetterOptionBadge() {
             Claiming Medicaid will automatically uncheck CHIP — the kids are covered either
             way.
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** CHIP-only: shown when Medicaid is claimed and the budget code skips
+ *  applying CHIP (Medicaid covers the household — kids included). The
+ *  visible label is short ("Covered by Medicaid · why?") with a dotted
+ *  underline that opens a richer tooltip on hover/focus explaining the
+ *  policy reality and what to do if the user wants CHIP's standalone
+ *  value back. */
+function OvershadowedByMedicaidNote() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        type="button"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        aria-describedby={open ? 'overshadow-popover' : undefined}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          padding: 0,
+          cursor: 'help',
+          fontFamily: fonts.body,
+          fontSize: rem(12),
+          color: T.inkMuted,
+          textDecoration: 'underline',
+          textDecorationStyle: 'dotted',
+          textUnderlineOffset: 3,
+          fontStyle: 'italic',
+        }}
+      >
+        🔒 Covered by Medicaid · why?
+      </button>
+      {open && (
+        <div
+          id="overshadow-popover"
+          role="tooltip"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            left: 0,
+            zIndex: 5,
+            width: 320,
+            padding: '10px 12px',
+            background: T.surface,
+            border: `1px solid ${T.border}`,
+            borderRadius: 4,
+            boxShadow: '0 4px 12px rgba(27, 24, 21, 0.12)',
+            fontFamily: fonts.body,
+            fontSize: rem(12),
+            lineHeight: 1.5,
+            color: T.ink,
+            fontStyle: 'normal',
+            pointerEvents: 'none',
+          }}
+        >
+          <div
+            style={{
+              fontSize: rem(10),
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: T.inkMuted,
+              fontWeight: 600,
+              marginBottom: 4,
+            }}
+          >
+            Why CHIP isn't claimable here
+          </div>
+          When a household qualifies for Medicaid, the kids are included in that coverage —
+          they're enrolled in Medicaid, not CHIP. CHIP exists for kids in households that earn
+          too much for Medicaid but not enough for affordable private insurance. Since this
+          household is on Medicaid, CHIP would add zero relief. Unclaim Medicaid above if you
+          want to see CHIP's standalone value at this income.
         </div>
       )}
     </div>

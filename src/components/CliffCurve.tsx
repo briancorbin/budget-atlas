@@ -554,6 +554,31 @@ export function CliffCurve({
               ))}
           </ul>
         )}
+
+        {cliffDrops.some((c) => c.id === 'medicaid' && c.drop > 0) &&
+          cliffDrops.some((c) => c.id === 'chip' && c.drop > 0) && (
+            <div
+              style={{
+                marginTop: 14,
+                padding: '10px 14px',
+                background: T.bgAlt,
+                border: `1px dashed ${T.border}`,
+                borderRadius: 4,
+                fontFamily: fonts.body,
+                fontSize: rem(12),
+                color: T.inkSoft,
+                lineHeight: 1.6,
+              }}
+            >
+              <strong style={{ color: T.ink, fontWeight: 600 }}>
+                Note the Medicaid → CHIP handoff.
+              </strong>{' '}
+              At the Medicaid cutoff, the kids transition to CHIP automatically — so the visible
+              Medicaid cliff only reflects the <em>adults'</em> coverage loss, not the full family
+              premium. The kids' coverage cliff comes later, at the CHIP cutoff. Together the two
+              drops add up to the full family healthcare cost.
+            </div>
+          )}
       </div>
     </div>
   );
