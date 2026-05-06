@@ -127,7 +127,9 @@ describe('computeBudget — benefits integration', () => {
  */
 describe('computeBudget — pinned regressions', () => {
   it('low-income HoH with 2 kids in Columbus: refundable credits drive negative federal tax', () => {
-    const r = computeBudget(input({ incomeA: 25_000, filing: 'head', city: 'cmh', kids: 2, lifestyle: 'modest' }));
+    const r = computeBudget(
+      input({ incomeA: 25_000, filing: 'head', city: 'cmh', kids: 2, lifestyle: 'modest' }),
+    );
     expect(Math.round(r.federalTax)).toBe(-10_422); // CTC $4,000 + EITC $7,022, raw fed ~$600
     expect(Math.round(r.ctc)).toBe(4_000);
     expect(Math.round(r.eitc)).toBe(7_022);
@@ -137,7 +139,9 @@ describe('computeBudget — pinned regressions', () => {
   });
 
   it('median single in Columbus: standard middle-class profile', () => {
-    const r = computeBudget(input({ incomeA: 75_000, filing: 'single', city: 'cmh', kids: 0, lifestyle: 'moderate' }));
+    const r = computeBudget(
+      input({ incomeA: 75_000, filing: 'single', city: 'cmh', kids: 0, lifestyle: 'moderate' }),
+    );
     expect(Math.round(r.federalTax)).toBe(7_670);
     expect(Math.round(r.stateTax)).toBe(1_346);
     expect(Math.round(r.fica)).toBe(5_738);
@@ -146,14 +150,21 @@ describe('computeBudget — pinned regressions', () => {
   });
 
   it('dual-earner $200K+$200K married in NYC with 2 kids: per-person FICA + city tax', () => {
-    const r = computeBudget(input({
-      incomeA: 200_000, incomeB: 200_000, hasPartner: true,
-      filing: 'married', city: 'nyc', kids: 2, lifestyle: 'comfortable',
-    }));
+    const r = computeBudget(
+      input({
+        incomeA: 200_000,
+        incomeB: 200_000,
+        hasPartner: true,
+        filing: 'married',
+        city: 'nyc',
+        kids: 2,
+        lifestyle: 'comfortable',
+      }),
+    );
     expect(Math.round(r.federalTax)).toBe(69_468);
     expect(Math.round(r.stateTax)).toBe(22_413);
     expect(Math.round(r.localTax)).toBe(15_200); // NYC local tax
-    expect(Math.round(r.fica)).toBe(28_678);     // two SS wage bases
+    expect(Math.round(r.fica)).toBe(28_678); // two SS wage bases
     expect(Math.round(r.totalTaxes)).toBe(135_759);
   });
 });
