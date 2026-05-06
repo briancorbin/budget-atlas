@@ -233,6 +233,14 @@ export const ROADMAP: readonly RoadmapItem[] = [
     summary:
       'Plot the *slope* of the discretionary curve as its own line — the implicit marginal tax rate the household actually faces, including benefit phase-outs and refundable-credit reductions, not just income-tax brackets. Each cliff would show as a brief spike to ≥100% (every $1 earned costs more than $1) followed by an elevated plateau through the recovery zone. Makes legible why a $4K Medicaid loss takes an $11K raise to climb out of: the marginal keep-rate is much worse than the headline tax bracket suggests once EITC/SNAP phase-downs and untaxed-benefit replacement costs stack up. Companion to the existing cliff curve.',
   },
+  {
+    id: 129,
+    title: 'Asymmetric Medicaid value vs. post-cliff cost',
+    category: 'Benefits & safety net',
+    status: 'planned',
+    summary:
+      "Today the model conflates two different things into a single number (cityData.healthFamily, sourced from KFF's Employer Health Benefits Survey): (a) the dollar VALUE of Medicaid/CHIP coverage when a household qualifies, and (b) the household's healthcare EXPENSE when they don't. Setting these equal makes the cliff drop on the Discretionary line equal the cliff drop on the Take-home + benefits line — they're the same magnitude, just measured from different angles. In reality the two diverge: Medicaid is meaningfully better than typical employer coverage ($0 deductible, $0 copays, broader pediatric benefits) so its real actuarial value is HIGHER than a worker would pay for an equivalent plan; AND a household losing Medicaid often lands on an ACA marketplace plan that costs MORE than the modeled employer premium. Splitting these into separate values (medicaidValue, chipValue, postCliffCost) would make the Discretionary cliff legitimately differ in size from the Take-home + benefits cliff — capturing a real economic asymmetry. Likely sources: ACA marketplace median premium data (Healthcare.gov/state exchanges), MEPS for actuarial value of Medicaid, KFF for employer comparisons.",
+  },
 ];
 
 /**

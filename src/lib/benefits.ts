@@ -138,6 +138,28 @@ export function checkSnap({
  *
  * Children's Medicaid is broader; we route kids through CHIP as the
  * separate program, which subsumes Medicaid-for-kids in this model.
+ *
+ * ── How we compute the dollar VALUE of Medicaid ──
+ * `monthlyBenefit = monthlyHealthcareCost`, where `monthlyHealthcareCost`
+ * is the household's `cityData.healthFamily` (or healthSingle) figure
+ * sourced from KFF's Employer Health Benefits Survey — the worker's share
+ * of an employer-sponsored family premium. The model treats Medicaid as
+ * worth exactly what employer-sponsored coverage would cost the worker,
+ * which is a simplification with two real-world limitations:
+ *
+ *  (a) Medicaid is genuinely better than typical employer coverage —
+ *      $0 deductible, $0 copays, often broader dental/vision for kids —
+ *      so its actuarial value is higher than what a worker would pay
+ *      for an equivalent private plan.
+ *  (b) Conversely, a household losing Medicaid often lands on an ACA
+ *      marketplace plan that costs MORE than the modeled employer
+ *      premium (different premium, plus deductibles + out-of-pocket
+ *      max). So the post-cliff expense undercounts real-world cost.
+ *
+ * The symmetry — Medicaid value == post-cliff healthcare expense —
+ * means cliff drops on the Discretionary line equal cliff drops on the
+ * Take-home + benefits line. A more honest model would split these.
+ * See roadmap: "Asymmetric Medicaid value vs. post-cliff cost".
  */
 export function checkMedicaid({
   grossIncome,
@@ -194,9 +216,14 @@ export function checkMedicaid({
 
 /**
  * CHIP eligibility. Per-state income limit (typically 200%–400% FPL).
- * Only relevant when there are children in the household. Benefit value
- * is the kids' share of the family premium — the marginal cost of adding
- * children to an adult-only plan:
+ * Only relevant when there are children in the household.
+ *
+ * ── How we compute the dollar VALUE of CHIP ──
+ * Same KFF Employer Health Benefits Survey lineage as Medicaid: the
+ * `monthlyHealthcareCost` and `monthlyHealthcareSingle` are from
+ * `cityData.healthFamily` and `cityData.healthSingle` respectively.
+ * CHIP value is the kids' marginal share of the family premium — the
+ * cost of adding children to an adult-only plan:
  *
  *   1 adult + kids   →  family premium − single-coverage premium
  *   2 adults + kids  →  family premium − (2 × single-coverage premium)
@@ -205,6 +232,14 @@ export function checkMedicaid({
  *
  * Real CHIP often charges small premiums above ~150% FPL (varies by state);
  * we treat coverage as fully replacing the kids' share for simplicity.
+ *
+ * Same caveat as Medicaid: by treating CHIP value as exactly the kids'
+ * employer-premium share, we assume the post-CHIP-cliff household pays
+ * exactly that amount to add kids to a private plan. The true value of
+ * CHIP coverage (low/no copays, broad pediatric coverage) is likely
+ * higher; the true post-cliff cost depends on whether the household
+ * has employer coverage available or has to use the marketplace. See
+ * roadmap: "Asymmetric Medicaid value vs. post-cliff cost".
  */
 export function checkChip({
   grossIncome,
