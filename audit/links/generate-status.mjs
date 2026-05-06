@@ -141,7 +141,14 @@ for (const line of readFileSync(latestPath, 'utf8').split('\n').slice(1)) {
 // parsing on a typo'd kind would silently promote the row to human and
 // shift the column into notes, defeating the whole point of the
 // provenance column.
-const VALID_KINDS = new Set(['human', 'ai', 'ai-assisted', 'ai-proposed']);
+const VALID_KINDS = new Set(['human', 'ai', 'ai-assisted', 'ai-proposed', 'verified-bot-blocked']);
+// Kinds that don't represent the kind of full-citation verification this
+// status report is summarising — they're recognised so the row isn't
+// rejected as malformed, but skipped when populating reviewsById so they
+// don't show up in the human/AI counts or the per-source review lists.
+// See src/lib/sourceStatus.tsx for the matching UI-side logic and
+// audit/links/seed-issues.mjs for what verified-bot-blocked actually does.
+const HIDDEN_KINDS = new Set(['verified-bot-blocked']);
 const normaliseKind = (raw) => (raw === 'human' ? 'human' : 'ai');
 const reviewsById = new Map();
 try {
@@ -159,6 +166,7 @@ try {
         );
         continue;
       }
+      if (HIDDEN_KINDS.has(parts[3])) continue;
       kind = normaliseKind(parts[3]);
       notes = parts[4] ?? '';
     } else {
