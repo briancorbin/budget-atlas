@@ -304,26 +304,7 @@ function Card({
         <EligibilityBadge eligible={eligible} claimed={claimed} phantomEligible={phantomEligible} />
       </div>
 
-      {recommendedOverChip && !claimed && (
-        <div
-          style={{
-            display: 'inline-block',
-            fontSize: rem(10),
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            color: T.positive,
-            background: 'rgba(45, 80, 22, 0.1)',
-            border: `1px solid ${T.positive}`,
-            padding: '3px 8px',
-            borderRadius: 2,
-            fontWeight: 600,
-            marginBottom: 8,
-          }}
-          title="When both Medicaid and CHIP are available, Medicaid is the better choice — it covers the whole household (kids included) at $0 cost with broader benefits than CHIP. Claiming Medicaid will automatically uncheck CHIP."
-        >
-          ★ Better option than CHIP
-        </div>
-      )}
+      {recommendedOverChip && !claimed && <BetterOptionBadge />}
 
       <div
         style={{
@@ -564,6 +545,101 @@ function ValueWithDerivation({
             How this is computed
           </div>
           {derivation}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Small green badge that appears on the Medicaid card when CHIP is also
+ *  eligible. Hover/focus reveals a popover explaining WHY Medicaid is the
+ *  better choice — covers the whole household at $0 cost with broader
+ *  benefits, plus the practical UX note that claiming Medicaid will
+ *  auto-drop CHIP. */
+function BetterOptionBadge() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ position: 'relative', display: 'inline-block', marginBottom: 8 }}>
+      <button
+        type="button"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        aria-describedby={open ? 'better-option-popover' : undefined}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          display: 'inline-block',
+          fontSize: rem(10),
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: T.positive,
+          background: 'rgba(45, 80, 22, 0.1)',
+          border: `1px solid ${T.positive}`,
+          padding: '3px 8px',
+          borderRadius: 2,
+          fontWeight: 600,
+          cursor: 'help',
+          fontFamily: fonts.body,
+        }}
+      >
+        ★ Better option than CHIP
+      </button>
+      {open && (
+        <div
+          id="better-option-popover"
+          role="tooltip"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            left: 0,
+            zIndex: 5,
+            width: 320,
+            padding: '10px 12px',
+            background: T.surface,
+            border: `1px solid ${T.positive}`,
+            borderRadius: 4,
+            boxShadow: '0 4px 12px rgba(27, 24, 21, 0.12)',
+            fontFamily: fonts.body,
+            fontSize: rem(12),
+            lineHeight: 1.5,
+            color: T.ink,
+            fontStyle: 'normal',
+            pointerEvents: 'none',
+            textTransform: 'none',
+            letterSpacing: 'normal',
+          }}
+        >
+          <div
+            style={{
+              fontSize: rem(10),
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: T.inkMuted,
+              fontWeight: 600,
+              marginBottom: 4,
+            }}
+          >
+            Why Medicaid over CHIP
+          </div>
+          <ul style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <li>
+              <strong>Covers the whole household</strong> — adults and kids — instead of just
+              the kids' share.
+            </li>
+            <li>
+              <strong>Genuinely $0 cost.</strong> CHIP often charges small monthly premiums above
+              ~150% FPL (varies by state); Medicaid does not.
+            </li>
+            <li>
+              <strong>Broader benefits.</strong> Medicaid typically has $0 deductible, $0 copay,
+              and includes dental/vision; CHIP varies more by state.
+            </li>
+          </ul>
+          <div style={{ marginTop: 6, color: T.inkMuted, fontSize: rem(11) }}>
+            Claiming Medicaid will automatically uncheck CHIP — the kids are covered either
+            way.
+          </div>
         </div>
       )}
     </div>
