@@ -3,7 +3,7 @@ status	url	final_url
 200	http://dhss.alaska.gov/dhcs/Pages/denalikidcare/default.aspx	https://health.alaska.gov/en/division-of-health-care-services/
 200	http://dhss.alaska.gov/dpa/Pages/snap/default.aspx	https://health.alaska.gov/en/division-of-public-assistance/
 200	https://ahca.myflorida.com/	https://ahca.myflorida.com/
-200	https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines	https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines
+403	https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines	https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines
 200	https://azdor.gov	https://azdor.gov/
 200	https://bfa.wv.gov/photo-call-out/supplemental-nutrition-assistance-program-snap	https://bfa.wv.gov/photo-call-out/supplemental-nutrition-assistance-program-snap
 200	https://cdhs.colorado.gov/snap	https://cdhs.colorado.gov/snap
@@ -78,9 +78,9 @@ status	url	final_url
 200	https://medicaid.ohio.gov/families-and-individuals/coverage/coverage-for-children-and-pregnant-women	https://medicaid.ohio.gov/families-and-individuals/coverage/coverage-for-children-and-pregnant-women
 200	https://medicaid.utah.gov/	https://medicaid.utah.gov/
 200	https://medquest.hawaii.gov/	https://medquest.hawaii.gov/
-200	https://mn.gov/dhs/people-we-serve/adults/economic-assistance/food-nutrition/programs-and-services/supplemental-nutrition-assistance-program.jsp	http://validate.perfdrive.com/d5bd5333eafe8b0ccd6023ba818d1aa6/?ssa=1bf44295-85f5-4712-b0a0-033c48311140&ssb=15853211913&ssc=https%3A%2F%2Fmn.gov%2Fdhs%2Fpeople-we-serve%2Fadults%2Feconomic-assistance%2Ffood-nutrition%2Fprograms-and-services%2Fsupplemental-nutrition-assistance-program.jsp&ssi=edfbeb63-bf56-4c45-8db3-2189c865172f&ssk=support@shieldsquare.com&ssm=33069299235523452109911953309401&ssn=8c2f27f0a76da62e5f9e948e741ed7096af30a23240f-e3c8-47d3-ac933a&sso=db17421c-6313e38b5e37facab08362e8724e906d08e2731ad0e4a92e&ssp=01388733971778075790177802189129569&ssq=61878374844370050802948443524320855163043&ssr=NDAuNzkuMjQ1LjE2&sst=Mozilla/5.0+(compatible;+BudgetAtlas-link-audit;++https://github.com/TheBudgetAtlas/thebudgetatlas)&ssu=&ssv=&ssw=&ssx=W10=
-200	https://mn.gov/dhs/people-we-serve/adults/health-care/health-care-programs/	http://validate.perfdrive.com/d5bd5333eafe8b0ccd6023ba818d1aa6/?ssa=7feea5e0-35d6-400a-a452-1b96e1ea1132&ssb=11539249507&ssc=https%3A%2F%2Fmn.gov%2Fdhs%2Fpeople-we-serve%2Fadults%2Fhealth-care%2Fhealth-care-programs%2F&ssi=19f92a88-bf56-4af2-8648-c137a07ed1fc&ssk=support@shieldsquare.com&ssm=39151043154918978106061496666047&ssn=75d24897e4631f80e0e418f886d50885be000dffd685-8cb8-4f69-83c0cc&sso=a587c551-93a63ac9e383279f6a73a6fbb71682f28a30cb16a5ab75fc&ssp=64750414441778022640177803547760173&ssq=88664744844608887447448446698148079432730&ssr=NDAuNzkuMjQ1LjE2&sst=Mozilla/5.0+(compatible;+BudgetAtlas-link-audit;++https://github.com/TheBudgetAtlas/thebudgetatlas)&ssu=&ssv=&ssw=&ssx=W10=
-200	https://mn.gov/dhs/people-we-serve/adults/health-care/health-care-programs/programs-and-services/minnesotacare.jsp	http://validate.perfdrive.com/d5bd5333eafe8b0ccd6023ba818d1aa6/?ssa=948ad141-f596-403e-ae3b-48485a196bd1&ssb=11539249507&ssc=https%3A%2F%2Fmn.gov%2Fdhs%2Fpeople-we-serve%2Fadults%2Fhealth-care%2Fhealth-care-programs%2Fprograms-and-services%2Fminnesotacare.jsp&ssi=a37a6660-bf56-4350-89b3-39256b884fd7&ssk=support@shieldsquare.com&ssm=39151043154918978106061496666047&ssn=75d248970a677726caeae805dde30885be0084da92ad-6e5b-426d-83c0cc&sso=a587c5c3-4dcf5588dcfe279f6a73e705d6810cd2669d10c3a5ab75fc&ssp=64750414441778022640177803547760173&ssq=88664744844608887447448446698148079432730&ssr=NDAuNzkuMjQ1LjE2&sst=Mozilla/5.0+(compatible;+BudgetAtlas-link-audit;++https://github.com/TheBudgetAtlas/thebudgetatlas)&ssu=&ssv=&ssw=&ssx=W10=
+200	https://mn.gov/dhs/people-we-serve/adults/economic-assistance/food-nutrition/programs-and-services/supplemental-nutrition-assistance-program.jsp	http://validate.perfdrive.com/d5bd5333eafe8b0ccd6023ba818d1aa6/?ssa=6da44941-1d88-4fe0-a48f-5f4257163c67&ssb=24037227111&ssc=https%3A%2F%2Fmn.gov%2Fdhs%2Fpeople-we-serve%2Fadults%2Feconomic-assistance%2Ffood-nutrition%2Fprograms-and-services%2Fsupplemental-nutrition-assistance-program.jsp&ssi=5d1fae3e-bf56-48bc-b72b-670a102ff514&ssk=support@shieldsquare.com&ssm=84083897194728299102892379793348&ssn=a3b6955d5c54898d1fd5a870331b2aa23928ef480a17-f3db-4a40-88f76f&sso=1d983f41-51ced8c8798518ed008e75f5adea14b201d65349a73b399b&ssp=84360013641778082503177805187197359&ssq=06740229634964543152996349787933491573874&ssr=NTIuMTY1LjI1MS4xNjU=&sst=Mozilla/5.0+(compatible;+BudgetAtlas-link-audit;++https://github.com/TheBudgetAtlas/thebudgetatlas)&ssu=&ssv=&ssw=&ssx=W10=
+200	https://mn.gov/dhs/people-we-serve/adults/health-care/health-care-programs/	http://validate.perfdrive.com/d5bd5333eafe8b0ccd6023ba818d1aa6/?ssa=005c9f6e-5258-4275-a99e-bc253d3d4b3d&ssb=94037229119&ssc=https%3A%2F%2Fmn.gov%2Fdhs%2Fpeople-we-serve%2Fadults%2Fhealth-care%2Fhealth-care-programs%2F&ssi=19e84f76-bf56-45fa-bdc0-e06739de7f43&ssk=support@shieldsquare.com&ssm=48703732412686446100870594324868&ssn=b3125497858c9c8be0fdace39d6d1a986a86dfb6c6dd-d556-4f6b-864bca&sso=a8cb08f8-e42a2bc8d74d5b5c0ecedff56bf80c31c9c07dcf4395e6d7&ssp=49591347331778008006177801935752413&ssq=07235989636684029069596366077734422276144&ssr=NTIuMTY1LjI1MS4xNjU=&sst=Mozilla/5.0+(compatible;+BudgetAtlas-link-audit;++https://github.com/TheBudgetAtlas/thebudgetatlas)&ssu=&ssv=&ssw=&ssx=W10=
+200	https://mn.gov/dhs/people-we-serve/adults/health-care/health-care-programs/programs-and-services/minnesotacare.jsp	http://validate.perfdrive.com/d5bd5333eafe8b0ccd6023ba818d1aa6/?ssa=b4b0a5fd-bbda-4b63-a017-78b25ed8f01c&ssb=94037229119&ssc=https%3A%2F%2Fmn.gov%2Fdhs%2Fpeople-we-serve%2Fadults%2Fhealth-care%2Fhealth-care-programs%2Fprograms-and-services%2Fminnesotacare.jsp&ssi=2bb56322-bf56-4230-98c9-7647938278f8&ssk=support@shieldsquare.com&ssm=48703732412686446100870594324868&ssn=b312549775549f6f96cc98e377d81a986a866b124990-29eb-4a2f-964bca&sso=a8cb0ded-e795af447d425b5c0ece408b9b6ecb28f27f6fce4395e6d7&ssp=49591347331778008006177801935752413&ssq=07235989636684029069596366077734422276144&ssr=NTIuMTY1LjI1MS4xNjU=&sst=Mozilla/5.0+(compatible;+BudgetAtlas-link-audit;++https://github.com/TheBudgetAtlas/thebudgetatlas)&ssu=&ssv=&ssw=&ssx=W10=
 200	https://mtrevenue.gov	https://revenue.mt.gov/
 200	https://mydss.mo.gov/food-assistance	https://mydss.mo.gov/food-assistance
 200	https://mydss.mo.gov/healthcare	https://mydss.mo.gov/healthcare
@@ -125,8 +125,8 @@ status	url	final_url
 200	https://www.dcfs.louisiana.gov/page/snap	https://www.dcfs.louisiana.gov/page/snap
 200	https://www.dfa.arkansas.gov/income-tax	https://www.dfa.arkansas.gov/office/taxes/income-tax-administration/
 200	https://www.dhcs.ca.gov/services/medi-cal	https://www.dhcs.ca.gov/services/medi-cal
-200	https://www.dhhs.nh.gov/programs-services/medicaid	https://www.dhhs.nh.gov/programs-services/medicaid
-404	https://www.dhhs.nh.gov/programs-services/medicaid/food-stamp-program	https://www.dhhs.nh.gov/programs-services/medicaid/food-stamp-program
+403	https://www.dhhs.nh.gov/programs-services/medicaid	https://www.dhhs.nh.gov/programs-services/medicaid
+403	https://www.dhhs.nh.gov/programs-services/medicaid/food-stamp-program	https://www.dhhs.nh.gov/programs-services/medicaid/food-stamp-program
 200	https://www.dhs.pa.gov/Services/Assistance/Pages/Medical-Assistance-Health-Care.aspx	https://www.pa.gov/agencies/dhs
 200	https://www.dhs.pa.gov/Services/Assistance/Pages/SNAP.aspx	https://www.pa.gov/agencies/dhs/resources/snap
 200	https://www.dhs.state.il.us/page.aspx?item=30357	https://www.dhs.state.il.us/page.aspx?item=30357
@@ -196,7 +196,7 @@ status	url	final_url
 200	https://www.oregon.gov/oha/hsd/ohp/Pages/index.aspx	https://www.oregon.gov/oha/hsd/ohp/Pages/index.aspx
 200	https://www.pa.gov/agencies/dhs/resources/chip.html	https://www.pa.gov/agencies/dhs/resources/chip
 403	https://www.rentcafe.com/average-rent-market-trends/us/	https://www.rentcafe.com/average-rent-market-trends/us/
-200	https://www.revenue.nh.gov	https://www.revenue.nh.gov/
+403	https://www.revenue.nh.gov	https://www.revenue.nh.gov/
 200	https://www.revenue.pa.gov	https://www.pa.gov/agencies/revenue
 200	https://www.revenue.state.mn.us	https://www.revenue.state.mn.us/
 200	https://www.revenue.wi.gov	https://www.revenue.wi.gov/Pages/home.aspx
@@ -207,7 +207,7 @@ status	url	final_url
 200	https://www.tax.ny.gov	https://www.tax.ny.gov/
 200	https://www.tax.virginia.gov	https://www.tax.virginia.gov/
 000ERR	https://www.tn.gov/humanservices/for-families/supplemental-nutrition-assistance-program-snap.html	https://www.tn.gov/humanservices/for-families/supplemental-nutrition-assistance-program-snap.html
-200	https://www.tn.gov/revenue	https://www.tn.gov/revenue
+000ERR	https://www.tn.gov/revenue	https://www.tn.gov/revenue
 200	https://www.tn.gov/tenncare.html	https://www.tn.gov/tenncare.html
-200	https://www.tn.gov/tenncare/members-applicants/learn-more-apply/redirect-coverkids.html	https://www.tn.gov/coverkids/
+000ERR	https://www.tn.gov/tenncare/members-applicants/learn-more-apply/redirect-coverkids.html	https://www.tn.gov/coverkids/
 403	https://www.zillow.com/research/data/	https://www.zillow.com/research/data/
