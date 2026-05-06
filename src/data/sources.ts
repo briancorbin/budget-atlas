@@ -846,7 +846,7 @@ const RAW_STATE_SNAP_AGENCY: Record<StateCode, SourceLiteral> = {
   },
   KS: {
     label: 'KS DCF Food Assistance',
-    url: 'https://www.dcf.ks.gov/services/Pages/Food-Assistance.aspx',
+    url: 'https://www.dcf.ks.gov/services/ees/pages/food/foodassistance.aspx',
     date: '2026',
     tier: 'primary',
     addedBy: 'briancorbin',
@@ -950,7 +950,7 @@ const RAW_STATE_SNAP_AGENCY: Record<StateCode, SourceLiteral> = {
   },
   NH: {
     label: 'NH DHHS Food Stamp',
-    url: 'https://www.dhhs.nh.gov/programs-services/medicaid/food-stamp-program',
+    url: 'https://www.dhhs.nh.gov/programs-services/food-meals-assistance/supplemental-nutrition-assistance-program-snap',
     date: '2026',
     tier: 'primary',
     addedBy: 'briancorbin',
@@ -1626,7 +1626,7 @@ const RAW_STATE_CHIP_AGENCY: Record<StateCode, SourceLiteral> = {
   },
   DE: {
     label: 'Delaware Healthy Children Program',
-    url: 'https://dhss.delaware.gov/dhss/dhcq/dhcp.html',
+    url: 'https://dhss.delaware.gov/dmma/dhcp/',
     date: '2026',
     tier: 'primary',
     addedBy: 'briancorbin',
