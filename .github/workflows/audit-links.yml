@@ -22,6 +22,12 @@ on:
 permissions:
   contents: write
   issues: write
+  # Needed by peter-evans/create-pull-request to open the audit-refresh PR.
+  # Note: the default GITHUB_TOKEN doesn't trigger pull_request workflows on
+  # PRs it opens, so CI checks won't run on the audit-refresh PR. That's
+  # acceptable here — the PR only changes machine-generated audit data, no
+  # code, so the CI checks (lint/typecheck/test) wouldn't be meaningful.
+  pull-requests: write
 
 concurrency:
   group: audit-links
@@ -47,23 +53,36 @@ jobs:
       - name: Run link audit
         run: yarn check-links
 
-      - name: Commit refreshed audit data
-        run: |
-          # Stage status.md + the dated TSV (per-day history) + latest.tsv
-          # (stable filename the /sources page imports). The [skip ci] tag
-          # prevents this commit from re-triggering the workflow.
-          if ! git diff --quiet -- audit/links/status.md audit/links/results/ \
-              || [ -n "$(git ls-files --others --exclude-standard audit/links/results/)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add audit/links/status.md audit/links/results/
-            git commit -m "Audit: refresh link-status data [skip ci]"
-            git push
-          else
-            echo "No audit data changes to commit."
-          fi
+      - name: Open PR with refreshed audit data
+        # Switched from `git push origin main` to a PR-based flow because
+        # branch protection on main rejects direct pushes from the bot.
+        # peter-evans/create-pull-request is idempotent: it diffs the
+        # working tree against main, skips the PR entirely when there's
+        # nothing to commit, and updates the existing PR (same branch
+        # name) when a previous run is still open. The PR can be merged
+        # manually or by enabling repo-level auto-merge.
+        uses: peter-evans/create-pull-request@v7
+        with:
+          add-paths: |
+            audit/links/status.md
+            audit/links/results/
+          branch: audit/links-refresh
+          commit-message: 'Audit: refresh link-status data'
+          title: 'Audit: refresh link-status data'
+          body: |
+            Automated link-audit refresh.
+
+            Updated by `.github/workflows/audit-links.yml`.
+          labels: audit
+          delete-branch: true
 
       - name: Seed GitHub issues for newly broken links
+        # Runs regardless of the PR step's outcome — issue tracking
+        # shouldn't be coupled to whether new audit data was committable.
+        # Still depends on `yarn check-links` having produced the results
+        # TSV: if the audit itself failed earlier, seed-issues will exit
+        # cleanly without doing anything.
+        if: always()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node audit/links/seed-issues.mjs
