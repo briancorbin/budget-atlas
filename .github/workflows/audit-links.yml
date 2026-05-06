@@ -68,7 +68,7 @@ jobs:
         # nothing to commit, and updates the existing PR (same branch
         # name) when a previous run is still open. The PR can be merged
         # manually or by enabling repo-level auto-merge.
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           add-paths: |
             audit/links/status.md
