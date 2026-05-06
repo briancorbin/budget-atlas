@@ -28,7 +28,13 @@ export function computePitZones<P extends { gross: number }>(
   cliffs: readonly { id: string; gross: number; color: string }[],
 ): PitZone[] {
   const sortedCliffs = [...cliffs].sort((a, b) => b.gross - a.gross); // desc
-  const findCause = (zoneStart: number) => sortedCliffs.find((c) => c.gross < zoneStart);
+  // Use <= because a synthesized curve can open a pit at exactly the
+  // cliff's gross (the drop is applied at g === cliff.gross). For real
+  // computed curves the zone opens at the next swept point past the
+  // cliff, so the strict-< relation also matches via the same lookup —
+  // <= covers both cases. Without this, attribution silently falls back
+  // to a default color and the program's accent never propagates.
+  const findCause = (zoneStart: number) => sortedCliffs.find((c) => c.gross <= zoneStart);
 
   const zones: PitZone[] = [];
   let runningMax = -Infinity;
