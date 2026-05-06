@@ -14,7 +14,7 @@
  * `audit/links/status.md` on GitHub.
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { theme as T, fonts, rem } from '@/theme';
 import { SectionTitle } from './ui';
 import {
@@ -27,7 +27,7 @@ import {
 import type { Source } from '@/types';
 import {
   REVIEWS,
-  STATUS_BY_URL,
+  useStatusByUrl,
   STALENESS_THRESHOLDS_DAYS,
   STALENESS_DEFAULT_DAYS,
   isBrokenStatus,
@@ -138,8 +138,11 @@ const GROUPS: readonly Group[] = [
 
 const ALL_SOURCES = GROUPS.flatMap((g) => g.sources);
 
-const SUMMARY = (() => {
-  const total = ALL_SOURCES.length;
+// Tier counts don't depend on audit status, so they can be computed once
+// at module load. Status counts (broken/overdue/verified/ai-verified) move
+// with each /api/audit/latest fetch and are recomputed inside the
+// component via `computeStatusSummary` + useMemo.
+const TIER_SUMMARY = (() => {
   let primary = 0;
   let reference = 0;
   let commercial = 0;
@@ -149,22 +152,26 @@ const SUMMARY = (() => {
     else if (tier === 'reference') reference++;
     else if (tier === 'commercial') commercial++;
   }
-  // Overdue: tier-aware staleness check. Never-reviewed sources count as
-  // overdue from day one — the audit's job is to honestly represent how
-  // much human verification has happened, not to soft-start with addedAt
-  // as a free pass. See audit/staleness/ for the rolling-issue workflow
-  // that surfaces the queue for triage.
-  // Status classifier mirrors `getStatusKind` exactly so the four Status
-  // cells partition every source (sum equals total). Precedence: broken >
-  // overdue > ai-verified > human-verified. Counting broken and overdue
-  // independently would double-count any source that's both, breaking
-  // the row-level totals' agreement with the per-source dot.
+  return { total: ALL_SOURCES.length, primary, reference, commercial };
+})();
+
+// Status classifier mirrors `getStatusKind` exactly so the four Status
+// cells partition every source (sum equals total). Precedence: broken >
+// overdue > ai-verified > human-verified. Counting broken and overdue
+// independently would double-count any source that's both, breaking the
+// row-level totals' agreement with the per-source dot. Overdue uses the
+// tier-aware staleness check; never-reviewed sources count as overdue
+// from day one — the audit's job is to honestly represent how much human
+// verification has happened, not to soft-start with addedAt as a free
+// pass. See audit/staleness/ for the rolling-issue workflow that
+// surfaces the queue for triage.
+function computeStatusSummary(statusByUrl: ReadonlyMap<string, string>) {
   let humanVerified = 0;
   let aiVerified = 0;
   let overdue = 0;
   let broken = 0;
   for (const s of ALL_SOURCES) {
-    if (isBrokenStatus(STATUS_BY_URL.get(s.url))) {
+    if (isBrokenStatus(statusByUrl.get(s.url))) {
       broken++;
       continue;
     }
@@ -176,17 +183,8 @@ const SUMMARY = (() => {
     if (latest?.kind === 'ai') aiVerified++;
     else humanVerified++;
   }
-  return {
-    total,
-    primary,
-    reference,
-    commercial,
-    overdue,
-    broken,
-    humanVerified,
-    aiVerified,
-  };
-})();
+  return { humanVerified, aiVerified, overdue, broken };
+}
 
 export function Sources({ onBack }: { onBack: () => void }) {
   return (
@@ -434,31 +432,33 @@ const TIER_REVIEW_DAYS = {
 } as const;
 
 function Summary() {
+  const statusByUrl = useStatusByUrl();
+  const statusSummary = useMemo(() => computeStatusSummary(statusByUrl), [statusByUrl]);
   // Two semantic rows: composition (what's in the registry by class) on top,
   // current state (how the registry is doing) below. Each row gets four
   // cells, fits cleanly without auto-fit awkwardness.
   const composition: ReadonlyArray<Stat> = [
     {
       label: 'Total cited',
-      value: SUMMARY.total,
+      value: TIER_SUMMARY.total,
       tooltip:
         'Every citation the model relies on, across all categories. Each source has a tier (Primary / Reference / Commercial) that determines how often it gets re-reviewed.',
     },
     {
       label: 'Primary',
-      value: SUMMARY.primary,
+      value: TIER_SUMMARY.primary,
       tone: 'positive',
       tooltip: `Direct from the agency or data publisher: federal agencies (IRS, BLS, SSA, HUD, eCFR) and state agencies on their own programs (state DORs, SNAP / Medicaid / CHIP portals). Highest-confidence tier. Re-reviewed every ${TIER_REVIEW_DAYS.primary} days.`,
     },
     {
       label: 'Reference',
-      value: SUMMARY.reference,
+      value: TIER_SUMMARY.reference,
       tone: 'reference',
       tooltip: `Peer-respected third-party interpretation, methodology document, or research-org survey (KFF, EPI, CBPP, Tax Foundation, NCSL, AAA, HUD Handbook, Child Care Aware). Public methodology, one step removed from the publisher. Re-reviewed every ${TIER_REVIEW_DAYS.reference} days.`,
     },
     {
       label: 'Commercial',
-      value: SUMMARY.commercial,
+      value: TIER_SUMMARY.commercial,
       tone: 'commercial',
       tooltip: `Commercial or crowd-sourced data product (Zillow, RentCafe, Care.com, Numbeo). Methodology is proprietary or community-driven, not peer-reviewed; treat with appropriate skepticism. Re-reviewed every ${TIER_REVIEW_DAYS.commercial} days.`,
     },
@@ -479,27 +479,27 @@ function Summary() {
   const status: ReadonlyArray<Stat> = [
     {
       label: 'Human verified',
-      value: SUMMARY.humanVerified,
+      value: statusSummary.humanVerified,
       tone: 'positive',
       tooltip:
         'URL is live and the most recent review was eyes-on-source by a human within the tier window. The gold standard.',
     },
     {
       label: 'AI verified',
-      value: SUMMARY.aiVerified,
+      value: statusSummary.aiVerified,
       tone: 'ai',
       tooltip:
         'URL is live and reviewed within the tier window, but the most recent review was AI-assisted rather than eyes-on-source by a human. Provisional — awaiting a human pass.',
     },
     {
       label: 'Overdue',
-      value: SUMMARY.overdue,
+      value: statusSummary.overdue,
       tone: 'warning',
       tooltip: `No review within the tier-specific window (Primary ${TIER_REVIEW_DAYS.primary}d, Reference ${TIER_REVIEW_DAYS.reference}d, Commercial ${TIER_REVIEW_DAYS.commercial}d). Picked up during periodic sweeps.`,
     },
     {
       label: 'Broken',
-      value: SUMMARY.broken,
+      value: statusSummary.broken,
       tone: 'broken',
       tooltip:
         'URL is currently unreachable (404 or other error code from the periodic curl audit). Needs a fix in src/data/sources.ts paired with a row in reviewed.tsv.',
@@ -719,7 +719,8 @@ function SourceRow({ source }: { source: Source }) {
   const reviews = REVIEWS.get(source.id) ?? [];
   const latest = reviews[0];
   const tier = (source as Source & { tier?: string }).tier;
-  const statusKind = getStatusKind(source);
+  const statusByUrl = useStatusByUrl();
+  const statusKind = getStatusKind(source, statusByUrl);
 
   // Single-column stacked layout. Title leads (it's the content); metadata
   // strip contextualizes it; URL is the reference / wayfinding; actions

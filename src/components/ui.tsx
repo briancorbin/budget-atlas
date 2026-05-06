@@ -11,7 +11,14 @@ import { theme as T, fonts, rem } from '@/theme';
 import { fmt } from '@/lib/format';
 import { navigate } from '@/lib/nav';
 import { ALL_SOURCES } from '@/data/sources';
-import { StatusDot, ReportFlag, getStatusKind, REVIEWS, type StatusKind } from '@/lib/sourceStatus';
+import {
+  StatusDot,
+  ReportFlag,
+  getStatusKind,
+  REVIEWS,
+  useStatusByUrl,
+  type StatusKind,
+} from '@/lib/sourceStatus';
 
 /**
  * Roll a list of source statuses up to a single "worst" one. Broken
@@ -19,10 +26,13 @@ import { StatusDot, ReportFlag, getStatusKind, REVIEWS, type StatusKind } from '
  * is honest signal (one un-human-vetted apple in the bundle should flag
  * the bundle), not optimism.
  */
-function worstStatusOf(sources: readonly Source[]): StatusKind {
+function worstStatusOf(
+  sources: readonly Source[],
+  statusByUrl: ReadonlyMap<string, string>,
+): StatusKind {
   let worst: StatusKind = 'verified';
   for (const s of sources) {
-    const k = getStatusKind(s);
+    const k = getStatusKind(s, statusByUrl);
     if (k === 'broken') return 'broken';
     if (k === 'overdue') {
       worst = 'overdue';
@@ -74,8 +84,9 @@ export function CiteGroup({ sources }: { sources: readonly Source[] }) {
     };
   }, [open]);
 
+  const statusByUrl = useStatusByUrl();
   if (sources.length === 0) return null;
-  const worstStatus = worstStatusOf(sources);
+  const worstStatus = worstStatusOf(sources, statusByUrl);
 
   return (
     <span
@@ -170,7 +181,7 @@ export function CiteGroup({ sources }: { sources: readonly Source[] }) {
               }}
             >
               <span style={{ paddingTop: 4 }}>
-                <StatusDot kind={getStatusKind(s)} size={8} />
+                <StatusDot kind={getStatusKind(s, statusByUrl)} size={8} />
               </span>
               <a
                 href={s.url}

@@ -23,6 +23,18 @@ export default defineConfig({
     // by default as a DNS-rebinding mitigation; the wildcard scopes the
     // exception to trycloudflare.com only.
     allowedHosts: ['dev.thebudgetatlas.com', '.trycloudflare.com'],
+    // Proxy /api/* to the deployed Cloudflare Worker so the dev server
+    // can fetch real audit data without running a local Worker. The
+    // backend has no auth on reads (the data is public), so this is
+    // safe; the write endpoint is gated by AUDIT_WRITE_TOKEN regardless
+    // of where the request comes from.
+    proxy: {
+      '/api': {
+        target: 'https://thebudgetatlas.com',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
   resolve: {
     alias: {

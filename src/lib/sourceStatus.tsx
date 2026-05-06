@@ -6,7 +6,7 @@
  * render status the same way. One source of truth for:
  *
  *   - BROKEN_STATUS_CODES — what counts as broken from curl results.
- *   - STATUS_BY_URL — latest curl status per URL (built from latest.tsv).
+ *   - useStatusByUrl — React hook returning the latest curl status per URL.
  *   - REVIEWS — review history per source id (built from reviewed.tsv).
  *   - isOverdue / getStatusKind — tier-aware staleness check.
  *   - StatusDot — the green/yellow/red indicator.
@@ -16,12 +16,13 @@
  * URL-keyed since curl checks URLs. See audit/links/README.md.
  */
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { theme as T, fonts, rem } from '@/theme';
 import type { Source } from '@/types';
-// Vite inlines these at build time. Same files the audit pipeline writes.
+// reviewed.tsv is authored content (git history is meaningful) and stays
+// bundled. Audit results moved to a D1-backed API in PR A; the site now
+// fetches them at runtime from /api/audit/latest. See audit/links/README.md.
 import reviewedTsv from '../../audit/links/reviewed.tsv?raw';
-import latestResultsTsv from '../../audit/links/results/latest.tsv?raw';
 
 const REPO = 'https://github.com/TheBudgetAtlas/thebudgetatlas';
 
@@ -115,16 +116,82 @@ export const STALENESS_THRESHOLDS_DAYS: Record<string, number> = {
 };
 export const STALENESS_DEFAULT_DAYS = 180;
 
-/** URL → most recent curl status code, parsed once at module load. */
-export const STATUS_BY_URL = (() => {
-  const map = new Map<string, string>();
-  for (const line of latestResultsTsv.split('\n').slice(1)) {
-    if (!line) continue;
-    const [status, url] = line.split('\t');
-    if (url) map.set(url, status);
+/**
+ * Status store — URL → most recent curl status code, fetched at runtime
+ * from the D1-backed audit API.
+ *
+ * Tiny external store: a module-level `Map` that components subscribe to
+ * via `useStatusByUrl()` (built on `useSyncExternalStore`). The map is
+ * empty on initial render — sources show with no broken-state until the
+ * fetch resolves, then re-render. We deliberately don't gate the whole
+ * tree on the fetch: status is decoration over the citation registry,
+ * not the registry itself, and a brief "no audit data" state is
+ * preferable to blocking first paint on a network round-trip.
+ *
+ * Failure mode: a 4xx/5xx or network error keeps the map empty and logs
+ * a warning. Status dots fall through to "no broken signal" + the normal
+ * overdue/review classification, which is the same behaviour you'd get
+ * if the audit hadn't run yet for a never-checked source.
+ */
+let statusByUrlSnapshot: ReadonlyMap<string, string> = new Map();
+const statusListeners = new Set<() => void>();
+let statusFetchStarted = false;
+
+interface AuditLatestResponse {
+  run_date?: string;
+  results?: Array<{ url?: string; status?: string }>;
+}
+
+function notifyStatusListeners() {
+  for (const cb of statusListeners) cb();
+}
+
+/**
+ * Kick off the one-time fetch of /api/audit/latest. Idempotent — safe to
+ * call from multiple boot paths; only the first call hits the network.
+ * Resolves silently on failure so callers don't need to handle errors.
+ */
+export async function prefetchStatus(): Promise<void> {
+  if (statusFetchStarted) return;
+  statusFetchStarted = true;
+  try {
+    const res = await fetch('/api/audit/latest');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = (await res.json()) as AuditLatestResponse;
+    const map = new Map<string, string>();
+    for (const r of json.results ?? []) {
+      if (typeof r.url === 'string' && typeof r.status === 'string') map.set(r.url, r.status);
+    }
+    statusByUrlSnapshot = map;
+    notifyStatusListeners();
+  } catch (err) {
+    console.warn('[audit] failed to load /api/audit/latest:', err);
   }
-  return map;
-})();
+}
+
+/**
+ * React hook returning the URL → status map. Re-renders on first load.
+ * The returned map is read-only — pass it down or treat snapshots as
+ * stable references between renders.
+ */
+export function useStatusByUrl(): ReadonlyMap<string, string> {
+  return useSyncExternalStore(
+    (cb) => {
+      statusListeners.add(cb);
+      return () => statusListeners.delete(cb);
+    },
+    () => statusByUrlSnapshot,
+  );
+}
+
+/**
+ * Non-reactive accessor for code paths that aren't hooks (e.g. event
+ * handlers reading the latest status without subscribing). Hook-using
+ * components should prefer `useStatusByUrl()`.
+ */
+export function getStatusByUrlSnapshot(): ReadonlyMap<string, string> {
+  return statusByUrlSnapshot;
+}
 
 /**
  * Parse `audit/links/reviewed.tsv` into a Map keyed by source id (newest
@@ -203,8 +270,11 @@ export type StatusKind = 'broken' | 'overdue' | 'verified' | 'ai-verified';
  * by a human. We render it as a hollow green ring (same color family as
  * verified, different shape) to signal "same kind of state, just provisional."
  */
-export function getStatusKind(source: Source): StatusKind {
-  if (isBrokenStatus(STATUS_BY_URL.get(source.url))) return 'broken';
+export function getStatusKind(
+  source: Source,
+  statusByUrl: ReadonlyMap<string, string>,
+): StatusKind {
+  if (isBrokenStatus(statusByUrl.get(source.url))) return 'broken';
   if (isOverdue(source)) return 'overdue';
   const latest = REVIEWS.get(source.id)?.[0];
   if (latest && latest.kind === 'ai') return 'ai-verified';
