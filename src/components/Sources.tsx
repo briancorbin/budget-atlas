@@ -8,10 +8,10 @@
  * scannable.
  *
  * Editorial intent: the page is a bibliography, not a dashboard. Anyone
- * landing here should be able to see what we cite, who put each citation in,
- * when, and whether it's been independently verified. The deeper audit
- * machinery (current curl status, broken-link issues) lives at
- * `audit/links/status.md` on GitHub.
+ * landing here should be able to see what we cite, who put each citation
+ * in, when, and whether it's been independently verified. Machine status
+ * is fetched from /api/audit/latest at render time; broken-link triage
+ * lives in the rolling [`audit:link`] issue.
  */
 
 import { useMemo, useState } from 'react';

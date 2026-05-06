@@ -7,7 +7,7 @@
  *   1. Where it's used in the codebase (top-level entries only — state-map
  *      entries are dynamically accessed by code, treated as collectively
  *      used, see notes in output).
- *   2. Latest curl status (from audit/links/results/latest.tsv).
+ *   2. Latest curl status (from /api/audit/latest, the D1-backed audit API).
  *   3. Latest human review (from audit/links/reviewed.tsv).
  *
  * Outputs `audit/source-inventory.md` — a sortable, scannable table for
@@ -27,15 +27,15 @@
  * scripts could be replaced with this approach if we ever consolidate.
  */
 
-import { readFileSync, statSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, relative } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const REVIEWED_TSV = resolve(ROOT, 'audit/links/reviewed.tsv');
-const LATEST_TSV = resolve(ROOT, 'audit/links/results/latest.tsv');
 const OUT_MD = resolve(ROOT, 'audit/source-inventory.md');
+const API_BASE = process.env.AUDIT_API_BASE ?? 'https://thebudgetatlas.com';
 
 // Pull live data — types stripped on the fly so `id`/`tier`/etc. flow through.
 // Use a file URL rather than a raw path so this works on Windows (Node's
@@ -45,20 +45,35 @@ const { SOURCES, ALL_SOURCES } = sourcesModule;
 
 // ── Status + reviews ────────────────────────────────────────────────────
 //
-// `BROKEN_STATUS_CODES` matches the UI's definition (src/lib/sourceStatus.tsx),
-// so this report's broken count tracks the /sources page exactly. The audit
-// pipeline (audit/links/seed-issues.mjs and generate-status.mjs) currently
-// uses a slightly narrower set that excludes `000ERR`; that divergence is
-// long-standing and tracked as a follow-up. When the three definitions
-// converge, this constant becomes a re-export.
-const BROKEN_SET = new Set(['404', '000', '000ERR', 'ERR', '999']);
+// Matches the UI's definition (src/lib/audit/status.ts BROKEN_STATUS_CODES)
+// so this report's broken count tracks the /sources page exactly. 999 is
+// excluded — it's a bot-block signal (LinkedIn, several state .gov sites),
+// not a broken page; it belongs alongside 403 in the bot-blocked bucket.
+// When the audit pipeline's slightly narrower set (seed-issues.mjs, which
+// also flags 999) converges with this, this constant becomes a re-export.
+const BROKEN_SET = new Set(['404', '000', '000ERR', 'ERR']);
+
+// One fetch of /api/audit/latest serves both the URL → status map and the
+// snapshot date — splitting these into two requests opens a window where
+// they could disagree if a new run lands mid-script.
+const latestRun = await (async () => {
+  try {
+    const res = await fetch(`${API_BASE}/api/audit/latest`);
+    if (!res.ok) {
+      console.warn(`[audit-inventory] /api/audit/latest: HTTP ${res.status}`);
+      return null;
+    }
+    return await res.json();
+  } catch (err) {
+    console.warn(`[audit-inventory] /api/audit/latest fetch failed: ${err.message}`);
+    return null;
+  }
+})();
 
 const STATUS_BY_URL = (() => {
   const map = new Map();
-  for (const line of readFileSync(LATEST_TSV, 'utf8').split('\n').slice(1)) {
-    if (!line) continue;
-    const [status, url] = line.split('\t');
-    if (url) map.set(url, status);
+  for (const r of latestRun?.results ?? []) {
+    if (typeof r.url === 'string' && typeof r.status === 'string') map.set(r.url, r.status);
   }
   return map;
 })();
@@ -201,15 +216,10 @@ if (process.argv.includes('--check')) {
 
 // ── Render ──────────────────────────────────────────────────────────────
 const today = new Date().toISOString().slice(0, 10);
-// Record the snapshot date of the link-audit data so a re-run without a
-// fresh `yarn check-links` is honest about it. Pull from the dated TSV
-// path if available (`results/YYYY-MM-DD.tsv`); fall back to latest.tsv's
-// mtime. Without this stamp it's easy to misread broken-source counts as
-// current when they're days stale.
-const auditDate = (() => {
-  const mtime = statSync(LATEST_TSV).mtime.toISOString().slice(0, 10);
-  return mtime;
-})();
+// Record the snapshot date of the link-audit data so the report is
+// honest about freshness — reflects when the audit actually ran, not
+// when this report was rendered. Reused from the single fetch above.
+const auditDate = latestRun?.run_date ?? 'unknown';
 const lines = [];
 
 lines.push('# Source inventory audit');

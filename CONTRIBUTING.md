@@ -17,7 +17,7 @@ Thanks for considering a contribution. The Budget Atlas is a free, donation-supp
 
 ```bash
 yarn install
-yarn start          # Vite dev server, usually http://localhost:5173
+yarn dev            # Vite dev server, usually http://localhost:5173 (alias: yarn start)
 yarn typecheck
 yarn lint
 yarn format         # auto-format with Prettier
@@ -75,7 +75,7 @@ id<TAB>YYYY-MM-DD<TAB>your-handle<TAB>kind<TAB>brief notes describing what you v
 
 A source whose latest state-change isn't paired with a row will be flagged as overdue by the [staleness audit](./audit/staleness/README.md) immediately — by design. The asymmetry catches AI-proposed citations that get merged without an honest provenance row, URL updates made without re-reading the destination, and any human edits where the verification step was skipped. Every category should be visible.
 
-The `addedBy` / `addedAt` fields surface in [`audit/links/status.md`](./audit/links/status.md). They DON'T change when an existing citation's URL gets updated (the citation is the same; the URL just moved). They DO get filled when a new citation is introduced.
+The `addedBy` / `addedAt` fields surface on the [/sources page](https://thebudgetatlas.com/sources). They DON'T change when an existing citation's URL gets updated (the citation is the same; the URL just moved). They DO get filled when a new citation is introduced.
 
 ### Auditing a cited link
 
@@ -85,7 +85,7 @@ The project runs a public link audit because citations rot — agencies reorgani
 yarn check-links
 ```
 
-This extracts every URL from `src/data/sources.ts`, hits each with curl, and writes a dated TSV to `audit/links/results/`. Status code reference and full philosophy live in [`audit/links/README.md`](./audit/links/README.md).
+This extracts every URL from `src/data/sources.ts`, hits each with curl, and persists the run to the D1-backed audit API at `/api/audit/runs`. Past runs are queryable via `/api/audit/latest`, `/api/audit/runs/:date`, and `/api/audit/history`. Status code reference and full philosophy live in [`audit/links/README.md`](./audit/links/README.md).
 
 **The unified rule:** every resolved audit issue — `audit:link` from the nightly bot or `audit:report` from a community submission — writes exactly one row to `audit/links/reviewed.tsv`, regardless of outcome. Whether the resolution was "URL was moved and we updated it," "data needed correction," or "citation was retired," the row in `reviewed.tsv` is the durable record. Code changes (`sources.ts` edit, data-file edit, removal) ride along in the same PR. The PR's `Closes #N` in the description auto-closes the originating issue.
 

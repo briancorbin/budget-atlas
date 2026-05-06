@@ -7,6 +7,7 @@
   "packageManager": "yarn@4.9.1",
   "scripts": {
     "start": "vite",
+    "dev": "vite",
     "tunnel": "./scripts/tunnel.sh",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
@@ -21,11 +22,13 @@
     "render-branding": "./scripts/render-branding.sh",
     "check-links": "./audit/links/check.sh",
     "audit:seed-issues": "node audit/links/seed-issues.mjs",
-    "audit:status": "node audit/links/generate-status.mjs",
     "audit:staleness": "node audit/staleness/seed-issue.mjs",
     "audit:inventory": "node --experimental-strip-types scripts/source-inventory.mjs",
     "dev:worker": "wrangler dev --local --persist-to=.wrangler/state",
-    "dev:worker:seed": "wrangler d1 execute budget-atlas-audit --local --file=worker/schema.sql --persist-to=.wrangler/state"
+    "dev:worker:seed": "wrangler d1 execute budget-atlas-audit --local --file=worker/schema.sql --persist-to=.wrangler/state",
+    "dev:local": "concurrently --names worker,site --prefix-colors blue,green --kill-others-on-fail \"yarn dev:worker\" \"AUDIT_PROXY_TARGET=http://localhost:8787 yarn dev\"",
+    "dev:local:fresh": "yarn dev:worker:seed && yarn db:sync && yarn dev:local",
+    "db:sync": "./audit/links/sync-d1-from-prod.sh"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.2.9",
@@ -43,6 +46,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.2.1",
     "eslint": "^10.3.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",

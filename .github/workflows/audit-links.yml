@@ -1,17 +1,19 @@
 name: Audit links
 
-# Runs the public link audit nightly: extracts every external URL cited from
-# the codebase, hits each with curl, and opens GitHub issues for newly broken
-# ones (deduped against the existing audit:link issues).
+# Runs the public link audit nightly: extracts every external URL cited
+# from the citation registry, probes each with curl, persists the run to
+# the D1-backed audit API, and refreshes the rolling broken-citation
+# issue.
 #
-# Manual runs are also welcome via the "Run workflow" button on the Actions tab.
+# Manual runs welcome via the "Run workflow" button on the Actions tab.
 #
-# TODO(audit-ci): add a separate `pull_request` workflow that enforces the
-# unified-resolution-log rule — any PR closing an audit:link or audit:review
-# issue (via Closes/Fixes/Resolves #N) must add ≥1 row to
-# audit/links/reviewed.tsv. Defer until either (a) we forget the convention
-# in practice, or (b) someone other than the maintainer files the first
-# audit-resolving PR. See audit/links/README.md "unified resolution log".
+# TODO(audit-ci): add a separate `pull_request` workflow that enforces
+# the unified-resolution-log rule — any PR closing an audit:link or
+# audit:review issue (via Closes/Fixes/Resolves #N) must add ≥1 row to
+# audit/links/reviewed.tsv. Defer until either (a) we forget the
+# convention in practice, or (b) someone other than the maintainer
+# files the first audit-resolving PR. See audit/links/README.md
+# "unified resolution log".
 
 on:
   schedule:
@@ -20,14 +22,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   issues: write
-  # Needed by peter-evans/create-pull-request to open the audit-refresh PR.
-  # Note: the default GITHUB_TOKEN doesn't trigger pull_request workflows on
-  # PRs it opens, so CI checks won't run on the audit-refresh PR. That's
-  # acceptable here — the PR only changes machine-generated audit data, no
-  # code, so the CI checks (lint/typecheck/test) wouldn't be meaningful.
-  pull-requests: write
 
 concurrency:
   group: audit-links
@@ -52,52 +48,16 @@ jobs:
 
       - name: Run link audit
         env:
-          # Dual-write phase: check.sh POSTs the new run to the D1-backed
-          # API in addition to writing TSVs to the repo. Until PR B
-          # switches the site to read from the API, the TSV remains the
-          # source of truth — a failed POST is logged but doesn't fail
-          # the audit step.
+          # check.sh POSTs the run to /api/audit/runs. Required — without
+          # the token there's no way to persist the run, and seeding
+          # issues without it would give a misleading view of which URLs
+          # are actually broken.
           AUDIT_WRITE_TOKEN: ${{ secrets.AUDIT_WRITE_TOKEN }}
         run: yarn check-links
 
-      - name: Open PR with refreshed audit data
-        # Switched from `git push origin main` to a PR-based flow because
-        # branch protection on main rejects direct pushes from the bot.
-        # peter-evans/create-pull-request is idempotent: it diffs the
-        # working tree against main, skips the PR entirely when there's
-        # nothing to commit, and updates the existing PR (same branch
-        # name) when a previous run is still open. The PR can be merged
-        # manually or by enabling repo-level auto-merge.
-        uses: peter-evans/create-pull-request@v7
-        with:
-          add-paths: |
-            audit/links/status.md
-            audit/links/results/
-          branch: audit/links-refresh
-          commit-message: 'Audit: refresh link-status data'
-          title: 'Audit: refresh link-status data'
-          body: |
-            Automated link-audit refresh.
-
-            Updated by `.github/workflows/audit-links.yml`.
-          labels: audit
-          delete-branch: true
-
       - name: Seed GitHub issues for newly broken links
-        # Runs regardless of the PR step's outcome — issue tracking
-        # shouldn't be coupled to whether new audit data was committable.
-        # Still depends on `yarn check-links` having produced the results
-        # TSV: if the audit itself failed earlier, seed-issues will exit
-        # cleanly without doing anything.
-        if: always()
+        # Reads /api/audit/latest + /api/audit/history; depends on the
+        # audit step having posted successfully.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node audit/links/seed-issues.mjs
-
-      - name: Upload audit results as artifact
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: link-audit-${{ github.run_id }}
-          path: audit/links/results/
-          retention-days: 90

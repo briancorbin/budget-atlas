@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // Maintain a single rolling GitHub issue for broken-citation triage.
 //
-// Reads the most recent TSV from audit/links/results/, finds entries that
-// curl couldn't reach (404, network errors, anti-bot 999), and renders the
-// list as a single grouped checklist on a rolling `audit:link` issue.
+// Reads the most recent run from the D1-backed audit API
+// (/api/audit/latest), finds entries that curl couldn't reach (404,
+// network errors, anti-bot 999), and renders the list as a single
+// grouped checklist on a rolling `audit:link` issue. Flap suppression
+// fetches per-URL history via /api/audit/history?url=...
 //
 // State machine, mirroring the staleness audit:
 //
@@ -56,21 +58,27 @@
 //   node audit/links/seed-issues.mjs               # update the rolling issue
 //   node audit/links/seed-issues.mjs --dry-run     # print what would happen
 //
+// Env:
+//   AUDIT_API_BASE   API origin to fetch from (default https://thebudgetatlas.com).
+//                    Set to http://localhost:8787 when iterating against a
+//                    local Worker.
+//
 // Auth:
 //   Requires the gh CLI authenticated. In GitHub Actions, GITHUB_TOKEN is
 //   sufficient (set permissions: { issues: write } on the workflow).
+//   API reads are public — no token needed.
 
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..', '..');
-const RESULTS_DIR = resolve(__dirname, 'results');
 const SOURCES_TS = resolve(ROOT, 'src/data/sources.ts');
 const REPO = 'TheBudgetAtlas/thebudgetatlas';
 const LABEL = 'audit:link';
+const API_BASE = process.env.AUDIT_API_BASE ?? 'https://thebudgetatlas.com';
 
 // '000ERR' is the actual single merged code that check.sh writes for
 // DNS/TLS/timeout failures (despite the code list above splitting them
@@ -84,42 +92,20 @@ function sh(args, opts = {}) {
   return execFileSync('gh', args, { encoding: 'utf8', ...opts }).trim();
 }
 
-// ── 1. Locate the latest results TSV ─────────────────────────────────────
-let tsvs;
-try {
-  tsvs = readdirSync(RESULTS_DIR)
-    .filter((f) => f.endsWith('.tsv'))
-    .sort();
-} catch {
-  console.error(`No results directory at ${RESULTS_DIR}. Run yarn check-links first.`);
+// ── 1. Fetch the latest run from the audit API ───────────────────────────
+console.log(`→ Fetching ${API_BASE}/api/audit/latest`);
+const latestRes = await fetch(`${API_BASE}/api/audit/latest`);
+if (!latestRes.ok) {
+  console.error(`/api/audit/latest: HTTP ${latestRes.status} ${latestRes.statusText}`);
   process.exit(1);
 }
-if (tsvs.length === 0) {
-  console.error('No results TSV found. Run yarn check-links first.');
-  process.exit(1);
-}
-const latestPath = resolve(RESULTS_DIR, tsvs[tsvs.length - 1]);
-// Derive the run date from the most recent dated TSV — `latest.tsv` is a
-// duplicate copy and would yield the literal string "latest", which makes
-// downstream date comparisons no-ops.
-const datedTsvs = tsvs.filter((f) => /^\d{4}-\d{2}-\d{2}\.tsv$/.test(f));
-const latestDate = datedTsvs.length
-  ? datedTsvs[datedTsvs.length - 1].replace('.tsv', '')
-  : new Date().toISOString().slice(0, 10);
-console.log(`→ Reading ${latestPath}`);
+const latestRun = await latestRes.json();
+const rows = latestRun.results ?? [];
+const latestDate = latestRun.run_date;
 
-// ── 2. Parse rows ────────────────────────────────────────────────────────
-const rows = readFileSync(latestPath, 'utf8')
-  .split('\n')
-  .slice(1)
-  .filter(Boolean)
-  .map((line) => {
-    const [status, url, finalUrl] = line.split('\t');
-    return { status, url, finalUrl };
-  });
-
+// ── 2. Filter broken rows ────────────────────────────────────────────────
 const broken = rows.filter((r) => ACTIONABLE.has(r.status));
-console.log(`→ ${broken.length} broken / ${rows.length} total URLs.`);
+console.log(`→ Run ${latestDate}: ${broken.length} broken / ${rows.length} total URLs.`);
 
 // ── 3. Look up registry metadata for each URL (label, file:line) ─────────
 //
@@ -256,55 +242,84 @@ if (verifiedBotBlockedCount > 0) {
 // ── 3.6. Flap suppression across recent runs ─────────────────────────────
 //
 // Require a URL to be in an actionable status in EVERY one of the last N
-// dated runs (current included) before escalating it to the queue. One
+// runs (current included) before escalating it to the queue. One
 // non-actionable status in that window is treated as flap and the URL is
 // held back for another night. URLs that appear in fewer than N runs
 // (newly-cited URLs) escalate based on the runs they DO appear in.
+//
+// Fetched per-URL via /api/audit/history?url=... — small N of broken
+// URLs per night (~5–30), so the per-URL round trips are cheap. The
+// alternative of pulling the last N full runs in one bulk call would
+// mean fetching ~600 rows to read ~30 statuses; per-URL is leaner.
+//
+// Failures (network error, non-2xx, malformed JSON) degrade to "no
+// history" rather than aborting the whole issue refresh. Without flap
+// data the URL escalates immediately, which is the same behaviour you
+// got before flap suppression existed — strictly safer than failing
+// to seed the queue at all on a transient API blip.
 const FLAP_SUPPRESSION_RUNS = 3;
+const HISTORY_FETCH_CONCURRENCY = 5;
 
-function loadRecentRuns(currentDate, n) {
-  // Dated TSVs only — latest.tsv is a duplicate of the most recent dated
-  // file (see check.sh) and would skew counts.
-  const dated = readdirSync(RESULTS_DIR)
-    .filter((f) => /^\d{4}-\d{2}-\d{2}\.tsv$/.test(f))
-    .sort();
-  // Defensive: include only runs at-or-before the current run, in case
-  // older artifacts somehow show a future date.
-  const eligible = dated.filter((f) => f.replace('.tsv', '') <= currentDate);
-  const recent = eligible.slice(-n);
-  return recent.map((f) => {
-    const text = readFileSync(resolve(RESULTS_DIR, f), 'utf8');
-    const map = new Map();
-    for (const line of text.split('\n').slice(1)) {
-      if (!line) continue;
-      const [status, url] = line.split('\t');
-      if (url) map.set(url, status);
+async function fetchHistory(url) {
+  try {
+    const res = await fetch(`${API_BASE}/api/audit/history?url=${encodeURIComponent(url)}`);
+    if (!res.ok) {
+      console.warn(`  history fetch for ${url}: HTTP ${res.status}; treating as no history`);
+      return [];
     }
-    return { date: f.replace('.tsv', ''), statuses: map };
-  });
+    const body = await res.json();
+    return body.history ?? [];
+  } catch (err) {
+    console.warn(`  history fetch for ${url} threw (${err.message}); treating as no history`);
+    return [];
+  }
 }
 
-const recentRuns = loadRecentRuns(latestDate, FLAP_SUPPRESSION_RUNS);
-let flapSuppressedCount = 0;
+// Bounded concurrency so a queue with 50+ broken URLs (an outage / WAF
+// rule rollout) doesn't spike the Worker or hit subrequest limits in
+// the GitHub Actions runner. CF Workers comfortably handle far more
+// than 5 concurrent reads, but the limit also protects against
+// upstream rate-limiting on bad days.
+async function mapWithLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i], i);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
 
-if (recentRuns.length >= 2) {
-  // With <2 runs of history there's nothing to compare against; fall
-  // back to current behavior (escalate immediately).
-  filteredBroken = filteredBroken.filter((r) => {
-    const appearsIn = recentRuns.filter((run) => run.statuses.has(r.url));
-    if (appearsIn.length === 0) return true; // shouldn't happen — current run includes it
-    const allActionable = appearsIn.every((run) => ACTIONABLE.has(run.statuses.get(r.url)));
-    if (!allActionable) {
+let flapSuppressedCount = 0;
+const flapChecked = await mapWithLimit(filteredBroken, HISTORY_FETCH_CONCURRENCY, async (r) => {
+  const history = await fetchHistory(r.url);
+  // history is ordered DESC by run_date and capped at 30 rows by the
+  // API — slice to the suppression window. If we have fewer than 2
+  // runs of history there's nothing to compare against; fall back to
+  // escalating (current behaviour).
+  const window = history.slice(0, FLAP_SUPPRESSION_RUNS);
+  if (window.length < 2) return { row: r, suppress: false, runs: window.length };
+  const allActionable = window.every((h) => ACTIONABLE.has(h.status));
+  return { row: r, suppress: !allActionable, runs: window.length };
+});
+
+const flapWindow = flapChecked.length ? Math.max(...flapChecked.map((c) => c.runs)) : 0;
+filteredBroken = flapChecked
+  .filter((c) => {
+    if (c.suppress) {
       flapSuppressedCount++;
       return false;
     }
     return true;
-  });
-}
+  })
+  .map((c) => c.row);
 
 if (flapSuppressedCount > 0) {
   console.log(
-    `→ Suppressing ${flapSuppressedCount} flapping URL(s) (not actionable in all of last ${recentRuns.length} run(s)).`,
+    `→ Suppressing ${flapSuppressedCount} flapping URL(s) (not actionable in all of last ${flapWindow} run(s)).`,
   );
 }
 

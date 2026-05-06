@@ -1,6 +1,6 @@
 # Link audit — findings
 
-Triage view of currently-actionable links. Auto-generated raw data in [`results/`](./results/); the latest run is the one to consult. This doc is the human-curated triage layer on top.
+Triage view of currently-actionable links. Live machine status comes from the [audit API](https://thebudgetatlas.com/api/audit/latest) (and is rendered at [/sources](https://thebudgetatlas.com/sources)); this doc is the human-curated triage layer on top.
 
 ## Status snapshot — 2026-05-02
 
@@ -24,10 +24,11 @@ The audit runs nightly via [GitHub Actions](https://github.com/TheBudgetAtlas/th
 
 These are unambiguously broken. Each needs a replacement citation, removal of the data point, or substitution with an equivalent authoritative source. To pick one up: see the contribution flow in [`README.md`](./README.md).
 
-The full current list of 404s is the easiest thing to query directly from the latest results TSV:
+The full current list of 404s is the easiest thing to query from the audit API:
 
 ```bash
-awk -F'\t' 'NR>1 && $1=="404" {print $2}' audit/links/results/$(ls -t audit/links/results | head -1)
+curl -s https://thebudgetatlas.com/api/audit/latest \
+  | jq -r '.results[] | select(.status == "404") | .url'
 ```
 
 Most are state-agency Medicaid / SNAP / CHIP / tax authority pages that have been moved in agency reorgs. State-by-state, they typically follow predictable patterns (e.g. `dhss.alaska.gov` migrating to `health.alaska.gov`), so they go quickly once you find the new domain root.

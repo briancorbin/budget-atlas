@@ -2,31 +2,40 @@
 # Audit external links cited from the codebase.
 #
 # Extracts every http(s) URL from src/data/sources.ts and hits each with
-# curl. Writes a dated TSV to `results/` with columns:
+# curl. The run is POSTed to the D1-backed audit API at /api/audit/runs;
+# nothing is written to the repo. Past runs are queryable via
+# /api/audit/latest, /api/audit/runs/:date, and /api/audit/history.
 #
-#   status, url, final_url
-#
-# Curl tells us if a link loads; only a human can tell us whether the loaded
-# page still cites what we claim. The human-review log lives separately in
-# `reviewed.tsv`, keyed by source id (a stable slug) rather than URL — so
-# review history follows a citation across URL changes. Both inputs are
-# joined downstream by generate-status.mjs and the React /sources page.
+# Curl tells us if a link loads; only a human can tell us whether the
+# loaded page still cites what we claim. The human-review log lives
+# separately in `reviewed.tsv`, keyed by source id (a stable slug) rather
+# than URL — so review history follows a citation across URL changes.
 #
 # Usage:
 #   ./audit/links/check.sh
 #   yarn check-links
 #
-# Requires: bash, curl, grep, xargs, awk.
+# Env (required):
+#   AUDIT_WRITE_TOKEN — bearer token for POST /api/audit/runs.
+#   Local dev:  op run --env-file=.env.audit -- yarn check-links
+#   CI:         set as a GitHub Actions repository secret.
+#
+# Env (optional):
+#   AUDIT_API_BASE — API origin. Default https://thebudgetatlas.com.
+#                    Set to http://localhost:8787 to target a local Worker.
+#
+# Requires: bash, curl, grep, xargs, awk, node.
 
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
 DATE="$(date -u +%Y-%m-%d)"
 DIR="$ROOT/audit/links"
-OUTDIR="$DIR/results"
-OUT="$OUTDIR/$DATE.tsv"
+# Run output is a temporary TSV — the durable record lives in the D1
+# backend (see worker/index.ts). Audit history is no longer committed
+# to the repo; query /api/audit/* for past runs.
+OUT="$(mktemp -t budget-atlas-audit.XXXXXX).tsv"
 REVIEWS="$DIR/reviewed.tsv"
-mkdir -p "$OUTDIR"
 
 # UA tradeoff documented honestly: the identifying audit UA gets refused
 # by some state-agency sites (false-positive 000ERR / 403 / 999), while
@@ -40,7 +49,7 @@ UA="Mozilla/5.0 (compatible; BudgetAtlas-link-audit; +https://github.com/TheBudg
 
 URLS_FILE=$(mktemp)
 RAW_FILE=$(mktemp)
-trap 'rm -f "$URLS_FILE" "$RAW_FILE"' EXIT
+trap 'rm -f "$URLS_FILE" "$RAW_FILE" "$OUT"' EXIT INT TERM
 
 echo "→ Extracting URLs from src/data/sources.ts (the citation registry)..."
 # Only check the citation registry. Non-citation URLs in the codebase (font CDN
@@ -97,33 +106,28 @@ echo "→ Human-reviewed entries in reviewed.tsv: $REVIEWED"
 echo ""
 echo "→ Hard 404s:"
 awk -F'\t' 'NR>1 && $1=="404" {print "  "$2}' "$OUT" || true
-echo ""
-echo "→ Regenerating audit/links/status.md..."
-node "$DIR/generate-status.mjs"
-
-# Stable-filename copy of the latest run, used by the React /sources page so
-# the built bundle imports only one TSV instead of every dated one. Always
-# overwritten; dated files in results/ remain as the per-day audit history.
-cp "$OUT" "$DIR/results/latest.tsv"
-
-# Dual-write to the D1-backed audit API. Best-effort during the backend
-# stand-up phase: a failed POST shouldn't block the rest of the audit
-# pipeline (PR creation, issue seeding) since the in-repo TSVs remain
-# the source of truth until PR B switches the site to read from the API.
-if [ -n "${AUDIT_WRITE_TOKEN:-}" ]; then
+# Post the run to the audit API. The API is the durable record of every
+# nightly run — site reads, the rolling broken-citation issue, and any
+# future analytical views all source from there. A failed POST means the
+# run never actually happened from the rest of the pipeline's
+# perspective, so we exit non-zero rather than swallow the error.
+if [ -z "${AUDIT_WRITE_TOKEN:-}" ]; then
   echo ""
-  echo "→ Posting run to audit API..."
-  if AUDIT_WRITE_TOKEN="$AUDIT_WRITE_TOKEN" \
-       API_BASE="${AUDIT_API_BASE:-https://thebudgetatlas.com}" \
-       node "$DIR/post-run.mjs" "$OUT" "$DATE"; then
-    echo "  ok"
-  else
-    echo "  WARN: post-run failed; in-repo TSV remains source of truth"
-  fi
+  echo "ERROR: AUDIT_WRITE_TOKEN not set — can't persist this run."
+  echo "  Local: 'op run --env-file=.env.audit -- yarn check-links'"
+  echo "  CI:    set the AUDIT_WRITE_TOKEN repository secret on Actions."
+  exit 1
 fi
 
 echo ""
-echo "→ Results: $OUT"
+echo "→ Posting run to audit API..."
+AUDIT_WRITE_TOKEN="$AUDIT_WRITE_TOKEN" \
+  API_BASE="${AUDIT_API_BASE:-https://thebudgetatlas.com}" \
+  node "$DIR/post-run.mjs" "$OUT" "$DATE"
+
+echo ""
+echo "→ Run persisted. Query the latest at:"
+echo "    ${AUDIT_API_BASE:-https://thebudgetatlas.com}/api/audit/latest"
 echo ""
 echo "Status code interpretation:"
 echo "  200       — loaded; verify the destination still cites the claimed content"
