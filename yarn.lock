@@ -180,6 +180,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@cloudflare/workers-types@npm:^4.20260506.1":
+  version: 4.20260506.1
+  resolution: "@cloudflare/workers-types@npm:4.20260506.1"
+  checksum: 10c0/71e22ff760d7e5f30ae20061a7b40e0ea38b09b3ca9c5fbf8a384bfa209f5fb0f3f4b16f0b84a496fadb0853dfa993fcd763cc5c8dc0da6a524196c740d989d3
+  languageName: node
+  linkType: hard
+
 "@emnapi/core@npm:1.10.0":
   version: 1.10.0
   resolution: "@emnapi/core@npm:1.10.0"
@@ -1050,6 +1057,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "budget-atlas@workspace:."
   dependencies:
+    "@cloudflare/workers-types": "npm:^4.20260506.1"
     "@eslint/js": "npm:^10.0.1"
     "@fontsource-variable/fraunces": "npm:^5.2.9"
     "@fontsource/ibm-plex-mono": "npm:^5.2.7"

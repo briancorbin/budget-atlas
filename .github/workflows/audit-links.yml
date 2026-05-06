@@ -51,6 +51,13 @@ jobs:
         run: yarn install --immutable
 
       - name: Run link audit
+        env:
+          # Dual-write phase: check.sh POSTs the new run to the D1-backed
+          # API in addition to writing TSVs to the repo. Until PR B
+          # switches the site to read from the API, the TSV remains the
+          # source of truth — a failed POST is logged but doesn't fail
+          # the audit step.
+          AUDIT_WRITE_TOKEN: ${{ secrets.AUDIT_WRITE_TOKEN }}
         run: yarn check-links
 
       - name: Open PR with refreshed audit data

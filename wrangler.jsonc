@@ -5,11 +5,25 @@
   "name": "thebudgetatlas",
   "compatibility_date": "2026-05-02",
   "compatibility_flags": ["nodejs_compat"],
+  "main": "./worker/index.ts",
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     // SPA fallback — equivalent to the old Pages `/* /index.html 200` redirect.
     "not_found_handling": "single-page-application",
+    // Run the worker first only for /api/* paths; static assets keep
+    // their fast-path for everything else (no extra latency on page
+    // loads). The worker delegates non-API requests via env.ASSETS.fetch.
+    "run_worker_first": ["/api/*"],
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "budget-atlas-audit",
+      // Replace with the id printed by `wrangler d1 create budget-atlas-audit`.
+      "database_id": "REPLACE_ME_AFTER_WRANGLER_D1_CREATE",
+    },
+  ],
   "routes": [
     {
       "pattern": "thebudgetatlas.com",

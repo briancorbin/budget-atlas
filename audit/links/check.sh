@@ -106,6 +106,22 @@ node "$DIR/generate-status.mjs"
 # overwritten; dated files in results/ remain as the per-day audit history.
 cp "$OUT" "$DIR/results/latest.tsv"
 
+# Dual-write to the D1-backed audit API. Best-effort during the backend
+# stand-up phase: a failed POST shouldn't block the rest of the audit
+# pipeline (PR creation, issue seeding) since the in-repo TSVs remain
+# the source of truth until PR B switches the site to read from the API.
+if [ -n "${AUDIT_WRITE_TOKEN:-}" ]; then
+  echo ""
+  echo "→ Posting run to audit API..."
+  if AUDIT_WRITE_TOKEN="$AUDIT_WRITE_TOKEN" \
+       API_BASE="${AUDIT_API_BASE:-https://thebudgetatlas.com}" \
+       node "$DIR/post-run.mjs" "$OUT" "$DATE"; then
+    echo "  ok"
+  else
+    echo "  WARN: post-run failed; in-repo TSV remains source of truth"
+  fi
+fi
+
 echo ""
 echo "→ Results: $OUT"
 echo ""

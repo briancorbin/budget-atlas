@@ -4,7 +4,7 @@ Reproducible audit of every external URL cited from the codebase — does it sti
 
 ## How it works
 
-1. **`check.sh`** extracts every `http(s)://` URL from [`src/data/sources.ts`](../../src/data/sources.ts) — the citation registry — hits each with curl, and writes a dated TSV to `results/`. Other URLs in the codebase (font CDN preconnects, repo links, build artifacts) aren't checked: only declared citations are auditable, by design.
+1. **`check.sh`** extracts every `http(s)://` URL from [`src/data/sources.ts`](../../src/data/sources.ts) — the citation registry — hits each with curl, and writes a dated TSV to `results/`. Other URLs in the codebase (font CDN preconnects, repo links, build artifacts) aren't checked: only declared citations are auditable, by design. When `AUDIT_WRITE_TOKEN` is set, the run is also POSTed to the D1-backed audit API (see "Backend" below).
 2. **`reviewed.tsv`** is the unified resolution log (see below). One row per `id · date · reviewer · kind · notes` event — keyed by stable source slug, not URL, so review history follows a citation across URL changes. `kind` is `human` (eyes-on-source) or `ai` (AI involved in proposing/extracting). **Rows are append-only**: existing rows can't be modified, removed, or reordered (CI enforces this via `scripts/check-reviewed-immutable.mjs`). If a past review needs correction, append a new row that supersedes it — don't edit history.
 3. **`results/<date>.tsv`** captures the union: machine status (does it load?) + human review state (did someone verify the content?).
 
@@ -137,6 +137,25 @@ To run manually: `yarn audit:seed-issues` (or `--dry-run` to preview).
 ## At-a-glance status
 
 [`status.md`](./status.md) is the human-readable view of every cited source — auto-generated each audit run. One row per source, with current curl status, who added it, when, and any human-review history. Sort order is broken-first so the things needing attention surface immediately.
+
+## Backend (D1)
+
+Run history lives in a Cloudflare D1 database (`budget-atlas-audit`) bound to the site's worker. The schema is in [`worker/schema.sql`](../../worker/schema.sql); the worker entry point in [`worker/index.ts`](../../worker/index.ts) exposes:
+
+- `POST /api/audit/runs` — upsert a run (bearer auth, `AUDIT_WRITE_TOKEN`).
+- `GET  /api/audit/latest` — most-recent run as JSON.
+- `GET  /api/audit/runs/:date` — specific run.
+- `GET  /api/audit/history?url=…` — last 30 statuses for a URL.
+
+**Stand-up status (PR A):** the nightly job now dual-writes — TSVs to the repo *and* a POST to the API. The site (and `seed-issues.mjs`) still read from the in-repo TSVs; the backend exists but isn't on the read path yet.
+
+**One-time backfill** (after `wrangler d1 create budget-atlas-audit` + `wrangler d1 execute … --file=worker/schema.sql`):
+
+```sh
+AUDIT_WRITE_TOKEN=<token> node audit/links/backfill-d1.mjs
+```
+
+PRs B and C will move the site's reads to the API and finally remove the in-repo TSVs.
 
 ## Contributing a fix
 
