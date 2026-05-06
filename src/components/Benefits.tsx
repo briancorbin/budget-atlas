@@ -136,6 +136,12 @@ export function Benefits({
           const sources: readonly Source[] = meta.stateSource
             ? [...baseSources, meta.stateSource(inputs)]
             : baseSources;
+          // Medicaid covers the entire household when claimed (including
+          // kids), so CHIP claimed alongside it would add zero relief —
+          // the budget code skips applying CHIP in that case (see budget.ts).
+          // Surface that here so clicking CHIP doesn't look like a no-op.
+          const overshadowedByMedicaid =
+            meta.id === 'chip' && claimed.has('medicaid') && evaluate('medicaid').eligible;
           return (
             <Card
               key={meta.id}
@@ -143,6 +149,7 @@ export function Benefits({
               sources={sources}
               eligibility={elig}
               claimed={isClaimed}
+              overshadowedByMedicaid={overshadowedByMedicaid}
               onToggle={() => toggle(meta.id)}
             />
           );
@@ -191,12 +198,17 @@ function Card({
   sources,
   eligibility,
   claimed,
+  overshadowedByMedicaid = false,
   onToggle,
 }: {
   meta: BenefitMeta;
   sources: readonly Source[];
   eligibility: BenefitEligibility;
   claimed: boolean;
+  /** CHIP-only: true when Medicaid is claimed and eligible, in which case
+   *  CHIP would add $0 (Medicaid covers kids too). The card surfaces the
+   *  redundancy and disables the claim affordance. */
+  overshadowedByMedicaid?: boolean;
   onToggle: () => void;
 }) {
   const eligible = eligibility.eligible;
@@ -211,7 +223,12 @@ function Card({
   // into the phantom zone, the auto-drop logic in BudgetExplorer won't
   // fire (eligibility is still true), so we must keep the unclaim path
   // open — otherwise the card gets stuck "claimed at $0" forever.
-  const actionable = (eligible && !phantomEligible) || (phantomEligible && claimed);
+  const actionable =
+    // Allow unclaim if the card was claimed before Medicaid took over,
+    // so the user isn't stuck with a misleading "Claimed" badge.
+    (overshadowedByMedicaid && claimed) ||
+    (!overshadowedByMedicaid &&
+      ((eligible && !phantomEligible) || (phantomEligible && claimed)));
   const handleClick = () => {
     if (actionable) onToggle();
   };
@@ -285,7 +302,20 @@ function Card({
         {meta.blurb}
       </div>
 
-      {eligible && eligibility.monthlyBenefit > 0 ? (
+      {overshadowedByMedicaid ? (
+        <div
+          style={{
+            fontSize: rem(12),
+            color: T.inkMuted,
+            lineHeight: 1.5,
+            fontStyle: 'italic',
+          }}
+        >
+          Already covered by Medicaid — when a household qualifies for Medicaid, kids are
+          included in that coverage, so claiming CHIP separately adds nothing. Unclaim Medicaid
+          first if you want to see CHIP's standalone value.
+        </div>
+      ) : eligible && eligibility.monthlyBenefit > 0 ? (
         <>
           <ValueWithDerivation
             value={`~${fmt(eligibility.monthlyBenefit)}/mo`}
