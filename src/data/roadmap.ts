@@ -113,7 +113,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Benefits & safety net',
     status: 'planned',
     summary:
-      'Surface alternate Medicaid tracks the model omits — SSI-linked, aged (65+), and pregnancy (often 200%+ FPL even in non-expansion states). Plus state waiver programs. (The 138% FPL Medicaid cliff is now visualized in the income-sweep curve.)',
+      'Surface alternate Medicaid tracks the model omits — SSI-linked, aged (65+), and pregnancy (often 200%+ FPL even in non-expansion states). Plus state waiver programs. Also: state-charged CHIP premiums for families above ~150% FPL (varies by state — TX ~$35–50/mo, PA tiered up to ~$56/mo/child, FL ~$15–20/mo, etc.). Today CHIP value = full kids\' share of the family premium with no offset for the small monthly premium real higher-income families actually pay; small but real overstatement near the upper eligibility bands. (The 138% FPL Medicaid cliff is now visualized in the income-sweep curve.)',
   },
   {
     id: 11,
