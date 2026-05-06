@@ -225,6 +225,14 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'The Atlas computes eligibility for SNAP, Medicaid, and CHIP, but plenty of programs sit adjacent to the same life situations and never surface. A laid-off worker should hear about unemployment insurance the moment they tell us their income dropped. A new parent should hear about WIC. A renter behind on utilities should hear about LIHEAP. A household near tax-filing time should hear about VITA / Free File. A disabled adult should hear about SSDI / SSI. Two layers: (1) a contextual "you may also want to look into…" callout that triggers off household state changes — state-specific links to the right portal; and (2) the same guided-application treatment #126 plans for SNAP / Medicaid / CHIP, applied here too — application form, documents needed, portal URL for the user\'s state, and any agency-run pre-check we can surface — so "you might qualify" becomes "here\'s the next step," not just a hyperlink and a shrug.',
     status: 'planned',
   },
+  {
+    id: 128,
+    title: 'Implicit marginal tax rate view',
+    category: 'Benefits & safety net',
+    status: 'planned',
+    summary:
+      'Plot the *slope* of the discretionary curve as its own line — the implicit marginal tax rate the household actually faces, including benefit phase-outs and refundable-credit reductions, not just income-tax brackets. Each cliff would show as a brief spike to ≥100% (every $1 earned costs more than $1) followed by an elevated plateau through the recovery zone. Makes legible why a $4K Medicaid loss takes an $11K raise to climb out of: the marginal keep-rate is much worse than the headline tax bracket suggests once EITC/SNAP phase-downs and untaxed-benefit replacement costs stack up. Companion to the existing cliff curve.',
+  },
 ];
 
 /**
