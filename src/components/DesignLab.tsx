@@ -3942,14 +3942,48 @@ function PitChartBottomBand() {
 //
 // These four variations explore how to expose multi-cliff contribution.
 
-// Synthetic curve engineered to clearly exhibit overlapping pits — three
-// cliffs close enough together, with a shallow enough recovery slope,
-// that they merge into one continuous pit zone. Real Columbus scenarios
-// don't reliably overlap (cliffs there are spaced apart relative to
-// recovery slopes), so we synthesize for visual clarity. Cliff positions
-// and labels mirror the Columbus, OH program lineup for editorial
-// continuity with the rest of the lab.
-function useCompoundDemoData(): {
+// User-editable program config. Each row defines one synthetic cliff: a
+// label, the gross income at which it fires, the dollar drop in
+// discretionary income, and its color. The compound section synthesizes
+// a curve from this list (linear baseline minus accumulated drops) so
+// the user can dial in scenarios that exhibit single pits, merged pits,
+// triple-overlap pits, etc. — and watch each variation respond.
+interface ProgramConfig {
+  id: string;
+  label: string;
+  gross: number;
+  drop: number;
+  color: string;
+}
+
+const COMPOUND_COLOR_CHOICES = [
+  { id: 'medicaid', value: CLIFF_COLORS.medicaid, label: 'Red' },
+  { id: 'snap', value: CLIFF_COLORS.snap, label: 'Orange' },
+  { id: 'chip', value: CLIFF_COLORS.chip, label: 'Slate' },
+  { id: 'positive', value: T.positive, label: 'Green' },
+  { id: 'commercial', value: T.commercialAccent, label: 'Gold' },
+  { id: 'ai', value: T.aiAccent, label: 'Blue' },
+] as const;
+
+const COMPOUND_DEFAULT_PROGRAMS: ProgramConfig[] = [
+  { id: 'p1', label: 'Medicaid', gross: 30_000, drop: 5_000, color: CLIFF_COLORS.medicaid },
+  { id: 'p2', label: 'SNAP', gross: 40_000, drop: 3_000, color: CLIFF_COLORS.snap },
+  { id: 'p3', label: 'CHIP', gross: 50_000, drop: 5_000, color: CLIFF_COLORS.chip },
+];
+
+interface CompoundConfig {
+  programs: ProgramConfig[];
+  slope: number;
+  maxGross: number;
+}
+
+const COMPOUND_DEFAULT_CONFIG: CompoundConfig = {
+  programs: COMPOUND_DEFAULT_PROGRAMS,
+  slope: 0.3,
+  maxGross: 80_000,
+};
+
+function useCompoundDemoData(config: CompoundConfig): {
   points: CliffPoint[];
   cliffs: CliffMark[];
   pitZones: PitZone[];
@@ -3957,73 +3991,297 @@ function useCompoundDemoData(): {
   currentGross: number;
 } {
   return React.useMemo(() => {
-    const maxGross = 80_000;
-    const currentGross = 35_000;
-    const stepSize = 500;
-    // Cliffs deliberately close together with big drops, so recovery from
-    // the first extends past the second and third.
-    const cliffSpecs = [
-      { id: 'medicaid', label: 'Medicaid (138% FPL)', shortLabel: 'Medicaid', gross: 30_000, drop: 5_000, color: CLIFF_COLORS.medicaid },
-      { id: 'snap',     label: 'SNAP (185% FPL)',     shortLabel: 'SNAP',     gross: 40_000, drop: 3_000, color: CLIFF_COLORS.snap     },
-      { id: 'chip',     label: 'CHIP (211% FPL)',     shortLabel: 'CHIP',     gross: 50_000, drop: 5_000, color: CLIFF_COLORS.chip     },
-    ];
-    const slope = 0.3; // shallow enough that recovery spans multiple cliffs
+    const { programs, slope, maxGross } = config;
+    const currentGross = Math.round(maxGross * 0.45);
+    const stepSize = Math.max(250, Math.round(maxGross / 200 / 250) * 250);
     const intercept = -1_000;
 
+    const sortedPrograms = [...programs].sort((a, b) => a.gross - b.gross);
     const points: CliffPoint[] = [];
     for (let g = 0; g <= maxGross; g += stepSize) {
       let disc = slope * g + intercept;
-      for (const c of cliffSpecs) if (g >= c.gross) disc -= c.drop;
+      for (const c of sortedPrograms) if (g >= c.gross) disc -= c.drop;
       points.push({ gross: g, discretionary: Math.round(disc) });
     }
 
-    const cliffs: CliffMark[] = cliffSpecs.map((c) => ({
+    const cliffs: CliffMark[] = sortedPrograms.map((c) => ({
       id: c.id,
       label: c.label,
-      shortLabel: c.shortLabel,
+      shortLabel: c.label,
       gross: c.gross,
       color: c.color,
     }));
     const pitZones = computePitZones(points, 'discretionary', cliffs);
 
     return { points, cliffs, pitZones, maxGross, currentGross };
-  }, []);
+  }, [config]);
 }
 
 function SectionCompoundPits() {
+  const [config, setConfig] = React.useState<CompoundConfig>(COMPOUND_DEFAULT_CONFIG);
+
   return (
     <Section
       columns={1}
       heading="Compound pit attribution"
-      subhead="When two cliffs fire close enough that the household hasn't recovered from the first when the second hits, the resulting pit zone is caused by BOTH programs. Production today colors the merged zone by the first cliff only — losing the second cliff's signal. These four variations expose multi-cliff contribution differently."
+      subhead="When two cliffs fire close enough that the household hasn't recovered from the first when the second hits, the resulting pit zone is caused by BOTH programs. Production today colors the merged zone by the first cliff only — losing the second cliff's signal. Edit the program list below to dial in any scenario; all four variations re-render against your config."
     >
+      <CompoundConfigPanel config={config} setConfig={setConfig} />
       <Variation
         title="V1 — Single-color attribution (current production)"
         description="Whole merged zone gets the first cliff's color. Simple but understates the second cliff's role."
       >
-        <CompoundChartSingleColor />
+        <CompoundChartSingleColor config={config} />
       </Variation>
       <Variation
         title="V2 — Split striping at each contributing cliff"
         description="Walk the merged zone and split at every cliff that fires inside it; each segment gets that cliff's color. The shading reads as 'first Medicaid, then SNAP also dropped you.'"
       >
-        <CompoundChartSplitStriping />
+        <CompoundChartSplitStriping config={config} />
       </Variation>
       <Variation
         title="V3 — Ghost 'best-so-far' line, no shading"
         description="Skip attribution entirely. Render a faded running-max line; the visible gap between actual and ghost IS the pit, and it naturally shows compound depth without choosing colors."
       >
-        <CompoundChartGhost />
+        <CompoundChartGhost config={config} />
       </Variation>
       <Variation
         title="V4 — Per-cliff layered zones (translucent stacking)"
         description="Each cliff opens its own translucent pit zone that closes when the curve recovers to that cliff's pre-cliff value. Overlapping zones stack visually — 'inside both' regions look darker. Shows attribution AND depth."
       >
-        <CompoundChartLayered />
+        <CompoundChartLayered config={config} />
       </Variation>
     </Section>
   );
 }
+
+function CompoundConfigPanel({
+  config,
+  setConfig,
+}: {
+  config: CompoundConfig;
+  setConfig: React.Dispatch<React.SetStateAction<CompoundConfig>>;
+}) {
+  const updateProgram = (id: string, patch: Partial<ProgramConfig>) =>
+    setConfig((c) => ({
+      ...c,
+      programs: c.programs.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+    }));
+  const removeProgram = (id: string) =>
+    setConfig((c) => ({ ...c, programs: c.programs.filter((p) => p.id !== id) }));
+  const addProgram = () => {
+    const nextId = `p${Date.now()}`;
+    const usedColors = new Set(config.programs.map((p) => p.color));
+    const nextColor =
+      COMPOUND_COLOR_CHOICES.find((c) => !usedColors.has(c.value))?.value ?? T.warning;
+    setConfig((c) => ({
+      ...c,
+      programs: [
+        ...c.programs,
+        {
+          id: nextId,
+          label: 'New program',
+          gross: Math.round(c.maxGross * 0.6),
+          drop: 3_000,
+          color: nextColor,
+        },
+      ],
+    }));
+  };
+  const reset = () => setConfig(COMPOUND_DEFAULT_CONFIG);
+
+  return (
+    <div
+      style={{
+        gridColumn: '1 / -1',
+        // Sticky so the config stays in reach as the user scrolls down
+        // through the variations. Top offset clears the page's outer
+        // padding; z-index keeps the panel above variation cards.
+        position: 'sticky',
+        top: 8,
+        zIndex: 4,
+        background: T.bgAlt,
+        border: `1px dashed ${T.border}`,
+        borderRadius: 4,
+        padding: 16,
+        marginBottom: 4,
+        boxShadow: '0 4px 12px rgba(27, 24, 21, 0.08)',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          marginBottom: 12,
+        }}
+      >
+        <div style={{ fontSize: rem(13), fontWeight: 600, color: T.ink }}>
+          Synthetic scenario config
+        </div>
+        <button
+          type="button"
+          onClick={reset}
+          style={{
+            border: 'none',
+            background: 'transparent',
+            color: T.inkMuted,
+            fontSize: rem(11),
+            textDecoration: 'underline',
+            cursor: 'pointer',
+            padding: 0,
+          }}
+        >
+          Reset to defaults
+        </button>
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(120px, 2fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(120px, 1fr) auto',
+          gap: 8,
+          alignItems: 'center',
+          fontSize: rem(11),
+          marginBottom: 6,
+          color: T.inkMuted,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+        }}
+      >
+        <span>Label</span>
+        <span>Cliff at ($)</span>
+        <span>Drop ($)</span>
+        <span>Color</span>
+        <span />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {config.programs.map((p) => (
+          <div
+            key={p.id}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'minmax(120px, 2fr) minmax(100px, 1fr) minmax(100px, 1fr) minmax(120px, 1fr) auto',
+              gap: 8,
+              alignItems: 'center',
+            }}
+          >
+            <input
+              type="text"
+              value={p.label}
+              onChange={(e) => updateProgram(p.id, { label: e.target.value })}
+              style={inputStyle}
+            />
+            <input
+              type="number"
+              step={500}
+              value={p.gross}
+              onChange={(e) => updateProgram(p.id, { gross: Number(e.target.value) || 0 })}
+              style={{ ...inputStyle, fontFamily: fonts.mono }}
+            />
+            <input
+              type="number"
+              step={500}
+              value={p.drop}
+              onChange={(e) => updateProgram(p.id, { drop: Number(e.target.value) || 0 })}
+              style={{ ...inputStyle, fontFamily: fonts.mono }}
+            />
+            <select
+              value={p.color}
+              onChange={(e) => updateProgram(p.id, { color: e.target.value })}
+              style={{ ...inputStyle, paddingRight: 4 }}
+            >
+              {COMPOUND_COLOR_CHOICES.map((c) => (
+                <option key={c.id} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => removeProgram(p.id)}
+              aria-label={`Remove ${p.label}`}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                color: T.inkMuted,
+                cursor: 'pointer',
+                fontSize: rem(14),
+                padding: '0 6px',
+              }}
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: 10 }}>
+        <button
+          type="button"
+          onClick={addProgram}
+          style={{
+            border: `1px solid ${T.border}`,
+            background: T.bg,
+            color: T.inkSoft,
+            fontFamily: fonts.body,
+            fontSize: rem(12),
+            padding: '4px 10px',
+            cursor: 'pointer',
+          }}
+        >
+          + Add program
+        </button>
+      </div>
+      <div
+        style={{
+          display: 'flex',
+          gap: 24,
+          alignItems: 'center',
+          marginTop: 14,
+          paddingTop: 12,
+          borderTop: `1px solid ${T.border}`,
+        }}
+      >
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: rem(11) }}>
+          <span style={{ color: T.inkMuted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            Recovery slope ({config.slope.toFixed(2)} disc per $1 gross)
+          </span>
+          <input
+            type="range"
+            min={0.05}
+            max={1}
+            step={0.05}
+            value={config.slope}
+            onChange={(e) => setConfig((c) => ({ ...c, slope: Number(e.target.value) }))}
+            style={{ width: 220 }}
+          />
+        </label>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: rem(11) }}>
+          <span style={{ color: T.inkMuted, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            Max gross ({fmtK(config.maxGross)})
+          </span>
+          <input
+            type="range"
+            min={20_000}
+            max={200_000}
+            step={5_000}
+            value={config.maxGross}
+            onChange={(e) => setConfig((c) => ({ ...c, maxGross: Number(e.target.value) }))}
+            style={{ width: 220 }}
+          />
+        </label>
+      </div>
+    </div>
+  );
+}
+
+const inputStyle: React.CSSProperties = {
+  fontFamily: fonts.body,
+  fontSize: rem(12),
+  padding: '4px 6px',
+  border: `1px solid ${T.border}`,
+  background: T.bg,
+  color: T.ink,
+};
 
 /** Each cliff's individual pit zone — runs from that cliff's gross to the
  *  income at which the curve recovers to THAT cliff's pre-cliff value.
@@ -4054,8 +4312,8 @@ function computePerCliffZones(
   return zones;
 }
 
-function CompoundChartSingleColor() {
-  const { points, cliffs, pitZones, maxGross, currentGross } = useCompoundDemoData();
+function CompoundChartSingleColor({ config }: { config: CompoundConfig }) {
+  const { points, cliffs, pitZones, maxGross, currentGross } = useCompoundDemoData(config);
   return (
     <CompoundFrame>
       <CompoundChartBase
@@ -4069,8 +4327,8 @@ function CompoundChartSingleColor() {
   );
 }
 
-function CompoundChartSplitStriping() {
-  const { points, cliffs, pitZones, maxGross, currentGross } = useCompoundDemoData();
+function CompoundChartSplitStriping({ config }: { config: CompoundConfig }) {
+  const { points, cliffs, pitZones, maxGross, currentGross } = useCompoundDemoData(config);
   const splitZones: PitZone[] = pitZones.flatMap((z) => {
     const interior = cliffs
       .filter((c) => c.gross > z.x1 && c.gross < z.x2)
@@ -4107,8 +4365,8 @@ function CompoundChartSplitStriping() {
   );
 }
 
-function CompoundChartGhost() {
-  const { points, cliffs, maxGross, currentGross } = useCompoundDemoData();
+function CompoundChartGhost({ config }: { config: CompoundConfig }) {
+  const { points, cliffs, maxGross, currentGross } = useCompoundDemoData(config);
   const ghostPoints = (() => {
     let runningMax = -Infinity;
     return points.map((p) => {
@@ -4177,8 +4435,8 @@ function CompoundChartGhost() {
   );
 }
 
-function CompoundChartLayered() {
-  const { points, cliffs, maxGross, currentGross } = useCompoundDemoData();
+function CompoundChartLayered({ config }: { config: CompoundConfig }) {
+  const { points, cliffs, maxGross, currentGross } = useCompoundDemoData(config);
   const layeredZones = computePerCliffZones(points, cliffs);
   return (
     <CompoundFrame>
