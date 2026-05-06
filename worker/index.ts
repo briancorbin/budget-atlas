@@ -32,10 +32,12 @@ interface PostBody {
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function json(data: unknown, init: ResponseInit = {}): Response {
-  return new Response(JSON.stringify(data), {
-    ...init,
-    headers: { 'content-type': 'application/json', ...(init.headers ?? {}) },
-  });
+  // Build via the Headers constructor so callers passing a Headers
+  // instance (a valid HeadersInit) don't get silently dropped by an
+  // object spread.
+  const headers = new Headers(init.headers);
+  if (!headers.has('content-type')) headers.set('content-type', 'application/json');
+  return new Response(JSON.stringify(data), { ...init, headers });
 }
 
 function requireAuth(req: Request, env: Env): Response | null {
@@ -65,25 +67,35 @@ async function postRun(req: Request, env: Env): Promise<Response> {
   }
 
   const runDate = body.run_date;
+  // Validate the entire results array up-front so a malformed row
+  // can't quietly truncate the day's data after the DELETE has already
+  // wiped it. All-or-nothing: 400 on any bad row, no DB writes.
+  for (let i = 0; i < body.results.length; i++) {
+    const r = body.results[i];
+    if (!r || typeof r.status !== 'string' || typeof r.url !== 'string') {
+      return json({ error: `results[${i}] must have string status + url` }, { status: 400 });
+    }
+  }
+
   // Idempotent: re-POSTing the same date wipes prior rows for that date
-  // and inserts the new payload. Lets the action retry safely and lets
-  // a manual re-audit overwrite without duplicating.
+  // and inserts the new payload. created_at on audit_runs stays at the
+  // first-seen timestamp (ON CONFLICT DO NOTHING) so the column means
+  // what its name says.
   const stmts: D1PreparedStatement[] = [
     env.DB.prepare('DELETE FROM audit_results WHERE run_date = ?').bind(runDate),
     env.DB.prepare(
-      'INSERT INTO audit_runs (run_date) VALUES (?) ON CONFLICT(run_date) DO UPDATE SET created_at = unixepoch()',
+      'INSERT INTO audit_runs (run_date) VALUES (?) ON CONFLICT(run_date) DO NOTHING',
     ).bind(runDate),
   ];
   const insert = env.DB.prepare(
     'INSERT INTO audit_results (run_date, url, status, final_url) VALUES (?, ?, ?, ?)',
   );
   for (const r of body.results) {
-    if (typeof r.status !== 'string' || typeof r.url !== 'string') continue;
     stmts.push(insert.bind(runDate, r.url, r.status, r.final_url ?? null));
   }
   await env.DB.batch(stmts);
 
-  return json({ ok: true, run_date: runDate, inserted: stmts.length - 2 });
+  return json({ ok: true, run_date: runDate, inserted: body.results.length });
 }
 
 async function getLatest(env: Env): Promise<Response> {

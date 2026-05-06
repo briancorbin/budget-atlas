@@ -147,7 +147,7 @@ Run history lives in a Cloudflare D1 database (`budget-atlas-audit`) bound to th
 - `GET  /api/audit/runs/:date` — specific run.
 - `GET  /api/audit/history?url=…` — last 30 statuses for a URL.
 
-**Stand-up status (PR A):** the nightly job now dual-writes — TSVs to the repo *and* a POST to the API. The site (and `seed-issues.mjs`) still read from the in-repo TSVs; the backend exists but isn't on the read path yet.
+**Stand-up status (PR A):** the nightly job now dual-writes — TSVs to the repo _and_ a POST to the API. The site (and `seed-issues.mjs`) still read from the in-repo TSVs; the backend exists but isn't on the read path yet.
 
 **One-time backfill** (after `wrangler d1 create budget-atlas-audit` + `wrangler d1 execute … --file=worker/schema.sql`):
 

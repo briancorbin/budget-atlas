@@ -17,7 +17,14 @@ import prettierConfig from 'eslint-config-prettier';
 export default tseslint.config(
   // Ignore generated and vendored output. Everything else is fair game.
   {
-    ignores: ['dist/**', 'build/**', 'node_modules/**', '.vite/**', '.claude/**'],
+    ignores: [
+      'dist/**',
+      'dist-tsbuildinfo/**',
+      'build/**',
+      'node_modules/**',
+      '.vite/**',
+      '.claude/**',
+    ],
   },
 
   // Base JS recommendations.
@@ -71,6 +78,9 @@ export default tseslint.config(
         setInterval: 'readonly',
         clearTimeout: 'readonly',
         clearInterval: 'readonly',
+        // Node 18+ exposes fetch globally (used in audit/links/post-run.mjs
+        // + backfill-d1.mjs to POST to the Cloudflare-hosted audit API).
+        fetch: 'readonly',
       },
     },
   },
