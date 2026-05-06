@@ -17,7 +17,7 @@ Thanks for considering a contribution. The Budget Atlas is a free, donation-supp
 
 ```bash
 yarn install
-yarn start          # Vite dev server, usually http://localhost:5173
+yarn dev            # Vite dev server, usually http://localhost:5173 (alias: yarn start)
 yarn typecheck
 yarn lint
 yarn format         # auto-format with Prettier

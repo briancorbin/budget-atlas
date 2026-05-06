@@ -7,6 +7,7 @@
   "packageManager": "yarn@4.9.1",
   "scripts": {
     "start": "vite",
+    "dev": "vite",
     "tunnel": "./scripts/tunnel.sh",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
@@ -25,7 +26,7 @@
     "audit:inventory": "node --experimental-strip-types scripts/source-inventory.mjs",
     "dev:worker": "wrangler dev --local --persist-to=.wrangler/state",
     "dev:worker:seed": "wrangler d1 execute budget-atlas-audit --local --file=worker/schema.sql --persist-to=.wrangler/state",
-    "dev:local": "concurrently --names worker,site --prefix-colors blue,green --kill-others-on-fail \"yarn dev:worker\" \"AUDIT_PROXY_TARGET=http://localhost:8787 yarn start\"",
+    "dev:local": "concurrently --names worker,site --prefix-colors blue,green --kill-others-on-fail \"yarn dev:worker\" \"AUDIT_PROXY_TARGET=http://localhost:8787 yarn dev\"",
     "dev:local:fresh": "yarn dev:worker:seed && yarn db:sync && yarn dev:local",
     "db:sync": "./audit/links/sync-d1-from-prod.sh"
   },

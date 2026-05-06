@@ -184,10 +184,10 @@ Both commands run wrangler and vite concurrently in the same terminal with color
 yarn dev:worker:seed   # apply worker/schema.sql to local D1 (one-time / after schema edits)
 yarn db:sync           # snapshot prod D1 → local
 yarn dev:worker        # local Worker on :8787, persistent state in .wrangler/state
-yarn start             # Vite dev server (proxies /api to prod by default)
+yarn dev               # Vite dev server (proxies /api to prod by default)
 ```
 
-`yarn start` without `AUDIT_PROXY_TARGET` proxies to production — fine for UI-only work. The local Worker accepts any `AUDIT_WRITE_TOKEN` for writes (no secret is set unless you `wrangler secret put` against the local env), so `local-dev` is conventional but anything works.
+`yarn dev` without `AUDIT_PROXY_TARGET` proxies to production — fine for UI-only work. The local Worker accepts any `AUDIT_WRITE_TOKEN` for writes (no secret is set unless you `wrangler secret put` against the local env), so `local-dev` is conventional but anything works.
 
 State persists under `.wrangler/state/` (gitignored) between runs of `yarn dev:worker`, so you don't lose your local data when restarting.
 
