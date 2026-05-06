@@ -4046,8 +4046,8 @@ function SectionCompoundPits() {
         <CompoundChartGhost config={config} />
       </Variation>
       <Variation
-        title="V4 — Per-cliff layered zones (translucent stacking)"
-        description="Each cliff opens its own translucent pit zone that closes when the curve recovers to that cliff's pre-cliff value. Overlapping zones stack visually — 'inside both' regions look darker. Shows attribution AND depth."
+        title="V4 — Per-cliff pit timeline (Gantt-style lanes)"
+        description="Chart stays clean (no in-chart fills); pit attribution moves to a small per-program timeline below the chart. Each cliff gets its own labeled lane, colored only over the income range where that program contributes to the household being worse off. Comparing lanes vertically tells you which programs overlap and where."
       >
         <CompoundChartLayered config={config} />
       </Variation>
@@ -4496,15 +4496,94 @@ function CompoundChartLayered({ config }: { config: CompoundConfig }) {
   const layeredZones = computePerCliffZones(points, cliffs);
   return (
     <CompoundFrame>
+      {/* Chart stays clean — no in-chart fills. Cliffs as faint reference
+          lines only. The pit attribution lives in the timeline below. */}
       <CompoundChartBase
         points={points}
         cliffs={cliffs}
-        zones={layeredZones}
+        zones={[]}
         maxGross={maxGross}
         currentGross={currentGross}
-        zoneOpacity={0.14}
       />
+      <PitTimeline cliffs={cliffs} zones={layeredZones} maxGross={maxGross} />
     </CompoundFrame>
+  );
+}
+
+/** Per-program pit timeline. One labeled lane per cliff, with a colored
+ *  bar marking the income range over which that program contributes to
+ *  the household being worse off than at some lower income. Reads as a
+ *  Gantt-style timeline aligned to the chart's X axis above. */
+function PitTimeline({
+  cliffs,
+  zones,
+  maxGross,
+}: {
+  cliffs: CliffMark[];
+  zones: PitZone[];
+  maxGross: number;
+}) {
+  // Match the chart's plot-area inset so lane bars line up with chart X.
+  // CompoundChartBase uses YAxis width=48 plus left margin 0 and right
+  // margin 16 plus chart-internal padding ~4px each side.
+  const leftPad = 48 + 4;
+  const rightPad = 16 + 4;
+  return (
+    <div style={{ marginTop: 8, paddingLeft: leftPad, paddingRight: rightPad }}>
+      <div
+        style={{
+          fontSize: rem(10),
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: T.inkMuted,
+          marginBottom: 4,
+        }}
+      >
+        In-pit timeline
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {cliffs.map((c) => {
+          const zone = zones.find((z) => z.cliffId === c.id);
+          return (
+            <div
+              key={c.id}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '80px 1fr',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: rem(11),
+              }}
+            >
+              <span style={{ color: T.inkSoft, textAlign: 'right' }}>{c.label}</span>
+              <div
+                style={{
+                  position: 'relative',
+                  height: 10,
+                  background: T.bgAlt,
+                  border: `1px solid ${T.border}`,
+                }}
+              >
+                {zone && (
+                  <div
+                    title={`${c.label} pit: ${fmtK(zone.x1)} → ${fmtK(zone.x2)}`}
+                    style={{
+                      position: 'absolute',
+                      left: `${(zone.x1 / maxGross) * 100}%`,
+                      width: `${((zone.x2 - zone.x1) / maxGross) * 100}%`,
+                      top: 0,
+                      bottom: 0,
+                      background: c.color,
+                      opacity: 0.55,
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
