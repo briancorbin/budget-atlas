@@ -23,7 +23,9 @@
     "audit:seed-issues": "node audit/links/seed-issues.mjs",
     "audit:status": "node audit/links/generate-status.mjs",
     "audit:staleness": "node audit/staleness/seed-issue.mjs",
-    "audit:inventory": "node --experimental-strip-types scripts/source-inventory.mjs"
+    "audit:inventory": "node --experimental-strip-types scripts/source-inventory.mjs",
+    "dev:worker": "wrangler dev --local --persist-to=.wrangler/state",
+    "dev:worker:seed": "wrangler d1 execute budget-atlas-audit --local --file=worker/schema.sql --persist-to=.wrangler/state"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.2.9",
@@ -49,6 +51,7 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.10",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.5",
+    "wrangler": "^4.88.0"
   }
 }

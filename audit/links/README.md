@@ -157,6 +157,31 @@ AUDIT_WRITE_TOKEN=<token> node audit/links/backfill-d1.mjs
 
 PRs B and C will move the site's reads to the API and finally remove the in-repo TSVs.
 
+### Local backend
+
+For backend changes (worker code, schema, API contract), run a local Worker against a local D1 so production stays untouched:
+
+```sh
+# 1. Apply the schema to local D1 (one-time, or after schema edits)
+yarn dev:worker:seed
+
+# 2. Start the local Worker on :8787 with local D1
+yarn dev:worker
+
+# 3. (Optional) seed local D1 with the dated TSVs already in the repo
+API_BASE=http://localhost:8787 \
+  AUDIT_WRITE_TOKEN=local-dev \
+  node audit/links/backfill-d1.mjs
+
+# 4. In another terminal, point the Vite dev server's /api proxy at the
+#    local Worker instead of production
+AUDIT_PROXY_TARGET=http://localhost:8787 yarn start
+```
+
+`yarn start` without `AUDIT_PROXY_TARGET` proxies to production — fine for UI-only work. The local Worker accepts any `AUDIT_WRITE_TOKEN` for writes (no secret is set unless you `wrangler secret put` against the local env), so `local-dev` is conventional but anything works.
+
+State persists under `.wrangler/state/` (gitignored) between runs of `yarn dev:worker`, so you don't lose your local data when restarting.
+
 ## Contributing a fix
 
 1. Pick an open issue (`audit:link` from the nightly bot, or `audit:report` from a community submission).
