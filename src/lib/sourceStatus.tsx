@@ -61,13 +61,22 @@ export interface Review {
 /**
  * Recognised values in the kind column. Includes the legacy three-state
  * spellings so old rows still parse; the parser folds them into `ai`.
+ *
+ * `verified-bot-blocked` is recognised by the validator (so a row with
+ * that kind doesn't get rejected as malformed) but is NOT loaded into
+ * REVIEWS — those rows only affect the broken-link audit's suppression,
+ * not the user-facing review history shown on /sources or the staleness
+ * clock. See audit/links/seed-issues.mjs for how they're consumed.
  */
 const REVIEW_KIND_VALUES: ReadonlySet<string> = new Set([
   'human',
   'ai',
   'ai-assisted',
   'ai-proposed',
+  'verified-bot-blocked',
 ]);
+
+const REVIEW_KIND_HIDDEN: ReadonlySet<string> = new Set(['verified-bot-blocked']);
 
 function normaliseKind(raw: string): ReviewKind {
   if (raw === 'human') return 'human';
@@ -150,6 +159,11 @@ export const REVIEWS = (() => {
         );
         continue;
       }
+      // verified-bot-blocked rows are valid but intentionally excluded
+      // from REVIEWS — they don't represent the kind of full-citation
+      // verification the /sources page surfaces, and shouldn't reset
+      // the staleness clock via isOverdue() either.
+      if (REVIEW_KIND_HIDDEN.has(parts[3])) continue;
       kind = normaliseKind(parts[3]);
       notes = parts[4] ?? '';
     } else {
