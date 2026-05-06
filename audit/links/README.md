@@ -168,13 +168,11 @@ For backend changes (worker code, schema, API contract), run a local Worker agai
 # 1. Apply the schema to local D1 (one-time, or after schema edits)
 yarn dev:worker:seed
 
-# 2. Start the local Worker on :8787 with local D1
-yarn dev:worker
+# 2. (Recommended) snapshot production D1 into local for realistic data
+yarn db:sync
 
-# 3. (Optional) seed local D1 with the dated TSVs already in the repo
-API_BASE=http://localhost:8787 \
-  AUDIT_WRITE_TOKEN=local-dev \
-  node audit/links/backfill-d1.mjs
+# 3. Start the local Worker on :8787 with local D1
+yarn dev:worker
 
 # 4. In another terminal, point the Vite dev server's /api proxy at the
 #    local Worker instead of production

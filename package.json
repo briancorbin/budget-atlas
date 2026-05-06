@@ -24,7 +24,8 @@
     "audit:staleness": "node audit/staleness/seed-issue.mjs",
     "audit:inventory": "node --experimental-strip-types scripts/source-inventory.mjs",
     "dev:worker": "wrangler dev --local --persist-to=.wrangler/state",
-    "dev:worker:seed": "wrangler d1 execute budget-atlas-audit --local --file=worker/schema.sql --persist-to=.wrangler/state"
+    "dev:worker:seed": "wrangler d1 execute budget-atlas-audit --local --file=worker/schema.sql --persist-to=.wrangler/state",
+    "db:sync": "./audit/links/sync-d1-from-prod.sh"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.2.9",
