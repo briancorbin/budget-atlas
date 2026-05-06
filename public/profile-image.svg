@@ -1,0 +1,30 @@
+<!--
+  Social profile picture for The Budget Atlas. Same italic Fraunces "A" +
+  circle period as favicon.svg, but on a larger 200-unit canvas with
+  ~20% padding on every side so the mark survives the circular crop that
+  Instagram, X, and TikTok apply to profile pictures.
+
+  This is NOT a replacement for favicon.svg — the browser-tab favicon
+  stays tight (no padding) because it renders as a small square, not a
+  circle, and the extra padding would just shrink the legible glyph.
+
+  Rendered to public/profile-image.png at 1024×1024 via rsvg-convert;
+  see scripts/render-branding.sh.
+
+  Geometry: the favicon's "A." sits in a 100-unit box at font-size 92
+  with the period at (78,76). Here the mark is scaled 1.5× and recentered
+  so its bounding box is centered on (100,100) of the 200-unit canvas.
+  The farthest point of the period circle lands at radius ~70 from the
+  canvas center, well inside the 100-radius circular crop boundary.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,500&amp;display=swap');
+  </style>
+  <rect width="200" height="200" fill="#F4EFE3"/>
+  <text x="87" y="150" text-anchor="middle"
+        font-family="Fraunces"
+        font-size="138" font-weight="500" font-style="italic"
+        fill="#A6261C">A</text>
+  <circle cx="141" cy="144" r="11" fill="#A6261C"/>
+</svg>
