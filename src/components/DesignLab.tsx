@@ -121,7 +121,10 @@ const LAB_SECTIONS: ReadonlyArray<LabSection> = [
     nav: 'Pit-zone presentation',
     count: 4,
     Component: SectionPitZones,
-    status: 'open',
+    status: 'decided',
+    decidedAs: 'V1 — tinted full-height area, uniform warning color',
+    decidedNote:
+      'Per-program tinting was dropped (see compound-pit V5) — every pit zone uses the same warning color now. Hard to miss without overclaiming attribution.',
   },
   {
     id: 'compound',
@@ -3556,8 +3559,9 @@ function SectionPitZones() {
       subhead="Four ways to depict the income ranges where the household ends up with less than they'd have at some lower income. The data is identical; only the visual encoding changes."
     >
       <Variation
+        decided
         title="V1 — Tinted full-height area (current production)"
-        description="ReferenceArea spans the full chart height for each pit, tinted by the program that caused it. Hard to miss; can feel heavy when pits stack up."
+        description="ReferenceArea spans the full chart height for each pit, uniformly tinted in the warning color. Hard to miss; doesn't claim per-program attribution."
       >
         <PitChartTintedArea />
       </Variation>
@@ -3610,9 +3614,9 @@ function PitChartTintedArea() {
               key={i}
               x1={z.x1}
               x2={z.x2}
-              fill={z.color ?? T.warning}
+              fill={T.warning}
               fillOpacity={0.12}
-              stroke={z.color ?? T.warning}
+              stroke={T.warning}
               strokeOpacity={0.3}
               strokeDasharray="2 3"
             />
