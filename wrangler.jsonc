@@ -21,7 +21,7 @@
       "binding": "DB",
       "database_name": "budget-atlas-audit",
       // Replace with the id printed by `wrangler d1 create budget-atlas-audit`.
-      "database_id": "REPLACE_ME_AFTER_WRANGLER_D1_CREATE",
+      "database_id": "8e994c5e-6072-4bb5-b999-d75b97425e77",
     },
   ],
   "routes": [
