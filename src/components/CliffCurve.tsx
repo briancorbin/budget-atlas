@@ -149,10 +149,12 @@ export function CliffCurve({
   // for this household size and state.
   const cliffs = useMemo(() => {
     const fplBase = fpl(householdSize);
-    const list: { id: string; label: string; gross: number; color: string }[] = [];
+    const list: { id: string; shortLabel: string; label: string; gross: number; color: string }[] =
+      [];
 
     list.push({
       id: 'snap',
+      shortLabel: 'SNAP',
       label: 'SNAP',
       gross: Math.round(fplBase * snapIncomeLimitFpl(cityData.state)),
       color: T.warning,
@@ -162,6 +164,7 @@ export function CliffCurve({
     if (policy.expanded) {
       list.push({
         id: 'medicaid',
+        shortLabel: 'Medicaid',
         label: 'Medicaid (138% FPL)',
         gross: Math.round(fplBase * MEDICAID_EXPANSION_LIMIT_FPL),
         color: T.accent,
@@ -170,6 +173,7 @@ export function CliffCurve({
       const pct = Math.round(policy.nonExpansionParentLimit * 100);
       list.push({
         id: 'medicaid',
+        shortLabel: 'Medicaid parents',
         label: `Medicaid parents (${pct}% FPL)`,
         gross: Math.round(fplBase * policy.nonExpansionParentLimit),
         color: T.accent,
@@ -180,6 +184,7 @@ export function CliffCurve({
       const chipLimit = STATE_CHIP_LIMIT_FPL[cityData.state];
       list.push({
         id: 'chip',
+        shortLabel: 'CHIP',
         label: `CHIP (${Math.round(chipLimit * 100)}% FPL)`,
         gross: Math.round(fplBase * chipLimit),
         color: T.aiAccent,
@@ -386,7 +391,7 @@ export function CliffCurve({
                         fontFamily={fonts.body}
                         textAnchor="middle"
                       >
-                        {c.label}
+                        {c.shortLabel}
                       </text>
                     </g>
                   );
