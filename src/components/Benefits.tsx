@@ -654,20 +654,21 @@ function OvershadowedByMedicaidNote() {
         aria-describedby={open ? 'overshadow-popover' : undefined}
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'transparent',
-          border: 'none',
-          padding: 0,
+          display: 'inline-block',
+          fontSize: rem(10),
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: T.warning,
+          background: 'rgba(184, 116, 43, 0.1)',
+          border: `1px solid ${T.warning}`,
+          padding: '3px 8px',
+          borderRadius: 2,
+          fontWeight: 600,
           cursor: 'help',
           fontFamily: fonts.body,
-          fontSize: rem(12),
-          color: T.inkMuted,
-          textDecoration: 'underline',
-          textDecorationStyle: 'dotted',
-          textUnderlineOffset: 3,
-          fontStyle: 'italic',
         }}
       >
-        Covered by Medicaid · why?
+        ◐ Covered by Medicaid
       </button>
       {open && (
         <div
@@ -681,7 +682,7 @@ function OvershadowedByMedicaidNote() {
             width: 320,
             padding: '10px 12px',
             background: T.surface,
-            border: `1px solid ${T.border}`,
+            border: `1px solid ${T.warning}`,
             borderRadius: 4,
             boxShadow: '0 4px 12px rgba(27, 24, 21, 0.12)',
             fontFamily: fonts.body,
