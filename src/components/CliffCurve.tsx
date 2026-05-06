@@ -7,6 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  ReferenceArea,
   ReferenceDot,
   CartesianGrid,
 } from 'recharts';
@@ -244,6 +245,33 @@ export function CliffCurve({
     null,
   );
 
+  // Pit zones: contiguous income ranges where the household ends up with
+  // less of the active metric than they would at some lower income. Walks
+  // the curve left→right tracking the running max; any point below that
+  // running max is "in a pit." Coalesces consecutive in-pit points into
+  // single shaded ranges so we render one ReferenceArea per zone.
+  const pitZones = useMemo(() => {
+    const zones: { x1: number; x2: number }[] = [];
+    let runningMax = -Infinity;
+    let currentZoneStart: number | null = null;
+    for (let i = 0; i < points.length; i++) {
+      const v = points[i][metricMeta.key] as number;
+      if (v < runningMax) {
+        if (currentZoneStart === null) currentZoneStart = points[i].gross;
+      } else {
+        if (currentZoneStart !== null) {
+          zones.push({ x1: currentZoneStart, x2: points[i].gross });
+          currentZoneStart = null;
+        }
+        runningMax = v;
+      }
+    }
+    if (currentZoneStart !== null) {
+      zones.push({ x1: currentZoneStart, x2: points[points.length - 1].gross });
+    }
+    return zones;
+  }, [points, metricMeta]);
+
   return (
     <div style={{ marginBottom: 48 }}>
       <SectionTitle kicker="The shape of the safety net">
@@ -319,6 +347,18 @@ export function CliffCurve({
                 <CliffTooltip {...props} cliffs={cliffs} metric={metricMeta} />
               )}
             />
+            {pitZones.map((z, i) => (
+              <ReferenceArea
+                key={`pit-${i}`}
+                x1={z.x1}
+                x2={z.x2}
+                fill={T.warning}
+                fillOpacity={0.1}
+                stroke={T.warning}
+                strokeOpacity={0.25}
+                strokeDasharray="2 3"
+              />
+            ))}
             <ReferenceLine y={0} stroke={T.inkMuted} strokeWidth={1} />
             {cliffs.map((c) => (
               <ReferenceLine
@@ -391,6 +431,23 @@ export function CliffCurve({
             />
             Your current income ({fmt(currentGross)})
           </span>
+          {pitZones.length > 0 && (
+            <span>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 14,
+                  height: 10,
+                  background: T.warning,
+                  opacity: 0.25,
+                  border: `1px dashed ${T.warning}`,
+                  marginRight: 6,
+                  verticalAlign: 'middle',
+                }}
+              />
+              Worse off than at some lower income
+            </span>
+          )}
           {cliffs.map((c) => (
             <span key={c.id + c.gross}>
               <span
