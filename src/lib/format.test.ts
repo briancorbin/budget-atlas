@@ -25,7 +25,7 @@ describe('fmt', () => {
 });
 
 describe('fmtSigned', () => {
-  it('always shows a sign on positives', () => {
+  it('prefixes negatives with the typographic minus; positives get no explicit sign', () => {
     expect(fmtSigned(500)).toBe('$500');
     expect(fmtSigned(-500)).toBe(`${MINUS}$500`);
   });
