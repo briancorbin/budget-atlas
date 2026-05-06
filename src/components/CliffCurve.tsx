@@ -224,9 +224,15 @@ export function CliffCurve({
     // the left and the right margin eats ~24px; subtract those before
     // converting. This collapses to per-label clearance instead of a
     // hand-tuned fraction of maxGross.
-    const plotWidthPx = Math.max(50, chartWidthPx - 56 - 24);
+    // Plot area: wrapper minus YAxis (56), right margin (24), left margin (8).
+    const plotWidthPx = Math.max(50, chartWidthPx - 56 - 24 - 8);
     const pxPerDollar = plotWidthPx / Math.max(1, maxGross);
-    const labelHalfWidthDollars = (label: string) => (label.length * 5.5 + 8) / 2 / pxPerDollar;
+    // Empirical: 10px IBM Plex Sans averages ~5px per char, with no extra
+    // padding before two labels visually touch. Earlier estimate of
+    // 5.5px + 8px padding was over-generous and bumped labels that
+    // actually had room — particularly short ones like "SNAP" sitting
+    // between two longer neighbours.
+    const labelHalfWidthDollars = (label: string) => (label.length * 5) / 2 / pxPerDollar;
     const placed: { gross: number; halfWidth: number; row: number }[] = [];
     return visible.map((c) => {
       const halfWidth = labelHalfWidthDollars(c.shortLabel);
