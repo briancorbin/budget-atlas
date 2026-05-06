@@ -3942,15 +3942,53 @@ function PitChartBottomBand() {
 //
 // These four variations explore how to expose multi-cliff contribution.
 
-const COMPOUND_SCENARIO: CliffScenario = {
-  city: 'nyc',
-  kids: 0,
-  filing: 'single',
-  lifestyle: 'moderate',
-  hasPartner: false,
-  incomeA: 30000,
-  incomeB: 0,
-};
+// Synthetic curve engineered to clearly exhibit overlapping pits — three
+// cliffs close enough together, with a shallow enough recovery slope,
+// that they merge into one continuous pit zone. Real Columbus scenarios
+// don't reliably overlap (cliffs there are spaced apart relative to
+// recovery slopes), so we synthesize for visual clarity. Cliff positions
+// and labels mirror the Columbus, OH program lineup for editorial
+// continuity with the rest of the lab.
+function useCompoundDemoData(): {
+  points: CliffPoint[];
+  cliffs: CliffMark[];
+  pitZones: PitZone[];
+  maxGross: number;
+  currentGross: number;
+} {
+  return React.useMemo(() => {
+    const maxGross = 80_000;
+    const currentGross = 35_000;
+    const stepSize = 500;
+    // Cliffs deliberately close together with big drops, so recovery from
+    // the first extends past the second and third.
+    const cliffSpecs = [
+      { id: 'medicaid', label: 'Medicaid (138% FPL)', shortLabel: 'Medicaid', gross: 30_000, drop: 5_000, color: CLIFF_COLORS.medicaid },
+      { id: 'snap',     label: 'SNAP (185% FPL)',     shortLabel: 'SNAP',     gross: 40_000, drop: 3_000, color: CLIFF_COLORS.snap     },
+      { id: 'chip',     label: 'CHIP (211% FPL)',     shortLabel: 'CHIP',     gross: 50_000, drop: 5_000, color: CLIFF_COLORS.chip     },
+    ];
+    const slope = 0.3; // shallow enough that recovery spans multiple cliffs
+    const intercept = -1_000;
+
+    const points: CliffPoint[] = [];
+    for (let g = 0; g <= maxGross; g += stepSize) {
+      let disc = slope * g + intercept;
+      for (const c of cliffSpecs) if (g >= c.gross) disc -= c.drop;
+      points.push({ gross: g, discretionary: Math.round(disc) });
+    }
+
+    const cliffs: CliffMark[] = cliffSpecs.map((c) => ({
+      id: c.id,
+      label: c.label,
+      shortLabel: c.shortLabel,
+      gross: c.gross,
+      color: c.color,
+    }));
+    const pitZones = computePitZones(points, 'discretionary', cliffs);
+
+    return { points, cliffs, pitZones, maxGross, currentGross };
+  }, []);
+}
 
 function SectionCompoundPits() {
   return (
@@ -4017,7 +4055,7 @@ function computePerCliffZones(
 }
 
 function CompoundChartSingleColor() {
-  const { points, cliffs, pitZones, maxGross, currentGross } = useCliffScenario(COMPOUND_SCENARIO);
+  const { points, cliffs, pitZones, maxGross, currentGross } = useCompoundDemoData();
   return (
     <CompoundFrame>
       <CompoundChartBase
@@ -4032,7 +4070,7 @@ function CompoundChartSingleColor() {
 }
 
 function CompoundChartSplitStriping() {
-  const { points, cliffs, pitZones, maxGross, currentGross } = useCliffScenario(COMPOUND_SCENARIO);
+  const { points, cliffs, pitZones, maxGross, currentGross } = useCompoundDemoData();
   const splitZones: PitZone[] = pitZones.flatMap((z) => {
     const interior = cliffs
       .filter((c) => c.gross > z.x1 && c.gross < z.x2)
@@ -4070,7 +4108,7 @@ function CompoundChartSplitStriping() {
 }
 
 function CompoundChartGhost() {
-  const { points, cliffs, maxGross, currentGross } = useCliffScenario(COMPOUND_SCENARIO);
+  const { points, cliffs, maxGross, currentGross } = useCompoundDemoData();
   const ghostPoints = (() => {
     let runningMax = -Infinity;
     return points.map((p) => {
@@ -4140,7 +4178,7 @@ function CompoundChartGhost() {
 }
 
 function CompoundChartLayered() {
-  const { points, cliffs, maxGross, currentGross } = useCliffScenario(COMPOUND_SCENARIO);
+  const { points, cliffs, maxGross, currentGross } = useCompoundDemoData();
   const layeredZones = computePerCliffZones(points, cliffs);
   return (
     <CompoundFrame>
@@ -4157,7 +4195,11 @@ function CompoundChartLayered() {
 }
 
 function CompoundFrame({ children }: { children: React.ReactNode }) {
-  return <ScenarioFrame label="NYC · single · no kids · $30K">{children}</ScenarioFrame>;
+  return (
+    <ScenarioFrame label="Synthetic Columbus-style scenario · cliffs at $30K / $40K / $50K (engineered to overlap)">
+      {children}
+    </ScenarioFrame>
+  );
 }
 
 function CompoundChartBase({
