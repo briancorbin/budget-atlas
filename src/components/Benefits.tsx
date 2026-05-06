@@ -667,7 +667,7 @@ function OvershadowedByMedicaidNote() {
           fontStyle: 'italic',
         }}
       >
-        🔒 Covered by Medicaid · why?
+        Covered by Medicaid · why?
       </button>
       {open && (
         <div
