@@ -159,8 +159,15 @@ function parseLatestReviews() {
   try {
     for (const line of readFileSync(REVIEWED_TSV, 'utf8').split('\n')) {
       if (!line || line.startsWith('#') || line.startsWith('id\t')) continue;
-      const [id, date] = line.split('\t');
+      const [id, date, , kind] = line.split('\t');
       if (!id || !date) continue;
+      // verified-bot-blocked rows certify only that the URL loads, NOT
+      // that the citation still backs the claim. They suppress the
+      // broken-link queue (see audit/links/seed-issues.mjs) but must
+      // not reset the staleness clock — staleness is about whether
+      // someone has done full eyes-on-source verification recently,
+      // and a "loaded fine" check doesn't qualify.
+      if (kind === 'verified-bot-blocked') continue;
       const existing = map.get(id);
       if (!existing || date > existing) map.set(id, date);
     }

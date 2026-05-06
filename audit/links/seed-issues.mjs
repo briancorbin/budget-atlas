@@ -32,10 +32,13 @@
 //   Some bot-blocked URLs (typically 999) genuinely work in a real
 //   browser. Adding a row to reviewed.tsv with kind = `verified-bot-blocked`
 //   suppresses that source from the broken-citation issue for
-//   VERIFIED_BOT_BLOCKED_TTL_DAYS, after which it re-flags so the
-//   verification doesn't go stale. Date and reviewer are recorded in
-//   the unified resolution log either way — the suppression is editorial
-//   discipline, not a hidden allowlist.
+//   VERIFIED_BOT_BLOCKED_TTL_DAYS (30) — deliberately tighter than the
+//   staleness cadence because bot-blocked URLs lose nightly automated
+//   reachability checks, so the human "this loads" check is the only
+//   liveness signal and needs to happen more often. Lighter than a
+//   full `human` review (just confirms the URL loads, not that the
+//   destination still cites the claim) and does NOT reset the
+//   staleness clock — see audit/staleness/seed-issue.mjs.
 //
 // Usage:
 //   node audit/links/seed-issues.mjs               # update the rolling issue
@@ -164,7 +167,12 @@ const sourcesIndex = buildSourcesIndex();
 // verification work isn't redundantly re-done every audit run. After the
 // TTL elapses we re-flag — verifications get stale.
 const REVIEWED_TSV = resolve(__dirname, 'reviewed.tsv');
-const VERIFIED_BOT_BLOCKED_TTL_DAYS = 90;
+// 30 days — deliberately tighter than the staleness cadence (90/180/365
+// per tier). Bot-blocked URLs lose nightly automated reachability checks,
+// so a human "this loads" verification is the only signal the URL is
+// still alive. Compensate for the lost automation with a more frequent
+// human re-verification rhythm.
+const VERIFIED_BOT_BLOCKED_TTL_DAYS = 30;
 
 function parseReviewedTsv() {
   const text = readFileSync(REVIEWED_TSV, 'utf8');

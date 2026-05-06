@@ -31,15 +31,18 @@
 #               careful read, none) is self-reported and unverifiable, so
 #               the kind doesn't try to subdivide. Be honest: if you
 #               weren't eyes-on-source, it's `ai`.
-#   - `verified-bot-blocked` — eyes-on-source confirmation that a URL
-#               which curl reports as bot-blocked (typically 999) is
-#               reachable in a real browser. Suppresses that source from
-#               the broken-citation queue for 90 days; after that the
-#               audit re-flags it so verifications don't go stale. Use
-#               this for legitimate sites with anti-bot defenses (e.g.
-#               LinkedIn, some state agency pages) when you've personally
-#               loaded the page and confirmed the citation still backs
-#               the claim. Must be eyes-on-source — same bar as `human`.
+#   - `verified-bot-blocked` — confirmation that a URL which curl reports
+#               as bot-blocked (typically 999) loads in a real browser.
+#               Lighter bar than `human`: you only need to confirm the
+#               URL is reachable, not that the destination still cites
+#               the claim. Suppresses that source from the broken-citation
+#               queue for 30 DAYS — deliberately tighter than the
+#               staleness cadence because bot-blocked URLs lose nightly
+#               automated reachability checks, so a human "this loads"
+#               verification is the only liveness signal. Does NOT reset
+#               the staleness clock (that still measures from your last
+#               full `human`/`ai` review). Use for legitimate sites with
+#               anti-bot defenses (LinkedIn, some state agency pages).
 #
 # An earlier three-state vocabulary (`ai-assisted`, `ai-proposed`) is
 # still accepted by the parser for backwards compatibility — both fold
