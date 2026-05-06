@@ -44,8 +44,7 @@ pnpm-debug.log*
 
 # Env
 .env
-.env.local
-.env.*.local
+.env.*
 
 # OS
 Thumbs.db
