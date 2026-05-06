@@ -53,14 +53,14 @@ jobs:
             run: node scripts/check-reviewed-immutable.mjs
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # source-pairing and reviewed-immutable need history to git-show
           # the base ref. fetch-depth: 0 is cheap here and keeps the matrix
           # uniform — not worth conditional logic to save a few hundred KB.
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           # No `cache: 'yarn'` here: setup-node calls `yarn cache dir`
