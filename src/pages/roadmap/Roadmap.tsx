@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { theme as T, fonts, rem } from '@/theme';
 import { ROADMAP, SHIPPED, type RoadmapItem, type RoadmapStatus } from '@/data/roadmap';
-import { SectionTitle } from './ui';
+import { SectionTitle } from '@/components/ui';
 
 export function Roadmap({ onBack }: { onBack: () => void }) {
   return (
@@ -145,6 +145,13 @@ function PlannedCard({ item }: { item: RoadmapItem }) {
         background: T.surface,
         border: `1px solid ${T.border}`,
         padding: '20px 24px',
+        // Flex column + height:100% so the IssueLink pins to the bottom
+        // of the grid cell regardless of summary length. The grid above
+        // already stretches cells to row height, this aligns the inner
+        // content with that.
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
       }}
     >
       <div
@@ -196,8 +203,13 @@ function PlannedCard({ item }: { item: RoadmapItem }) {
  * implementation notes, dollar magnitudes) lives in the issue.
  */
 function IssueLink({ id }: { id: number }) {
+  // marginTop: 'auto' pins the link to the bottom of any flex-column
+  // parent regardless of summary length; paddingTop: 12 preserves the
+  // minimum gap from whatever sits above it. Both card containers
+  // (PlannedCard and the shipped strip card) are flex columns so this
+  // works uniformly.
   return (
-    <div style={{ marginTop: 12, textAlign: 'right' }}>
+    <div style={{ marginTop: 'auto', paddingTop: 12, textAlign: 'right' }}>
       <a
         href={`https://github.com/TheBudgetAtlas/thebudgetatlas/issues/${id}`}
         target="_blank"
@@ -397,6 +409,13 @@ function ShippedList() {
               border: `1px solid ${T.border}`,
               padding: '16px 20px',
               position: 'relative',
+              // Flex column so IssueLink's marginTop: auto pins it to
+              // the card's bottom-right regardless of summary length.
+              // The horizontal strip stretches all cards to its tallest
+              // member, so shorter cards get the auto-margin breathing
+              // room.
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             <div
@@ -405,8 +424,18 @@ function ShippedList() {
                 fontSize: rem(16),
                 fontWeight: 500,
                 marginBottom: 8,
-                paddingRight: 70,
+                // Title wraps to multiple lines on long entries; the
+                // ✓ Shipped badge + date column on the right is ~95px
+                // wide. Pad the title's right edge past that so a
+                // wrapped title line never crowds the badge.
+                paddingRight: 100,
                 lineHeight: 1.25,
+                // Reserve two lines of vertical space (16px × 1.25 × 2)
+                // even when the title is one line, so the summary below
+                // starts at the same y-coordinate across every card in
+                // the strip. Keep titles ≤ ~32 chars (see RoadmapItem
+                // TSDoc) so the reservation is always enough.
+                minHeight: rem(40),
               }}
             >
               {item.title}

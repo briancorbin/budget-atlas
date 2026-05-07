@@ -1,7 +1,7 @@
 import type { BudgetResult } from '@/types';
 import { theme as T, fonts, rem } from '@/theme';
 import { fmt } from '@/lib/format';
-import { SectionTitle } from './ui';
+import { SectionTitle } from '@/components/ui';
 
 export function DiscretionaryPlan({ result }: { result: BudgetResult }) {
   if (result.discretionary < 0) return null;

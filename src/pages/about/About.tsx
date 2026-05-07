@@ -1,6 +1,6 @@
 import { theme as T, fonts, rem } from '@/theme';
 import { navigate } from '@/lib/nav';
-import { SectionTitle } from './ui';
+import { SectionTitle } from '@/components/ui';
 
 const GITHUB_URL = 'https://github.com/TheBudgetAtlas/thebudgetatlas';
 const CONTACT_EMAIL = 'brian@thebudgetatlas.com';

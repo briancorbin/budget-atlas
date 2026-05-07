@@ -5,7 +5,7 @@ import { fmt, fmtSigned } from '@/lib/format';
 import { CITIES, stateSlug } from '@/data/cities';
 import { STATES } from '@/data/states';
 import { computeBudget } from '@/lib/budget';
-import { SearchableSelect, SectionTitle, type SearchableOption } from './ui';
+import { SearchableSelect, SectionTitle, type SearchableOption } from '@/components/ui';
 
 export function CityComparison({
   result,

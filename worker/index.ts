@@ -31,6 +31,75 @@ interface PostBody {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+// Mirror of src/lib/audit/status.ts BROKEN_STATUS_CODES. Duplicated rather
+// than shared because the Worker bundles separately and pulling TS path
+// aliases across the boundary adds friction. If the set changes there it
+// changes here too.
+const BROKEN_STATUS_CODES = new Set(['404', '000', '000ERR', 'ERR']);
+
+// Flap-window size — kept aligned with FLAP_SUPPRESSION_RUNS in
+// audit/links/seed-issues.mjs. A URL is "intermittent" when the latest
+// run says broken but the window contains at least one non-broken run.
+const FLAP_WINDOW_RUNS = 3;
+
+/**
+ * Decorate result rows with an `intermittent` boolean. A row is
+ * intermittent iff its current status is broken AND, across the last
+ * FLAP_WINDOW_RUNS dated runs, the URL has at least one non-broken
+ * status. Mirrors the suppression rule in seed-issues.mjs so the
+ * /sources page and the rolling broken-citation issue agree on which
+ * URLs are still flapping.
+ *
+ * Fewer than 2 historical rows for a URL = no flap signal (newly cited);
+ * intermittent stays false. This matches seed-issues.mjs:304.
+ */
+async function decorateIntermittent(
+  env: Env,
+  asOfDate: string,
+  results: Array<{ url: string; status: string; final_url: string | null }>,
+): Promise<
+  Array<{ url: string; status: string; final_url: string | null; intermittent: boolean }>
+> {
+  const brokenUrls = results.filter((r) => BROKEN_STATUS_CODES.has(r.status)).map((r) => r.url);
+  if (brokenUrls.length === 0) {
+    return results.map((r) => ({ ...r, intermittent: false }));
+  }
+  // Pull the last FLAP_WINDOW_RUNS dated runs ending at asOfDate (inclusive),
+  // then per-URL statuses across those dates. The (url, run_date DESC) index
+  // makes both queries cheap. Using asOfDate rather than "always latest" so
+  // /api/audit/runs/:date stays internally consistent for historical runs.
+  const window = await env.DB.prepare(
+    'SELECT run_date FROM audit_runs WHERE run_date <= ? ORDER BY run_date DESC LIMIT ?',
+  )
+    .bind(asOfDate, FLAP_WINDOW_RUNS)
+    .all<{ run_date: string }>();
+  const windowDates = window.results.map((r) => r.run_date);
+  if (windowDates.length < 2) {
+    return results.map((r) => ({ ...r, intermittent: false }));
+  }
+  const placeholders = windowDates.map(() => '?').join(',');
+  const urlPlaceholders = brokenUrls.map(() => '?').join(',');
+  const history = await env.DB.prepare(
+    `SELECT url, status FROM audit_results
+     WHERE run_date IN (${placeholders}) AND url IN (${urlPlaceholders})`,
+  )
+    .bind(...windowDates, ...brokenUrls)
+    .all<{ url: string; status: string }>();
+  const perUrl = new Map<string, string[]>();
+  for (const row of history.results) {
+    const list = perUrl.get(row.url) ?? [];
+    list.push(row.status);
+    perUrl.set(row.url, list);
+  }
+  return results.map((r) => {
+    if (!BROKEN_STATUS_CODES.has(r.status)) return { ...r, intermittent: false };
+    const statuses = perUrl.get(r.url) ?? [];
+    if (statuses.length < 2) return { ...r, intermittent: false };
+    const hasNonBroken = statuses.some((s) => !BROKEN_STATUS_CODES.has(s));
+    return { ...r, intermittent: hasNonBroken };
+  });
+}
+
 function json(data: unknown, init: ResponseInit = {}): Response {
   // Build via the Headers constructor so callers passing a Headers
   // instance (a valid HeadersInit) don't get silently dropped by an
@@ -108,7 +177,8 @@ async function getLatest(env: Env): Promise<Response> {
   )
     .bind(run.run_date)
     .all<{ url: string; status: string; final_url: string | null }>();
-  return json({ run_date: run.run_date, created_at: run.created_at, results: rows.results });
+  const decorated = await decorateIntermittent(env, run.run_date, rows.results);
+  return json({ run_date: run.run_date, created_at: run.created_at, results: decorated });
 }
 
 async function getRun(date: string, env: Env): Promise<Response> {
@@ -122,7 +192,8 @@ async function getRun(date: string, env: Env): Promise<Response> {
   )
     .bind(date)
     .all<{ url: string; status: string; final_url: string | null }>();
-  return json({ run_date: run.run_date, created_at: run.created_at, results: rows.results });
+  const decorated = await decorateIntermittent(env, run.run_date, rows.results);
+  return json({ run_date: run.run_date, created_at: run.created_at, results: decorated });
 }
 
 async function getHistory(url: string, env: Env): Promise<Response> {

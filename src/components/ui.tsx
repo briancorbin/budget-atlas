@@ -17,11 +17,26 @@ import { StatusDot } from './audit/StatusDot';
 import { ReportFlag } from './audit/ReportFlag';
 
 /**
- * Roll a list of source statuses up to a single "worst" one. Broken
- * dominates overdue dominates ai-verified dominates verified — the goal
- * is honest signal (one un-human-vetted apple in the bundle should flag
- * the bundle), not optimism.
+ * Roll a list of source statuses up to a single "worst" one. Severity
+ * order (worst → best):
+ *
+ *   broken > intermittent > bot-blocked-verified > overdue > ai-verified > verified
+ *
+ * The goal is honest signal (one un-human-vetted apple in the bundle
+ * should flag the bundle), not optimism. The two softer audit states sit
+ * between overdue and broken: intermittent is closer to broken (we just
+ * couldn't reach it), bot-blocked-verified is closer to overdue (we have
+ * recent human eyes-on-page, just not eyes-on-citation).
  */
+const SEVERITY: Record<StatusKind, number> = {
+  verified: 0,
+  'ai-verified': 1,
+  overdue: 2,
+  'bot-blocked-verified': 3,
+  intermittent: 4,
+  broken: 5,
+};
+
 function worstStatusOf(
   sources: readonly Source[],
   statusByUrl: ReadonlyMap<string, string>,
@@ -29,18 +44,16 @@ function worstStatusOf(
   let worst: StatusKind = 'verified';
   for (const s of sources) {
     const k = getStatusKind(s, statusByUrl);
-    if (k === 'broken') return 'broken';
-    if (k === 'overdue') {
-      worst = 'overdue';
-    } else if (k === 'ai-verified' && worst === 'verified') {
-      worst = 'ai-verified';
-    }
+    if (SEVERITY[k] > SEVERITY[worst]) worst = k;
+    if (worst === 'broken') return worst;
   }
   return worst;
 }
 
 const STATUS_COLOR: Record<StatusKind, string> = {
   broken: T.accent,
+  intermittent: T.aiAccent,
+  'bot-blocked-verified': T.aiAccent,
   overdue: T.warning,
   verified: T.positive,
   'ai-verified': T.positive,

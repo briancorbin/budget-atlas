@@ -19,6 +19,17 @@ const STATUS_PALETTE: Record<
     short: 'Broken',
     long: 'URL is currently unreachable (404 / error). Needs a fix in src/data/sources.ts paired with a row in reviewed.tsv.',
   },
+  intermittent: {
+    color: T.aiAccent,
+    short: 'Intermittent',
+    long: 'Latest audit run could not reach this URL, but at least one of the last few runs did. Held back from escalation while the flap clears — the next consistent failure flips it to Broken.',
+    hollow: true,
+  },
+  'bot-blocked-verified': {
+    color: T.aiAccent,
+    short: 'Bot-blocked',
+    long: 'The audit cannot reach this URL from CI (a state agency that refuses non-browser user agents), but a human verified it loads in a real browser within the last 30 days.',
+  },
   overdue: {
     color: T.warning,
     short: 'Overdue',

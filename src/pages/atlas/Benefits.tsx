@@ -19,7 +19,7 @@ import {
   snapStateSource,
 } from '@/data/benefits';
 import { POVERTY_SOURCE } from '@/data/poverty';
-import { Cite, CiteGroup, SectionTitle } from './ui';
+import { Cite, CiteGroup, SectionTitle } from '@/components/ui';
 
 interface BenefitMeta {
   id: BenefitId;

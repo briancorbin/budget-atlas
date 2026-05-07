@@ -20,15 +20,21 @@ The aesthetic is deliberately editorial — think _The Atlantic_ meets _Bloomber
 
 ## Project layout
 
-The repo is organized into three layers, each with a clear responsibility:
+The repo is organized by responsibility, with UI further split by route:
 
 ```
 src/data/        Reference data (tax brackets, city costs, scenarios). No logic.
 src/lib/         Pure functions (tax math, formatting, budget composition). No React.
-src/components/  React UI. Each major section is its own file.
+src/components/  Cross-page UI primitives only — ui.tsx and audit/ (StatusDot, ReportFlag).
+src/pages/       One folder per route. atlas/ is the largest (BudgetExplorer + its
+                 section components + chrome like Masthead/PageNav/ShareLink).
+                 Secondary pages (about/, privacy/, roadmap/, sources/, design-lab/)
+                 each hold a single top-level component.
 ```
 
-When adding a feature, ask: which layer does this belong in? A new tax credit goes in `lib/tax.ts` and is wired into `lib/budget.ts`. A new city goes in `data/cities.ts`. A new chart or visualization gets its own component file.
+When adding a feature, ask: which layer does this belong in? A new tax credit goes in `lib/tax.ts` and is wired into `lib/budget.ts`. A new city goes in `data/cities.ts`. A new chart or visualization on the atlas gets a new component file inside `src/pages/atlas/`. Page-specific UI lives under `src/pages/<route>/`; only put something in `src/components/` if it's actually used across multiple pages.
+
+Subfolders inside `src/lib/` (like `lib/audit/`) and `src/components/` (like `components/audit/`) are reserved for domains dense enough to justify the split — a single feature file stays flat.
 
 ## Calculation correctness
 

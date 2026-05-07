@@ -112,6 +112,28 @@ export const STALENESS_DEFAULT_DAYS = 180;
  * review first within each list). Reviews follow source identity (slug),
  * not URL — so URL changes don't orphan history.
  */
+/**
+ * `verified-bot-blocked` rows live here, separate from REVIEWS. Keyed by
+ * source id, value is the most-recent BBV row (TSV may carry older ones
+ * but only the latest matters for TTL). Used by `getStatusKind` to soften
+ * the "broken" classification when a human has eyeballed the URL in a
+ * browser within BOT_BLOCKED_TTL_DAYS.
+ */
+export interface BotBlockedReview {
+  date: string;
+  reviewer: string;
+  notes: string;
+}
+export const BOT_BLOCKED_REVIEWS = new Map<string, BotBlockedReview>();
+
+/**
+ * How long a `verified-bot-blocked` row stays in effect on the /sources
+ * page. Mirrors VERIFIED_BOT_BLOCKED_TTL_DAYS in
+ * audit/links/seed-issues.mjs — both layers (the rolling issue and the
+ * /sources page) suppress for the same window.
+ */
+export const BOT_BLOCKED_TTL_DAYS = 30;
+
 export const REVIEWS = (() => {
   const map = new Map<string, Review[]>();
   for (const line of reviewedTsv.split('\n')) {
@@ -140,11 +162,20 @@ export const REVIEWS = (() => {
         );
         continue;
       }
-      // verified-bot-blocked rows are valid but intentionally excluded
-      // from REVIEWS — they don't represent the kind of full-citation
-      // verification the /sources page surfaces, and shouldn't reset
-      // the staleness clock via isOverdue() either.
-      if (REVIEW_KIND_HIDDEN.has(parts[3])) continue;
+      // verified-bot-blocked rows go into BOT_BLOCKED_REVIEWS instead
+      // of REVIEWS — they don't represent the kind of full-citation
+      // verification /sources surfaces in review history, and shouldn't
+      // reset the staleness clock via isOverdue(). But they DO soften the
+      // broken classification (see getStatusKind), so they need to be
+      // accessible — just through a separate map.
+      if (REVIEW_KIND_HIDDEN.has(parts[3])) {
+        const bbvNotes = parts[4] ?? '';
+        const existing = BOT_BLOCKED_REVIEWS.get(id);
+        if (!existing || (date ?? '') > existing.date) {
+          BOT_BLOCKED_REVIEWS.set(id, { date, reviewer, notes: bbvNotes });
+        }
+        continue;
+      }
       kind = normaliseKind(parts[3]);
       notes = parts[4] ?? '';
     } else {
@@ -160,6 +191,22 @@ export const REVIEWS = (() => {
   return map;
 })();
 
+/**
+ * True iff the source has a `verified-bot-blocked` row in reviewed.tsv
+ * dated within BOT_BLOCKED_TTL_DAYS of `today`. Only meaningful as a
+ * softener for an otherwise-broken status — callers should check raw
+ * status first.
+ */
+export function isBotBlockedVerified(source: Source, today: Date = new Date()): boolean {
+  const review = BOT_BLOCKED_REVIEWS.get(source.id);
+  if (!review) return false;
+  const reviewDate = new Date(review.date + 'T00:00:00Z');
+  if (Number.isNaN(reviewDate.valueOf())) return false;
+  const ageMs = today.getTime() - reviewDate.getTime();
+  const ageDays = ageMs / (1000 * 60 * 60 * 24);
+  return ageDays <= BOT_BLOCKED_TTL_DAYS;
+}
+
 /** Tier-aware overdue check. Never-reviewed sources are overdue from day one. */
 export function isOverdue(source: Source): boolean {
   const tier = source.tier ?? 'reference';
@@ -173,22 +220,47 @@ export function isOverdue(source: Source): boolean {
   return new Date() > dueDate;
 }
 
-export type StatusKind = 'broken' | 'overdue' | 'verified' | 'ai-verified';
+export type StatusKind =
+  | 'broken'
+  | 'intermittent'
+  | 'bot-blocked-verified'
+  | 'overdue'
+  | 'verified'
+  | 'ai-verified';
 
 /**
- * Combined status classifier — broken takes precedence, then overdue, then
- * verified vs ai-verified based on the latest review's kind.
+ * Combined status classifier. Precedence when raw status is broken:
+ *
+ *   bot-blocked-verified > intermittent > broken
+ *
+ * Otherwise: overdue > ai-verified > verified.
+ *
+ * `bot-blocked-verified`: raw status is broken from CI, but a human
+ * confirmed the URL loads in a real browser within BOT_BLOCKED_TTL_DAYS.
+ * Stronger evidence than flap history, so it outranks intermittent.
+ *
+ * `intermittent`: raw status is broken in the latest run, but the last
+ * few runs include at least one non-broken status. Could be transient.
+ * The flap signal arrives via the `intermittentUrls` set (server-computed
+ * in /api/audit/latest); when this hook is unavailable (server old, set
+ * empty) the classifier falls through to `broken`, which is the same
+ * behaviour the page had before.
  *
  * `ai-verified` means: URL loads, latest review is within the tier window,
  * but that review was AI-assisted or AI-proposed rather than eyes-on-source
- * by a human. We render it as a hollow green ring (same color family as
+ * by a human. Rendered as a hollow green ring (same color family as
  * verified, different shape) to signal "same kind of state, just provisional."
  */
 export function getStatusKind(
   source: Source,
   statusByUrl: ReadonlyMap<string, string>,
+  intermittentUrls: ReadonlySet<string> = new Set(),
 ): StatusKind {
-  if (isBrokenStatus(statusByUrl.get(source.url))) return 'broken';
+  if (isBrokenStatus(statusByUrl.get(source.url))) {
+    if (isBotBlockedVerified(source)) return 'bot-blocked-verified';
+    if (intermittentUrls.has(source.url)) return 'intermittent';
+    return 'broken';
+  }
   if (isOverdue(source)) return 'overdue';
   const latest = REVIEWS.get(source.id)?.[0];
   if (latest && latest.kind === 'ai') return 'ai-verified';

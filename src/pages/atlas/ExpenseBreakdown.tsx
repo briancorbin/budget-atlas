@@ -2,7 +2,7 @@ import type { BudgetResult } from '@/types';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { theme as T, fonts, PIE_COLORS, rem } from '@/theme';
 import { fmt } from '@/lib/format';
-import { SectionTitle, CustomTooltip } from './ui';
+import { SectionTitle, CustomTooltip } from '@/components/ui';
 
 export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
   const entries = Object.entries(result.expenses)

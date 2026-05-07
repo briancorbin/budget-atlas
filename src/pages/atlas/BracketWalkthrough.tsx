@@ -4,7 +4,7 @@ import { theme as T, fonts, rem } from '@/theme';
 import { fmt, fmtPct } from '@/lib/format';
 import { bracketBreakdown, type BracketRow } from '@/lib/tax';
 import { FEDERAL_BRACKETS_2026, FEDERAL_TAX_SOURCE, STD_DEDUCTION_2026 } from '@/data/federalTax';
-import { Cite, SectionTitle } from './ui';
+import { Cite, SectionTitle } from '@/components/ui';
 
 interface FilerWalk {
   label: string;

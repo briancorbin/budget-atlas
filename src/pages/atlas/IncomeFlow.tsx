@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import { theme as T, fonts, rem } from '@/theme';
 import { fmt, fmtPct } from '@/lib/format';
-import { SectionTitle, CustomTooltip } from './ui';
+import { SectionTitle, CustomTooltip } from '@/components/ui';
 import { STD_DEDUCTION_2026 } from '@/data/federalTax';
 
 export function IncomeFlow({ result }: { result: BudgetResult }) {

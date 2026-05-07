@@ -26,7 +26,7 @@ import {
   YAxis,
 } from 'recharts';
 import { theme as T, fonts, rem } from '@/theme';
-import { Cite } from './ui';
+import { Cite } from '@/components/ui';
 import type { Source } from '@/types';
 import type { ReviewKind } from '@/lib/audit/status';
 import { computeBudget } from '@/lib/budget';
@@ -63,6 +63,17 @@ interface LabSection {
   readonly decidedNote?: string;
 }
 const LAB_SECTIONS: ReadonlyArray<LabSection> = [
+  {
+    id: 'status-dots',
+    nav: 'Status dot palette',
+    count: 1,
+    Component: SectionStatusDotPalette,
+    status: 'decided',
+    decidedAs:
+      'Single slate-blue family for both audit-caveat states; BBV filled, intermittent hollow',
+    decidedNote:
+      'Earlier draft introduced a second blue (auditAccent) for bot-blocked / intermittent. Sat too close to slate aiAccent and produced a two-blues collision. Resolution: collapse onto aiAccent, kill auditAccent. Slate-blue now means "machine-flavoured signal" generally — AI provenance for review pills, audit caveat for the dot pair. Hollow/filled is uniformly evidence strength within the family. Green stays reserved for "data verified against the model" (filled = human, hollow = AI). BBV outranks intermittent in `getStatusKind` because BBV has a positive human signal with no contradicting evidence, while intermittent has explicit current "broken" with only historical positive signal.',
+  },
   {
     id: 'share',
     nav: 'Share-link affordance',
@@ -4848,5 +4859,677 @@ function CompoundChartBase({
         />
       </LineChart>
     </ResponsiveContainer>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Section: Status dot palette
+//
+// Iteration question: the /sources page now has six status kinds. The
+// shipped scheme uses two color families (green = verified-flavoured,
+// blue = audit-caveat-flavoured) plus warning + accent for overdue/broken,
+// with hollow-vs-filled meaning two different things in different families:
+//   - green pair: hollow = AI-reviewed, filled = human-reviewed (provenance)
+//   - blue pair: hollow = flapping, filled = browser-verified (strength)
+// That cross-talk is the open question — does the eye learn it, or does
+// it confuse readers who've internalised one rule and try to apply it
+// elsewhere?
+//
+// Live-picker pattern: shipped scheme on the left (static), live preview
+// on the right reflecting the picker state below. Compare combinations
+// without rebuilding the page.
+// ─────────────────────────────────────────────────────────────────────────
+
+type DotKind =
+  | 'verified'
+  | 'ai-verified'
+  | 'bot-blocked-verified'
+  | 'intermittent'
+  | 'overdue'
+  | 'broken';
+
+// Theme-token tokens come from src/theme.ts; lab-only tokens (prefixed
+// `lab-`) are exploration candidates that haven't been promoted to the
+// theme. If one wins, copy its hex into theme.ts and rename here.
+type DotColorToken =
+  | 'positive'
+  | 'accent'
+  | 'warning'
+  | 'aiAccent'
+  | 'commercialAccent'
+  | 'ink'
+  | 'lab-brightBlue'
+  | 'lab-teal'
+  | 'lab-violet'
+  | 'lab-magenta'
+  | 'lab-rust'
+  | 'lab-forestDark'
+  | 'lab-mossGreen'
+  | 'lab-dustyRose'
+  | 'lab-neutral'
+  | 'lab-charcoal';
+
+interface DotStyle {
+  color: DotColorToken;
+  hollow: boolean;
+}
+
+const DOT_KINDS: ReadonlyArray<DotKind> = [
+  'verified',
+  'ai-verified',
+  'bot-blocked-verified',
+  'intermittent',
+  'overdue',
+  'broken',
+];
+
+const DOT_KIND_LABEL: Record<DotKind, string> = {
+  verified: 'Human verified',
+  'ai-verified': 'AI verified',
+  'bot-blocked-verified': 'Bot-blocked',
+  intermittent: 'Intermittent',
+  overdue: 'Overdue',
+  broken: 'Broken',
+};
+
+const DOT_KIND_BLURB: Record<DotKind, string> = {
+  verified: 'Loads + reviewed by a human within window.',
+  'ai-verified': 'Loads + reviewed within window, but AI-flavoured.',
+  'bot-blocked-verified': "Audit can't reach it; human verified in browser within 30d.",
+  intermittent: 'Broken in latest run; reachable in some of last 3 runs.',
+  overdue: 'No review within tier window.',
+  broken: 'Audit cannot reach the URL; no recent human verification.',
+};
+
+// Grouped so the picker can render shipped tokens first, lab candidates
+// second, with a visual divider between. Order within each group runs
+// roughly green → blue → warm → neutral.
+interface ColorOption {
+  token: DotColorToken;
+  label: string;
+  /** Free-form note shown in the picker tooltip — usually the editorial
+   *  reason this hue is worth trying for status indicators. */
+  note?: string;
+}
+
+const SHIPPED_COLOR_OPTIONS: ReadonlyArray<ColorOption> = [
+  { token: 'positive', label: 'positive', note: 'green — verified family' },
+  {
+    token: 'aiAccent',
+    label: 'aiAccent',
+    note: 'slate-blue — AI provenance + audit caveat (bot-blocked, intermittent)',
+  },
+  { token: 'warning', label: 'warning', note: 'burnt orange — overdue family' },
+  { token: 'accent', label: 'accent', note: 'editorial red — broken' },
+  {
+    token: 'commercialAccent',
+    label: 'commercialAccent',
+    note: 'deep gold — commercial tier badge',
+  },
+  { token: 'ink', label: 'ink', note: 'near-black' },
+];
+
+const LAB_COLOR_OPTIONS: ReadonlyArray<ColorOption> = [
+  {
+    token: 'lab-brightBlue',
+    label: 'brightBlue',
+    note: 'saturated mid-blue — brighter alternative if slate aiAccent feels muted',
+  },
+  {
+    token: 'lab-teal',
+    label: 'teal',
+    note: 'green-blue hybrid — could bridge verified-and-audit families',
+  },
+  {
+    token: 'lab-violet',
+    label: 'violet',
+    note: 'cool purple — distinct from every existing family, neutral connotation',
+  },
+  {
+    token: 'lab-magenta',
+    label: 'magenta',
+    note: 'warm pink-purple — highly distinctive, reads as "noteworthy"',
+  },
+  {
+    token: 'lab-mossGreen',
+    label: 'mossGreen',
+    note: 'desaturated green — companion to positive without the same weight',
+  },
+  {
+    token: 'lab-forestDark',
+    label: 'forestDark',
+    note: 'deeper green than positive — pairs with positive for two-step verified hierarchy',
+  },
+  {
+    token: 'lab-rust',
+    label: 'rust',
+    note: 'red-brown — softer than accent, harsher than warning',
+  },
+  {
+    token: 'lab-dustyRose',
+    label: 'dustyRose',
+    note: 'muted rose — cautionary without alarm, distinct from accent',
+  },
+  {
+    token: 'lab-neutral',
+    label: 'neutral',
+    note: 'warm grey — minimal-emphasis "informational" indicator',
+  },
+  {
+    token: 'lab-charcoal',
+    label: 'charcoal',
+    note: 'soft near-black — quieter than ink, useful for "status unknown" framing',
+  },
+];
+
+const COLOR_HEX: Record<DotColorToken, string> = {
+  positive: T.positive,
+  accent: T.accent,
+  warning: T.warning,
+  aiAccent: T.aiAccent,
+  commercialAccent: T.commercialAccent,
+  ink: T.ink,
+  // Lab-only candidates. Hexes are first-pass picks intended to read on
+  // the cream background and stay distinguishable from each other and
+  // from the shipped tokens above. Treat them as starting points — tweak
+  // freely if a candidate looks promising but the exact shade is wrong.
+  'lab-brightBlue': '#1F7DBF',
+  'lab-teal': '#15706B',
+  'lab-violet': '#6B3F9C',
+  'lab-magenta': '#9C2E6B',
+  'lab-mossGreen': '#5C6E3A',
+  'lab-forestDark': '#1F3D0F',
+  'lab-rust': '#9C4A1F',
+  'lab-dustyRose': '#B0656B',
+  'lab-neutral': '#6B6157',
+  'lab-charcoal': '#3A3530',
+};
+
+// Frozen record of what's currently in production. Every change to
+// status.ts / StatusDot.tsx should bump these so the "shipped" card stays
+// truthful. The live picker initialises from this so "Reset to shipped"
+// is meaningful.
+const SHIPPED_DOT_STYLES: Readonly<Record<DotKind, DotStyle>> = {
+  verified: { color: 'positive', hollow: false },
+  'ai-verified': { color: 'positive', hollow: true },
+  'bot-blocked-verified': { color: 'aiAccent', hollow: false },
+  intermittent: { color: 'aiAccent', hollow: true },
+  overdue: { color: 'warning', hollow: false },
+  broken: { color: 'accent', hollow: false },
+};
+
+// Swatch-only — text labels would push every kind row to 3 lines once we
+// have ~17 options. Hover surfaces the token name + editorial note via
+// the title attribute. Active state is a thicker dark ring, shipped
+// state is a small ✓ overlay.
+function ColorChip({
+  option,
+  isActive,
+  isShipped,
+  onPick,
+}: {
+  option: ColorOption;
+  isActive: boolean;
+  isShipped: boolean;
+  onPick: () => void;
+}) {
+  const size = 20;
+  const swatch = COLOR_HEX[option.token];
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      aria-pressed={isActive}
+      aria-label={option.label}
+      title={`${option.label}${option.note ? ` — ${option.note}` : ''}${isShipped ? ' (shipped)' : ''}`}
+      style={{
+        cursor: 'pointer',
+        background: 'transparent',
+        border: 'none',
+        // Padding reserves space for the active ring + ✓ badge so an
+        // active state doesn't visually grow the swatch and nudge its
+        // neighbours.
+        padding: 5,
+        borderRadius: '50%',
+        position: 'relative',
+        lineHeight: 0,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <span
+        style={{
+          display: 'inline-block',
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          background: swatch,
+          boxShadow: isActive ? `0 0 0 2px ${T.ink}` : `0 0 0 1px ${T.border}`,
+        }}
+      />
+      {isShipped && (
+        <span
+          aria-hidden
+          style={{
+            position: 'absolute',
+            right: 0,
+            bottom: 0,
+            width: 10,
+            height: 10,
+            borderRadius: '50%',
+            background: T.bg,
+            color: T.ink,
+            fontSize: 8,
+            lineHeight: '10px',
+            textAlign: 'center',
+            fontWeight: 700,
+            border: `1px solid ${T.border}`,
+          }}
+        >
+          ✓
+        </span>
+      )}
+    </button>
+  );
+}
+
+// Compact two-state filled/hollow toggle — just two mini-dots side by
+// side with the active one ringed. Tooltip carries "filled"/"hollow".
+function FillToggle({
+  hollow,
+  color,
+  onChange,
+  shippedHollow,
+}: {
+  hollow: boolean;
+  color: string;
+  onChange: (next: boolean) => void;
+  shippedHollow: boolean;
+}) {
+  return (
+    <span style={{ display: 'inline-flex', gap: 4 }}>
+      {[false, true].map((value) => {
+        const isActive = hollow === value;
+        const isShipped = shippedHollow === value;
+        return (
+          <button
+            key={String(value)}
+            type="button"
+            onClick={() => onChange(value)}
+            aria-pressed={isActive}
+            aria-label={value ? 'hollow' : 'filled'}
+            title={`${value ? 'hollow' : 'filled'}${isShipped ? ' (shipped)' : ''}`}
+            style={{
+              cursor: 'pointer',
+              background: 'transparent',
+              border: 'none',
+              padding: 5,
+              borderRadius: '50%',
+              lineHeight: 0,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-block',
+                borderRadius: '50%',
+                boxShadow: isActive ? `0 0 0 2px ${T.ink}` : 'none',
+                lineHeight: 0,
+              }}
+            >
+              <LabDot color={color} hollow={value} size={14} />
+            </span>
+          </button>
+        );
+      })}
+    </span>
+  );
+}
+
+function LabDot({ color, hollow, size = 12 }: { color: string; hollow: boolean; size?: number }) {
+  const ringWidth = Math.max(2, Math.round(size / 5));
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        width: size,
+        height: size,
+        borderRadius: '50%',
+        background: hollow ? 'transparent' : color,
+        boxShadow: hollow ? `inset 0 0 0 ${ringWidth}px ${color}` : 'none',
+        flexShrink: 0,
+      }}
+    />
+  );
+}
+
+function DotLegendCard({ styles }: { styles: Record<DotKind, DotStyle> }) {
+  return (
+    <ul
+      style={{
+        listStyle: 'none',
+        margin: 0,
+        padding: 0,
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr',
+        columnGap: 12,
+        rowGap: 10,
+        alignItems: 'baseline',
+        color: T.inkSoft,
+        fontSize: rem(12),
+        lineHeight: 1.5,
+      }}
+    >
+      {DOT_KINDS.map((kind) => {
+        const s = styles[kind];
+        return (
+          <li key={kind} style={{ display: 'contents' }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 16,
+                paddingTop: 4,
+              }}
+            >
+              <LabDot color={COLOR_HEX[s.color]} hollow={s.hollow} />
+            </span>
+            <span>
+              <strong style={{ color: COLOR_HEX[s.color] }}>{DOT_KIND_LABEL[kind]}</strong>{' '}
+              <span style={{ color: T.inkMuted }}>— {DOT_KIND_BLURB[kind]}</span>
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function dotStylesEqual(a: Record<DotKind, DotStyle>, b: Record<DotKind, DotStyle>): boolean {
+  return DOT_KINDS.every((k) => a[k].color === b[k].color && a[k].hollow === b[k].hollow);
+}
+
+function SectionStatusDotPalette() {
+  const [styles, setStyles] = useState<Record<DotKind, DotStyle>>(() => ({
+    ...SHIPPED_DOT_STYLES,
+  }));
+  const matchesShipped = dotStylesEqual(styles, SHIPPED_DOT_STYLES);
+
+  const update = (kind: DotKind, patch: Partial<DotStyle>) => {
+    setStyles((prev) => ({ ...prev, [kind]: { ...prev[kind], ...patch } }));
+  };
+
+  return (
+    <Section
+      heading="Status dot palette"
+      subhead="Six dot kinds on /sources. Shipped on the left, live preview on the right. Decided: green family is reserved for 'data verified against the model' (filled = human, hollow = AI). Slate-blue family is reserved for 'machine-flavoured signal' (filled = bot-blocked-verified, hollow = intermittent). Hollow/filled means evidence strength within the family. Kept around as a record + sandbox for future tweaks."
+    >
+      <Variation
+        title="Shipped — what production renders today"
+        description="Frozen scheme. Updates here when the production palette ships."
+        decided
+      >
+        <DotLegendCard styles={SHIPPED_DOT_STYLES} />
+      </Variation>
+      <Variation title="Live preview" description="Reflects every change in the picker below.">
+        <DotLegendCard styles={styles} />
+      </Variation>
+      <div
+        style={{
+          gridColumn: '1 / -1',
+          border: `1px solid ${T.border}`,
+          background: T.surface,
+          borderRadius: 4,
+          padding: 16,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            gap: 8,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div
+            style={{
+              fontSize: rem(11),
+              textTransform: 'uppercase',
+              letterSpacing: '0.18em',
+              color: T.inkMuted,
+              fontWeight: 600,
+            }}
+          >
+            Picker — drives the live preview
+          </div>
+          <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 12 }}>
+            {matchesShipped && (
+              <span
+                style={{
+                  fontSize: rem(10),
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                  fontWeight: 600,
+                  color: 'rgb(45, 80, 22)',
+                }}
+              >
+                ✓ Matches shipped
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => setStyles({ ...SHIPPED_DOT_STYLES })}
+              disabled={matchesShipped}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                cursor: matchesShipped ? 'default' : 'pointer',
+                fontFamily: fonts.body,
+                fontSize: rem(11),
+                color: matchesShipped ? T.inkMuted : T.inkSoft,
+                textDecoration: matchesShipped ? 'none' : 'underline',
+                textDecorationStyle: 'dotted',
+                textUnderlineOffset: 3,
+                letterSpacing: '0.02em',
+              }}
+            >
+              Reset to shipped
+            </button>
+          </div>
+        </div>
+        {/*
+         * Single grid spanning header + every kind row. Sharing the grid
+         * (rather than each row owning its own) is what keeps the header
+         * labels aligned with their swatch banks below — when each row
+         * had its own grid, columns sized independently per row and the
+         * header drifted as soon as a row's content was wider than the
+         * label text.
+         *
+         * `display: contents` on each row wrapper lets the swatch banks
+         * group semantically (one ColorChip-flex per shipped/lab section)
+         * while still participating in the outer grid as individual cells.
+         */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns:
+              'minmax(140px, max-content) max-content max-content max-content max-content max-content max-content',
+            alignItems: 'center',
+            columnGap: 12,
+            rowGap: 4,
+          }}
+        >
+          {/* Header row */}
+          <span />
+          <span
+            style={{
+              textAlign: 'center',
+              color: T.inkMuted,
+              fontSize: rem(10),
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              paddingBottom: 4,
+              borderBottom: `1px dashed ${T.border}`,
+              alignSelf: 'end',
+            }}
+          >
+            Preview
+          </span>
+          <span
+            style={{
+              color: T.inkMuted,
+              fontSize: rem(10),
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              fontWeight: 600,
+              paddingBottom: 4,
+              borderBottom: `1px dashed ${T.border}`,
+              alignSelf: 'end',
+              textAlign: 'center',
+            }}
+          >
+            Shipped tokens
+          </span>
+          <span
+            style={{
+              borderBottom: `1px dashed ${T.border}`,
+              alignSelf: 'stretch',
+            }}
+          />
+          <span
+            style={{
+              color: T.inkMuted,
+              fontSize: rem(10),
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              fontWeight: 600,
+              paddingBottom: 4,
+              borderBottom: `1px dashed ${T.border}`,
+              alignSelf: 'end',
+              textAlign: 'center',
+            }}
+          >
+            Lab candidates
+          </span>
+          <span
+            style={{
+              borderBottom: `1px dashed ${T.border}`,
+              alignSelf: 'stretch',
+            }}
+          />
+          <span
+            style={{
+              textAlign: 'center',
+              color: T.inkMuted,
+              fontSize: rem(10),
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              fontWeight: 600,
+              paddingBottom: 4,
+              borderBottom: `1px dashed ${T.border}`,
+              alignSelf: 'end',
+            }}
+          >
+            Fill
+          </span>
+          {/* Data rows */}
+          {DOT_KINDS.map((kind) => {
+            const s = styles[kind];
+            const swatchColor = COLOR_HEX[s.color];
+            return (
+              <div key={kind} style={{ display: 'contents' }}>
+                <span style={{ fontSize: rem(12), fontWeight: 600, color: T.inkSoft }}>
+                  {DOT_KIND_LABEL[kind]}
+                </span>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 22,
+                  }}
+                >
+                  <LabDot color={swatchColor} hollow={s.hollow} size={14} />
+                </span>
+                <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                  {SHIPPED_COLOR_OPTIONS.map((opt) => (
+                    <ColorChip
+                      key={opt.token}
+                      option={opt}
+                      isActive={s.color === opt.token}
+                      isShipped={SHIPPED_DOT_STYLES[kind].color === opt.token}
+                      onPick={() => update(kind, { color: opt.token })}
+                    />
+                  ))}
+                </span>
+                <span
+                  aria-hidden
+                  style={{
+                    display: 'inline-block',
+                    width: 1,
+                    height: 22,
+                    background: T.border,
+                    margin: '0 4px',
+                    justifySelf: 'center',
+                  }}
+                />
+                <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                  {LAB_COLOR_OPTIONS.map((opt) => (
+                    <ColorChip
+                      key={opt.token}
+                      option={opt}
+                      isActive={s.color === opt.token}
+                      isShipped={false}
+                      onPick={() => update(kind, { color: opt.token })}
+                    />
+                  ))}
+                </span>
+                <span
+                  aria-hidden
+                  style={{
+                    display: 'inline-block',
+                    width: 1,
+                    height: 22,
+                    background: T.border,
+                    margin: '0 4px',
+                    justifySelf: 'center',
+                  }}
+                />
+                <FillToggle
+                  hollow={s.hollow}
+                  color={swatchColor}
+                  shippedHollow={SHIPPED_DOT_STYLES[kind].hollow}
+                  onChange={(hollow) => update(kind, { hollow })}
+                />
+              </div>
+            );
+          })}
+        </div>
+        <div
+          style={{
+            fontSize: rem(11),
+            color: T.inkMuted,
+            lineHeight: 1.5,
+            paddingTop: 6,
+            borderTop: `1px dashed ${T.border}`,
+          }}
+        >
+          Combinations worth trying: <strong>(a)</strong> bot-blocked / intermittent on{' '}
+          <code>lab-brightBlue</code> if slate aiAccent feels too muted; <strong>(b)</strong>{' '}
+          ai-verified → aiAccent / filled to give green-family back to &ldquo;data verified against
+          the model&rdquo; only; <strong>(c)</strong> overdue → warning / hollow to reuse the
+          strength mechanic on the warning family.
+        </div>
+      </div>
+    </Section>
   );
 }

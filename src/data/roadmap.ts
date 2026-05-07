@@ -19,9 +19,23 @@ export type RoadmapCategory =
 
 export interface RoadmapItem {
   id: number;
+  /**
+   * Shipped-card titles wrap inside a 300px-wide strip cell with ~180px
+   * of effective text width. Aim for ≤ 32 characters so the title takes
+   * at most two lines and every card's summary starts at the same
+   * vertical position. Three-line titles destroy that alignment in the
+   * "Already in the model" strip.
+   */
   title: string;
   category: RoadmapCategory;
   status: RoadmapStatus;
+  /**
+   * One-paragraph editorial blurb shown on the Roadmap page. Aim for
+   * ≤ 280 characters (median of existing entries is ~225); push longer
+   * only when the item genuinely needs to enumerate sub-items the title
+   * can't carry. Tighter is better — the page reads as a scannable list,
+   * not a wiki.
+   */
   summary: string;
   /** ISO date (YYYY-MM-DD) when status flipped to 'in-progress'. Set this
    *  the same commit that starts work; leave undefined for planned items. */
@@ -96,6 +110,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     title: 'Shareable configuration links',
     category: 'Sharing',
     status: 'shipped',
+    shippedAt: '2026-05-05',
     summary:
       'Encode the household state into a URL hash so a specific scenario can be shared. Plus a copy-able short code for paste-into-chat. No backend required.',
   },
@@ -135,7 +150,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
   },
   {
     id: 18,
-    title: 'Rethink the "Start with someone real" section',
+    title: 'Rethink the scenario picker',
     category: 'UX & navigation',
     status: 'shipped',
     shippedAt: '2026-05-02',
@@ -232,6 +247,23 @@ export const ROADMAP: readonly RoadmapItem[] = [
     status: 'planned',
     summary:
       'Plot the *slope* of the discretionary curve as its own line — the implicit marginal tax rate the household actually faces, including benefit phase-outs and refundable-credit reductions, not just income-tax brackets. Each cliff would show as a brief spike to ≥100% (every $1 earned costs more than $1) followed by an elevated plateau through the recovery zone. Makes legible why a $4K Medicaid loss takes an $11K raise to climb out of: the marginal keep-rate is much worse than the headline tax bracket suggests once EITC/SNAP phase-downs and untaxed-benefit replacement costs stack up. Companion to the existing cliff curve.',
+  },
+  {
+    id: 166,
+    title: 'Sources list filter + search',
+    category: 'UX & navigation',
+    status: 'planned',
+    summary:
+      "Today /sources is one long scroll across 230+ citations. Add filter chips (tier, status, group) and free-text search (URL or label) so a reader can ask 'show me all broken citations' or 'show me everything from KFF' without manual scanning.",
+  },
+  {
+    id: 165,
+    title: 'Income-sweep cliff curve',
+    category: 'Benefits & safety net',
+    status: 'shipped',
+    shippedAt: '2026-05-05',
+    summary:
+      'Plots discretionary across a gross-income sweep so benefit cliffs (138% FPL Medicaid, SNAP phase-down, CHIP overshadow) read as visible drops. Pit-zone shading marks income bands where a raise leaves the household worse off net of lost benefits.',
   },
   {
     id: 129,

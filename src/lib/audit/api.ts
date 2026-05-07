@@ -17,6 +17,17 @@ export interface AuditResult {
   url: string;
   status: string;
   final_url: string | null;
+  /**
+   * True iff `status` is in BROKEN_STATUS_CODES AND the URL has at least
+   * one non-broken status across the trailing flap window (last 3 dated
+   * runs ending at this run's date). Mirrors the suppression rule in
+   * audit/links/seed-issues.mjs so the /sources page agrees with the
+   * rolling broken-citation issue on which URLs are still flapping.
+   *
+   * Older Worker deployments may omit this field; callers should treat
+   * `undefined` as `false` (no flap signal).
+   */
+  intermittent?: boolean;
 }
 
 export interface AuditLatestResponse {

@@ -15,17 +15,31 @@
 #   4. Cleans up the temp file.
 #
 # Usage:
-#   ./audit/links/sync-d1-from-prod.sh
-#   yarn db:sync
+#   yarn db:sync                  # preferred — wraps with op run automatically
+#   op run --env-file=.env.audit -- ./audit/links/sync-d1-from-prod.sh
 #
-# Requires: wrangler logged in (wrangler login) with access to the
-# budget-atlas-audit D1 database in your Cloudflare account.
+# Requires CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to be set in
+# the environment. The yarn entry point pulls both from .env.audit via
+# the 1Password CLI; running the script directly without those env vars
+# will fail at the wrangler call below.
+#
+# OAuth tokens from `wrangler login` won't work — the /export endpoint
+# rejects them. Create an API token at
+# https://dash.cloudflare.com/profile/api-tokens with the
+# "Edit Cloudflare Workers" template.
 
 set -euo pipefail
 
 DB=budget-atlas-audit
 DUMP="$(mktemp -t budget-atlas-d1-prod.XXXXXX).sql"
 trap 'rm -f "$DUMP"' EXIT INT TERM
+
+if [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+  echo "✘ CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID must both be set." >&2
+  echo "   Run via 'yarn db:sync' (which loads them from .env.audit)," >&2
+  echo "   or wrap manually with: op run --env-file=.env.audit -- $0" >&2
+  exit 1
+fi
 
 echo "→ Exporting remote $DB to $DUMP..."
 wrangler d1 export "$DB" --remote --output="$DUMP"

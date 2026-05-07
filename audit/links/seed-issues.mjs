@@ -225,17 +225,19 @@ function isVerifiedBotBlocked(url, reviews, today) {
 
 const reviews = parseReviewedTsv();
 const today = new Date();
-let verifiedBotBlockedCount = 0;
+const botBlockedSuppressed = [];
 let filteredBroken = broken.filter((r) => {
   if (isVerifiedBotBlocked(r.url, reviews, today)) {
-    verifiedBotBlockedCount++;
+    const meta = sourcesIndex.get(r.url);
+    const review = meta?.id ? reviews.get(meta.id) : null;
+    botBlockedSuppressed.push({ row: r, reviewDate: review?.date ?? null });
     return false;
   }
   return true;
 });
-if (verifiedBotBlockedCount > 0) {
+if (botBlockedSuppressed.length > 0) {
   console.log(
-    `→ Suppressing ${verifiedBotBlockedCount} verified-bot-blocked URL(s) per reviewed.tsv (TTL ${VERIFIED_BOT_BLOCKED_TTL_DAYS}d).`,
+    `→ Suppressing ${botBlockedSuppressed.length} verified-bot-blocked URL(s) per reviewed.tsv (TTL ${VERIFIED_BOT_BLOCKED_TTL_DAYS}d).`,
   );
 }
 
@@ -293,7 +295,7 @@ async function mapWithLimit(items, limit, fn) {
   return out;
 }
 
-let flapSuppressedCount = 0;
+const flapSuppressed = [];
 const flapChecked = await mapWithLimit(filteredBroken, HISTORY_FETCH_CONCURRENCY, async (r) => {
   const history = await fetchHistory(r.url);
   // history is ordered DESC by run_date and capped at 30 rows by the
@@ -301,25 +303,25 @@ const flapChecked = await mapWithLimit(filteredBroken, HISTORY_FETCH_CONCURRENCY
   // runs of history there's nothing to compare against; fall back to
   // escalating (current behaviour).
   const window = history.slice(0, FLAP_SUPPRESSION_RUNS);
-  if (window.length < 2) return { row: r, suppress: false, runs: window.length };
+  if (window.length < 2) return { row: r, suppress: false, runs: window.length, window };
   const allActionable = window.every((h) => ACTIONABLE.has(h.status));
-  return { row: r, suppress: !allActionable, runs: window.length };
+  return { row: r, suppress: !allActionable, runs: window.length, window };
 });
 
 const flapWindow = flapChecked.length ? Math.max(...flapChecked.map((c) => c.runs)) : 0;
 filteredBroken = flapChecked
   .filter((c) => {
     if (c.suppress) {
-      flapSuppressedCount++;
+      flapSuppressed.push({ row: c.row, window: c.window });
       return false;
     }
     return true;
   })
   .map((c) => c.row);
 
-if (flapSuppressedCount > 0) {
+if (flapSuppressed.length > 0) {
   console.log(
-    `→ Suppressing ${flapSuppressedCount} flapping URL(s) (not actionable in all of last ${flapWindow} run(s)).`,
+    `→ Suppressing ${flapSuppressed.length} flapping URL(s) (not actionable in all of last ${flapWindow} run(s)).`,
   );
 }
 
@@ -351,7 +353,65 @@ function extractCheckedUrls(existingBody) {
   return checked;
 }
 
-function buildBody(broken, checkedUrls) {
+// Render a single suppression row. Mirrors the layout of the actionable
+// rows (label + sources.ts pointer) without a checkbox — these aren't
+// claim-able work, just visibility.
+function renderSuppressedRow(url) {
+  const meta = sourcesIndex.get(url);
+  const label = meta?.label ?? url;
+  const line = meta?.line ? `\`sources.ts:${meta.line}\`` : '_not found in registry_';
+  return `- **[${label}](${url})** — ${line}`;
+}
+
+// Build the "Suppressed (informational)" section. Two subgroups:
+//   - verified-bot-blocked: a human eyeballed the URL in a browser within
+//     30 days; curl can't reach it but the page is fine.
+//   - flapping: the URL was actionable now but recovered in the trailing
+//     window. Held back another night to absorb transient outages.
+//
+// Returns [] (no section) when both groups are empty.
+function buildSuppressedSection(botBlocked, flap) {
+  if (botBlocked.length === 0 && flap.length === 0) return [];
+  const out = [
+    `<details>`,
+    `<summary><strong>Suppressed (informational) — ${botBlocked.length + flap.length} URL(s) the audit flagged but isn't escalating</strong></summary>`,
+    ``,
+    `These URLs were broken in the latest run but aren't in the actionable queue above. Listed here so you can see what's being held back, not because anything is required of you.`,
+    ``,
+  ];
+  if (botBlocked.length > 0) {
+    out.push(
+      `### ✅ Verified bot-blocked (${botBlocked.length})`,
+      ``,
+      `_Human verified each URL loads in a real browser within the last ${VERIFIED_BOT_BLOCKED_TTL_DAYS} days. Suppression expires per-URL when the reviewed.tsv row ages out — at which point the URL re-enters the queue here and needs a fresh browser check._`,
+      ``,
+    );
+    for (const item of botBlocked) {
+      const datePart = item.reviewDate ? ` _(verified ${item.reviewDate})_` : '';
+      out.push(`${renderSuppressedRow(item.row.url)}${datePart}`);
+    }
+    out.push(``);
+  }
+  if (flap.length > 0) {
+    out.push(
+      `### 🔁 Flapping (${flap.length})`,
+      ``,
+      `_Broken in the latest run but reachable in at least one of the last ${FLAP_SUPPRESSION_RUNS} runs. Held back another night; if the URL stays broken across the next runs it'll escalate into the queue above._`,
+      ``,
+    );
+    for (const item of flap) {
+      const window = item.window ?? [];
+      const trace = window.map((h) => h.status).join(' / ');
+      const tracePart = trace ? ` _(last ${window.length} runs: ${trace})_` : '';
+      out.push(`${renderSuppressedRow(item.row.url)}${tracePart}`);
+    }
+    out.push(``);
+  }
+  out.push(`</details>`, ``);
+  return out;
+}
+
+function buildBody(broken, checkedUrls, botBlocked = [], flap = []) {
   const by404 = broken.filter((r) => r.status === '404');
   const byErrors = broken.filter(
     (r) => r.status === '000' || r.status === '000ERR' || r.status === 'ERR',
@@ -399,6 +459,8 @@ function buildBody(broken, checkedUrls) {
       'Often fine in a real browser. Manual check; if reachable, no fix needed beyond a reviewed.tsv row.',
     ),
   );
+
+  lines.push(...buildSuppressedSection(botBlocked, flap));
 
   lines.push(
     `---`,
@@ -466,7 +528,7 @@ if (checkedUrls.size > 0) {
   console.log(`→ Preserving ${checkedUrls.size} checked claim(s) from existing body.`);
 }
 const title = buildTitle(filteredBroken);
-const body = buildBody(filteredBroken, checkedUrls);
+const body = buildBody(filteredBroken, checkedUrls, botBlockedSuppressed, flapSuppressed);
 
 if (DRY_RUN) {
   console.log(`\n--- WOULD ${existing ? 'EDIT #' + existing.number : 'CREATE'} ---`);

@@ -23,6 +23,7 @@ import { useSyncExternalStore } from 'react';
 import { fetchLatestAudit } from './api';
 
 let snapshot: ReadonlyMap<string, string> = new Map();
+let intermittentSnapshot: ReadonlySet<string> = new Set();
 const listeners = new Set<() => void>();
 let fetchStarted = false;
 
@@ -41,12 +42,22 @@ export async function prefetchStatus(): Promise<void> {
   try {
     const data = await fetchLatestAudit();
     const map = new Map<string, string>();
-    for (const r of data.results) map.set(r.url, r.status);
+    const intermittent = new Set<string>();
+    for (const r of data.results) {
+      map.set(r.url, r.status);
+      if (r.intermittent) intermittent.add(r.url);
+    }
     snapshot = map;
+    intermittentSnapshot = intermittent;
     notify();
   } catch (err) {
     console.warn('[audit] failed to load /api/audit/latest:', err);
   }
+}
+
+function subscribe(cb: () => void): () => void {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
 }
 
 /**
@@ -55,13 +66,18 @@ export async function prefetchStatus(): Promise<void> {
  * stable references between renders.
  */
 export function useStatusByUrl(): ReadonlyMap<string, string> {
-  return useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb);
-      return () => listeners.delete(cb);
-    },
-    () => snapshot,
-  );
+  return useSyncExternalStore(subscribe, () => snapshot);
+}
+
+/**
+ * Companion hook for the per-URL flap signal. A URL appears in this set
+ * iff it's broken in the latest run AND has been non-broken in at least
+ * one of the trailing flap-window runs. The /sources page uses this to
+ * render an `intermittent` state distinct from the all-broken-everything
+ * case — see src/lib/audit/status.ts getStatusKind.
+ */
+export function useIntermittentUrls(): ReadonlySet<string> {
+  return useSyncExternalStore(subscribe, () => intermittentSnapshot);
 }
 
 /**
@@ -71,4 +87,8 @@ export function useStatusByUrl(): ReadonlyMap<string, string> {
  */
 export function getStatusByUrlSnapshot(): ReadonlyMap<string, string> {
   return snapshot;
+}
+
+export function getIntermittentUrlsSnapshot(): ReadonlySet<string> {
+  return intermittentSnapshot;
 }

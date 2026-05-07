@@ -26,7 +26,7 @@ import {
 } from '@/data/benefits';
 import { getCityData } from '@/data/cities';
 import { computePitZones } from '@/lib/cliffs';
-import { SectionTitle } from './ui';
+import { SectionTitle } from '@/components/ui';
 
 type MetricId = 'discretionary' | 'takeHome' | 'takeHomePlusBenefits';
 

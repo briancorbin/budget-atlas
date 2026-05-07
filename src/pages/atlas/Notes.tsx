@@ -4,7 +4,7 @@ import { fmt } from '@/lib/format';
 import { FEDERAL_TAX_SOURCE, SS_WAGE_BASE_SOURCE, STD_DEDUCTION_2026 } from '@/data/federalTax';
 import { STATE_TAX_SOURCE, STATE_MIN_WAGE_SOURCE } from '@/data/states';
 import { CITY_COL_SOURCES } from '@/data/cities';
-import { PageSources } from './ui';
+import { PageSources } from '@/components/ui';
 
 function buildFooterSources(stateSource?: Source): readonly Source[] {
   return [

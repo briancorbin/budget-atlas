@@ -1,7 +1,7 @@
 import type { BudgetResult } from '@/types';
 import { theme as T, fonts, rem } from '@/theme';
 import { fmt, fmtSigned, fmtPct } from '@/lib/format';
-import { Stat } from './ui';
+import { Stat } from '@/components/ui';
 
 export function StatRow({ result }: { result: BudgetResult }) {
   const sustainable = result.discretionary >= 0;

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { BudgetExplorer } from '@/components/BudgetExplorer';
-import { Roadmap } from '@/components/Roadmap';
-import { About } from '@/components/About';
-import { Sources } from '@/components/Sources';
-import { Privacy } from '@/components/Privacy';
-import { DesignLab } from '@/components/DesignLab';
+import { BudgetExplorer } from '@/pages/atlas/BudgetExplorer';
+import { Roadmap } from '@/pages/roadmap/Roadmap';
+import { About } from '@/pages/about/About';
+import { Sources } from '@/pages/sources/Sources';
+import { Privacy } from '@/pages/privacy/Privacy';
+import { DesignLab } from '@/pages/design-lab/DesignLab';
 import { NAV_EVENT, navigate } from '@/lib/nav';
 
 type Route = 'atlas' | 'roadmap' | 'about' | 'sources' | 'privacy' | 'design-lab';

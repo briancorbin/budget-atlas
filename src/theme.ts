@@ -13,7 +13,14 @@ export const theme = {
   accent: '#A6261C', // editorial red
   positive: '#2D5016', // forest green
   warning: '#B8742B', // burnt orange
-  aiAccent: '#3E5A7A', // muted slate-blue, used for AI-provenance signals
+  // Slate-blue carries two related "machine-flavoured signal" meanings:
+  //   - AI provenance: ai-verified review pills, AI-tier badges
+  //   - Audit caveat: bot-blocked-verified (filled) and intermittent (hollow)
+  // Both are "the audit can't fully vouch for this; here's a softer signal
+  // instead," and sharing the colour avoids the two-blues collision an
+  // earlier auditAccent token created. Hollow/filled within this family is
+  // uniformly "weaker / stronger evidence within the family."
+  aiAccent: '#3E5A7A',
   commercialAccent: '#7A6628', // deep gold, used for the commercial source tier
   surface: '#FBF8EF',
 } as const;

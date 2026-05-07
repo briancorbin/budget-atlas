@@ -164,6 +164,13 @@ AUDIT_WRITE_TOKEN=<token> node audit/links/backfill-d1.mjs
 
 For backend changes (worker code, schema, API contract), run a local Worker against a local D1 so production stays untouched.
 
+**Cloudflare API token (one-time setup).** `yarn db:sync` calls `wrangler d1 export --remote`, which the OAuth token from `wrangler login` can't access. You need a real API token + the account ID, both pulled from `.env.audit` via the 1Password CLI.
+
+1. Create a token at <https://dash.cloudflare.com/profile/api-tokens> using the **Edit Cloudflare Workers** template (covers D1 read+write).
+2. Save it to 1Password as an item named `CLOUDFLARE_API_TOKEN` (vault `The Budget Atlas`) with a `credential` field. The reference in [`.env.audit`](../../.env.audit) is `op://The Budget Atlas/CLOUDFLARE_API_TOKEN/credential` — adjust the vault if yours differs.
+3. `CLOUDFLARE_ACCOUNT_ID` is hardcoded in `.env.audit` as a literal — account IDs aren't secrets and setting it lets the token skip needing `User → Memberships → Read` (which the Workers template doesn't include).
+4. Make sure the `op` CLI is signed in (`op signin`) so `op run` can resolve the secret reference at runtime.
+
 **One-shot, fresh start** — applies schema, syncs prod → local, then runs the local Worker + Vite dev server together with the proxy already pointed at the local Worker:
 
 ```sh

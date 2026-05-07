@@ -4,7 +4,7 @@ import { fmt, fmtPct } from '@/lib/format';
 import { CITIES, RENT_LOGIC_SOURCES, getCityData, stateSlug } from '@/data/cities';
 import { STATES, bracketRange } from '@/data/states';
 import { SCENARIOS } from '@/data/scenarios';
-import { CiteGroup, SearchableSelect, type SearchableOption } from './ui';
+import { CiteGroup, SearchableSelect, type SearchableOption } from '@/components/ui';
 
 export interface InputsState {
   incomeA: number;
