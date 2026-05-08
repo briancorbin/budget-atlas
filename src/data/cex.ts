@@ -4,14 +4,20 @@
  * Issue #131 expands the rolled-up cost-of-living fields on `CityInfo` into
  * line items pulled directly from BLS CEX, with two axes of variation:
  *
- *   1. Geography  — city → state → division → region fallback chain.
+ *   1. Geography  — eventual chain: city → state → division → region. This
+ *                   module currently implements the state → division →
+ *                   region portion. City- and state-level CEX cuts (where
+ *                   they exist) wire in alongside their data.
  *   2. Income     — quintile of income-before-taxes (Table 1101).
  *
  * BLS does NOT publish a clean geo × income cross-tab, so we synthesize one
  * via the rule:
  *
  *     spending(geo, quintile, item)
- *       = nationalQuintile(item) × ( regionalAllCU(item) / nationalAllCU(item) )
+ *       = nationalQuintile(item) × ( geoAllCU(item) / nationalAllCU(item) )
+ *
+ * where `geoAllCU` is the most-specific geographic average available —
+ * division when populated, else region.
  *
  * This treats the income shape and the geographic shape as independent
  * multiplicative factors — wrong in degree but mostly right in direction.
@@ -151,8 +157,10 @@ export type IncomeQuintile = 'q1' | 'q2' | 'q3' | 'q4' | 'q5';
  *
  * TODO: Populate from BLS CEX 2024 single-year quintile table (xlsx). The
  * structure here is `{ q1Max, q2Max, q3Max, q4Max }` — anything above q4Max
- * is q5. Uses 0 placeholders so the lookup falls into a known-bad state
- * loudly rather than silently returning q1 for everyone.
+ * is q5. While these are all-zero placeholders, `quintileFromIncome`
+ * detects the placeholder state and returns `q3` (the median bucket), so
+ * the model produces sensible mid-range values during the scaffolding
+ * phase rather than treating every household as q1.
  */
 export const QUINTILE_THRESHOLDS_2024: Readonly<{
   q1Max: number;
@@ -193,7 +201,7 @@ export function quintileFromIncome(grossIncome: number): IncomeQuintile {
  * categories sourced from non-CEX sources (rent → HUD/Zillow/RentCafe,
  * childcare → Care.com / Child Care Aware, healthcare premium → KFF).
  *
- * 12 line items, each appears as a row in the BLS CEX geography and
+ * 15 line items, each appears as a row in the BLS CEX geography and
  * income tables.
  */
 export type BLSCEXLineItem =
@@ -271,9 +279,7 @@ export const NATIONAL_ALLCU_SPENDING: LineItemSpending = ZERO_PROFILE;
  *
  * TODO: Populate from BLS CEX 2024 Table 1101 quintile columns.
  */
-export const NATIONAL_QUINTILE_SPENDING: Readonly<
-  Record<IncomeQuintile, LineItemSpending>
-> = {
+export const NATIONAL_QUINTILE_SPENDING: Readonly<Record<IncomeQuintile, LineItemSpending>> = {
   q1: ZERO_PROFILE,
   q2: ZERO_PROFILE,
   q3: ZERO_PROFILE,
@@ -289,9 +295,7 @@ export const NATIONAL_QUINTILE_SPENDING: Readonly<
  * TODO: Populate from BLS CEX cu-region-2-year-average (latest 2-year-avg
  * vintage published — currently 2023-2024).
  */
-export const REGION_ALLCU_SPENDING: Readonly<
-  Record<BLSRegion, LineItemSpending>
-> = {
+export const REGION_ALLCU_SPENDING: Readonly<Record<BLSRegion, LineItemSpending>> = {
   Northeast: ZERO_PROFILE,
   Midwest: ZERO_PROFILE,
   South: ZERO_PROFILE,
@@ -305,9 +309,7 @@ export const REGION_ALLCU_SPENDING: Readonly<
  *
  * TODO: Populate from BLS CEX cu-division-2-year-average (2023-2024).
  */
-export const DIVISION_ALLCU_SPENDING: Readonly<
-  Record<BLSDivision, Partial<LineItemSpending>>
-> = {
+export const DIVISION_ALLCU_SPENDING: Readonly<Record<BLSDivision, Partial<LineItemSpending>>> = {
   'New England': {},
   'Middle Atlantic': {},
   'East North Central': {},
@@ -346,8 +348,7 @@ export function blendCexSpending(inputs: {
   const { nationalAllCU, nationalQuintile, divisionAllCU, regionAllCU } = inputs;
   if (nationalAllCU === 0) return 0;
   if (nationalQuintile === 0) return 0;
-  const geoAllCU =
-    divisionAllCU !== undefined && divisionAllCU > 0 ? divisionAllCU : regionAllCU;
+  const geoAllCU = divisionAllCU !== undefined && divisionAllCU > 0 ? divisionAllCU : regionAllCU;
   if (geoAllCU === 0) return 0;
   return nationalQuintile * (geoAllCU / nationalAllCU);
 }
@@ -376,10 +377,7 @@ export function cexLineItemSpending(
 }
 
 /** Convenience: full per-line-item profile for a (state × income) cell. */
-export function cexProfile(
-  state: StateCode,
-  quintile: IncomeQuintile,
-): LineItemSpending {
+export function cexProfile(state: StateCode, quintile: IncomeQuintile): LineItemSpending {
   const out = {} as Record<BLSCEXLineItem, number>;
   for (const item of BLS_CEX_LINE_ITEMS) {
     out[item] = cexLineItemSpending(state, quintile, item);
