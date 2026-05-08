@@ -15,6 +15,10 @@ The point is calibration over time. After 50+ entries the patterns become visibl
 
 <!-- Newest entries at the top. -->
 
+### 2026-05-07 — Some tasks are small enough to not use AI `[scope] [process]`
+
+For small changes I could do in a few seconds of manual editing, I sometimes spent more time writing the prompt + waiting 2 minutes for processing than the change itself would have taken. The output was the exact single-line edit I'd already mentally drafted. AI has a fixed overhead per round-trip (prompt drafting + model latency + reading the response); below some change-size threshold, that overhead exceeds the change. Heuristic: if I can already see the diff in my head and it's <5 lines, just type it.
+
 ### 2026-05-07 — The multiplier may be skewed low because solo would also produce worse output `[trust]`
 
 Asked whether the calibrated ~4× multiplier matched my gut. Answer: lower than expected, but maybe not — solo would have meant a lot of research and learning-while-doing, which is a huge time sink _and_ produces a less cohesive product (because the half-learning gets baked into the codebase as inconsistencies). The time log captures hours saved but can't capture the quality dimension: AI's leverage isn't just "Brian goes faster," it's "Brian doesn't have to half-learn five things at once and ship the half-learning as architecture."
