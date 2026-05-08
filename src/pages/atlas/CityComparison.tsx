@@ -248,6 +248,12 @@ export function CityComparison({
                 ? { flat: b, grad: a }
                 : null;
           if (!surprise) return null;
+          const flatBrackets = surprise.flat.stateData.brackets[filing];
+          const gradBrackets = surprise.grad.stateData.brackets[filing];
+          const flatRate = (flatBrackets[0]![1] * 100).toFixed(2).replace(/\.?0+$/, '');
+          const gradTopRate = (gradBrackets[gradBrackets.length - 1]![1] * 100)
+            .toFixed(2)
+            .replace(/\.?0+$/, '');
           return (
             <div
               style={{
@@ -262,13 +268,12 @@ export function CityComparison({
               }}
             >
               <strong style={{ fontStyle: 'normal', color: T.ink }}>Top marginal rates lie:</strong>{' '}
-              {surprise.flat.cityData.state}'s flat tax owes more here (
-              {fmt(surprise.flat.stateTax).replace('.00', '')}
-              /yr) than {surprise.grad.cityData.state}'s graduated brackets (
-              {fmt(surprise.grad.stateTax).replace('.00', '')}/yr) — even though{' '}
-              {surprise.grad.cityData.state} has a fearsome top rate. Graduated states tax their
-              bottom dollars gently, so the headline rate isn't what most middle-income households
-              actually pay.
+              {surprise.flat.cityData.state} owes more here (
+              {fmt(surprise.flat.stateTax).replace('.00', '')}/yr) on a flat {flatRate}% rate than{' '}
+              {surprise.grad.cityData.state} owes ({fmt(surprise.grad.stateTax).replace('.00', '')}
+              /yr) on graduated brackets that top out at {gradTopRate}%. The graduated structure
+              taxes bottom dollars gently — the headline top rate isn't what most middle-income
+              households actually pay.
             </div>
           );
         })()}
