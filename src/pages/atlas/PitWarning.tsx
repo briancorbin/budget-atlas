@@ -39,6 +39,11 @@ export function PitWarning({
   );
 
   if (!pit) return null;
+  // Only surface the warning when a benefit cutoff actually caused the dip.
+  // Without this, modeling artifacts — e.g. crossing a BLS CEX income-quintile
+  // boundary, where the spending shape steps up — masquerade as benefits
+  // cliffs even for households well past every program threshold.
+  if (pit.programsGained.length === 0) return null;
 
   const programs = pit.programsGained.map((p) => BENEFIT_NAMES[p] ?? p).join(' + ');
 

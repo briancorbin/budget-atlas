@@ -292,6 +292,22 @@ export const ROADMAP: readonly RoadmapItem[] = [
       "Condense the 15-line monthly cost-of-living view back to a scannable few rolled-up categories by default; let users expand any line to drill into its BLS CEX sub-categories (food at home vs away, premiums vs OOP, gas vs vehicle purchase vs other vehicle), with the household's income quintile and threshold context surfaced and a per-cell indicator of which geographic granularity (MSA / division / region) sourced the value. Companion to the BLS CEX line-item schema (#131) — the schema gave us the depth; this is what keeps the surface clean while still letting curious readers go deep.",
   },
   {
+    id: 202,
+    title: 'Smooth CEX quintile transitions',
+    category: 'Cost of living',
+    status: 'planned',
+    summary:
+      "BLS CEX spending shape is a step function across quintile boundaries (q1Max=$29,931, q4Max=$155,924). Crossing a boundary makes modeled expenses jump, producing artifact 'pits' on the cliff curve that look identical to real benefit cliffs. Interpolate the spending shape near boundaries — likely a smoothed blend of adjacent quintiles within ±5% of each threshold — so the curve reflects gradual lifestyle drift, not discrete jumps.",
+  },
+  {
+    id: 201,
+    title: 'Two-sided discretionary plan',
+    category: 'Household detail',
+    status: 'planned',
+    summary:
+      "Today the model only allocates surplus (savings / vacation / splurge / emergency) when discretionary is positive. Generalize: when it's negative, surface concrete gap-closing levers ranked by impact — claimable benefits the household isn't using, lifestyle step-down, lower-rent housing tier, transit vs. car, childcare alternatives — with the dollar delta of each. Symmetric guidance whether the household has $400 left over or is $400 short.",
+  },
+  {
     id: 200,
     title: 'Demographic + population context',
     category: 'Cost of living',
