@@ -119,11 +119,17 @@ function PlannedList() {
     });
   const inProgress = ROADMAP.filter((i) => i.status === 'in-progress').length;
   const planned = ROADMAP.filter((i) => i.status === 'planned').length;
-  const shippedFromRoadmap = ROADMAP.filter((i) => i.status === 'shipped').length;
+  // Total shipped = roadmap items flipped to 'shipped' + historical
+  // pre-roadmap milestones in SHIPPED[]. The "Already in the model"
+  // strip below renders both as a single list, so the kicker count
+  // here matches what the user sees in that strip — avoids reading
+  // as inconsistent with the strip's "X milestones" header.
+  const shippedTotal =
+    ROADMAP.filter((i) => i.status === 'shipped').length + SHIPPED.length;
   const parts: string[] = [];
   if (inProgress > 0) parts.push(`${inProgress} in progress`);
   parts.push(`${planned} planned`);
-  if (shippedFromRoadmap > 0) parts.push(`${shippedFromRoadmap} shipped (below)`);
+  if (shippedTotal > 0) parts.push(`${shippedTotal} shipped (below)`);
   const kicker = parts.join(' · ');
 
   return (
