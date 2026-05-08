@@ -103,6 +103,17 @@ const RAW_SOURCES = {
     addedBy: 'briancorbin',
     addedAt: '2026-05-02',
   },
+  'bls-cex-geo-2-year-2023-2024': {
+    label: 'BLS CEX 2023–2024 — Region & Division (2-year average)',
+    url: 'https://www.bls.gov/cex/tables/geographic/mean.htm',
+    // ISO year — latest covered year of the 2-year average. Matches the
+    // documented `Source.date` format. The "2023-2024" range lives in the
+    // source id and label.
+    date: '2024',
+    tier: 'primary',
+    addedBy: 'briancorbin',
+    addedAt: '2026-05-08',
+  },
   'care-com-childcare': {
     label: 'Care.com Cost of Care Report',
     url: 'https://www.care.com/c/cost-of-care-report/',

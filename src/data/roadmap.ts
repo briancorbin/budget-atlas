@@ -279,9 +279,9 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Cost of living',
     status: 'in-progress',
     startedAt: '2026-05-08',
-    progress: 15,
+    progress: 30,
     summary:
-      'Expand cost-of-living to ~15 BLS CEX line items with two axes: geographic (city → state → division → region fallback) and income (national quintile shape blended via geo factor). Foundation landed (types, mappings, blend math, tests); BLS data fill in follow-up PRs.',
+      'Expand cost-of-living to ~15 BLS CEX line items with two axes: geographic (city → state → division → region) and income (national-quintile shape × geo factor). Foundation + 2023-2024 region & division data landed; income-quintile data + lib/budget.ts wire-up still ahead.',
   },
 ];
 

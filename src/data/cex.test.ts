@@ -7,6 +7,9 @@ import {
   quintileFromIncome,
   cexLineItemSpending,
   BLS_CEX_LINE_ITEMS,
+  NATIONAL_ALLCU_SPENDING,
+  REGION_ALLCU_SPENDING,
+  DIVISION_ALLCU_SPENDING,
 } from './cex';
 import type { StateCode } from '@/types';
 
@@ -234,11 +237,92 @@ describe('blendCexSpending', () => {
   });
 });
 
-describe('cexLineItemSpending (scaffolding mode)', () => {
-  it('returns 0 for every line item until BLS data is populated', () => {
-    // Module-level constants are all zero placeholders. The lookup
-    // should return 0 across the board, signalling callers to fall
-    // back to the legacy rolled-up fields rather than display $0.
+describe('NATIONAL_ALLCU_SPENDING (BLS CEX 2023-2024 Table 2700)', () => {
+  it('is fully populated for every line item', () => {
+    for (const item of BLS_CEX_LINE_ITEMS) {
+      expect(NATIONAL_ALLCU_SPENDING[item]).toBeGreaterThan(0);
+    }
+  });
+
+  it('matches a few known cells from the BLS Table 2700 "All CU" column', () => {
+    // Spot-checks against the source xlsx — guard against extraction errors.
+    expect(NATIONAL_ALLCU_SPENDING.foodAtHome).toBe(6139);
+    expect(NATIONAL_ALLCU_SPENDING.foodAway).toBe(3939);
+    expect(NATIONAL_ALLCU_SPENDING.gasoline).toBe(2430);
+    expect(NATIONAL_ALLCU_SPENDING.entertainment).toBe(3622);
+  });
+
+  it('utilitiesElectricGas equals the documented composite sum', () => {
+    // 516 (natural gas) + 1798 (electricity) + 132 (fuel oil) = 2446
+    expect(NATIONAL_ALLCU_SPENDING.utilitiesElectricGas).toBe(2446);
+  });
+
+  it('healthcareOOP equals the documented composite sum (excludes premium)', () => {
+    // 1252 (medical svcs) + 624 (drugs) + 267 (medical supplies) = 2143
+    expect(NATIONAL_ALLCU_SPENDING.healthcareOOP).toBe(2143);
+  });
+});
+
+describe('REGION_ALLCU_SPENDING (BLS CEX 2023-2024 Table 1800)', () => {
+  it('is fully populated for every region × line item', () => {
+    for (const region of ['Northeast', 'Midwest', 'South', 'West'] as const) {
+      for (const item of BLS_CEX_LINE_ITEMS) {
+        expect(REGION_ALLCU_SPENDING[region][item]).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('reflects the West-region food-away premium over national', () => {
+    // West region spends ~20% more on dining out than national average.
+    expect(REGION_ALLCU_SPENDING.West.foodAway).toBeGreaterThan(NATIONAL_ALLCU_SPENDING.foodAway);
+    // South region spends ~12% less than national on dining out.
+    expect(REGION_ALLCU_SPENDING.South.foodAway).toBeLessThan(NATIONAL_ALLCU_SPENDING.foodAway);
+  });
+});
+
+describe('DIVISION_ALLCU_SPENDING (BLS CEX 2023-2024 Table 2700)', () => {
+  // The value type is `Partial<LineItemSpending>` to accommodate future
+  // vintages where BLS may suppress a cell for sample-size reasons. The
+  // 2023-2024 vintage happens to publish every division × line item we
+  // consume — this test pins that completeness for the current data so a
+  // future vintage's suppressions become visible (and the
+  // `blendCexSpending` region fallback can be exercised intentionally).
+  it('is fully populated for every division × line item (2023-2024 vintage)', () => {
+    const divisions = [
+      'New England',
+      'Middle Atlantic',
+      'East North Central',
+      'West North Central',
+      'South Atlantic',
+      'East South Central',
+      'West South Central',
+      'Mountain',
+      'Pacific',
+    ] as const;
+    for (const div of divisions) {
+      for (const item of BLS_CEX_LINE_ITEMS) {
+        const v = DIVISION_ALLCU_SPENDING[div][item];
+        expect(v, `${div} / ${item}`).toBeDefined();
+        expect(v!).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('shows New England spending more on food at home than its parent Northeast region', () => {
+    // Per BLS Table 2700: New England $7530 vs Mid-Atlantic $6839 averaged
+    // out to NE region $7029. New England is the higher of the two.
+    expect(DIVISION_ALLCU_SPENDING['New England'].foodAtHome!).toBeGreaterThan(
+      REGION_ALLCU_SPENDING.Northeast.foodAtHome,
+    );
+  });
+});
+
+describe('cexLineItemSpending (geographic-only mode)', () => {
+  it('returns 0 for every line item until income-quintile data is populated', () => {
+    // National geographic data is populated, but quintile shapes are
+    // still zero placeholders. The function short-circuits to 0 because
+    // `nationalQuintile === 0`. Callers should fall back to the legacy
+    // rolled-up fields until the income axis is wired in.
     for (const item of BLS_CEX_LINE_ITEMS) {
       expect(cexLineItemSpending('NY', 'q3', item)).toBe(0);
       expect(cexLineItemSpending('CA', 'q5', item)).toBe(0);

@@ -92,6 +92,13 @@ const GROUPS: readonly Group[] = [
     ],
   },
   {
+    kicker: 'BLS CEX (issue #131)',
+    title: 'BLS Consumer Expenditure Survey — geographic line items',
+    description:
+      'Backs the geographic axis of the line-item cost-of-living schema (region and division all-CU 2-year averages). Income-quintile axis populates separately in a follow-up.',
+    sources: [SOURCES['bls-cex-geo-2-year-2023-2024']],
+  },
+  {
     kicker: 'Aggregators',
     title: 'Cross-state aggregators',
     sources: [SOURCES['tax-foundation-state-rates'], SOURCES['ncsl-state-min-wage']],
