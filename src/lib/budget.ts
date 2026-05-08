@@ -236,9 +236,17 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   const isTransitCity = ['nyc', 'sf', 'bos', 'dc', 'chi'].includes(city);
   const usesTransit = isTransitCity && kids === 0;
   const transitCost = usesTransit ? cityData.transit * adults : 0;
-  const gasoline = usesTransit ? 0 : cexMonthly('gasoline');
-  const vehicleOther = usesTransit ? 0 : cexMonthly('vehicleOther');
-  const vehiclePurchase = usesTransit ? 0 : cexMonthly('vehiclePurchase');
+  // For each car line, capture the BLS-modeled value separately from
+  // the shipped value. When `usesTransit` is true the shipped value is
+  // forced to 0 (model assumption: transit-only household has no car),
+  // but the BLS number stays available so the UI can show the
+  // model-vs-shipped comparison and explain the override.
+  const gasolineBls = cexMonthly('gasoline');
+  const vehicleOtherBls = cexMonthly('vehicleOther');
+  const vehiclePurchaseBls = cexMonthly('vehiclePurchase');
+  const gasoline = usesTransit ? 0 : gasolineBls;
+  const vehicleOther = usesTransit ? 0 : vehicleOtherBls;
+  const vehiclePurchase = usesTransit ? 0 : vehiclePurchaseBls;
 
   // Healthcare = KFF employer-plan premium (still cityData) + CEX OOP.
   // Medicaid covers both — zeros the entire line. CHIP value is the kids'
@@ -403,18 +411,20 @@ export function computeBudget(input: BudgetInput): BudgetResult {
     // exposed as their constituent parts (foodAtHome + foodAway, and
     // transit / gasoline / vehicleOther / vehiclePurchase) rather than
     // pre-rolled, so the drill-down UI can show the essentials-vs-
-    // lifestyle split inside those parents. Conditional keys (Transit,
-    // Gasoline, Vehicle*) drop out when not applicable to the household
-    // — transit-city childless = transit only; everyone else = car only.
+    // lifestyle split inside those parents. ALL keys are always present
+    // — when a category doesn't apply to the household type the value
+    // is $0 (e.g. Vehicle (purchase) for a transit-only household).
+    // expenseModelNotes below records why a $0 line is $0 so the UI
+    // can distinguish "model assumed N/A" from "BLS itself returned 0."
     expenses: {
       Housing: housing,
       Utilities: utilities,
       'Food at home': foodAtHomeAfterBenefits,
       'Food away': foodAway,
-      ...(transitCost > 0 ? { Transit: transitCost } : {}),
-      ...(gasoline > 0 ? { Gasoline: gasoline } : {}),
-      ...(vehicleOther > 0 ? { 'Vehicle (insurance & maint.)': vehicleOther } : {}),
-      ...(vehiclePurchase > 0 ? { 'Vehicle (purchase)': vehiclePurchase } : {}),
+      Transit: transitCost,
+      Gasoline: gasoline,
+      'Vehicle (insurance & maint.)': vehicleOther,
+      'Vehicle (purchase)': vehiclePurchase,
       Healthcare: healthcareAfterBenefits,
       Childcare: childcare,
       'Phone & Internet': phoneInternet,
@@ -426,6 +436,46 @@ export function computeBudget(input: BudgetInput): BudgetResult {
       'Household Operations': householdOperations,
       'Housekeeping Supplies': housekeepingSupplies,
       Furnishings: furnishings,
+    },
+    expenseModelNotes: {
+      // Vehicle/gasoline lines are forced to $0 for transit-only
+      // households. BLS-derived values (`*Bls`) are preserved so the
+      // detail view can show "BLS says $X, model overrode to $0
+      // because the household uses transit."
+      ...(usesTransit
+        ? {
+            Gasoline: {
+              modelValue: gasolineBls,
+              reason: 'No car modeled — transit-only household',
+            },
+            'Vehicle (insurance & maint.)': {
+              modelValue: vehicleOtherBls,
+              reason: 'No car modeled — transit-only household',
+            },
+            'Vehicle (purchase)': {
+              modelValue: vehiclePurchaseBls,
+              reason: 'No car modeled — transit-only household',
+            },
+          }
+        : {
+            // For car households, Transit is forced to $0 — no BLS
+            // counterpart since transit pass costs are sourced from
+            // cityData, not CEX. modelValue stays null.
+            Transit: {
+              modelValue: null,
+              reason: 'Modeled with a car instead of transit',
+            },
+          }),
+      // Childcare is forced to $0 when no kids; no BLS counterpart
+      // (childcare is sourced from cityData, not CEX).
+      ...(kids === 0
+        ? {
+            Childcare: {
+              modelValue: null,
+              reason: 'No kids modeled',
+            },
+          }
+        : {}),
     },
     totalExpenses,
     essentialExpenses,

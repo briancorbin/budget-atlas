@@ -53,10 +53,12 @@ const ROLLUPS: readonly RollupDef[] = [
     id: 'transport',
     label: 'Transportation',
     kind: 'mixed',
-    // Transit / Gasoline / Vehicle keys are conditionally present based
-    // on whether the household uses transit (childless transit-city) or
-    // a car. The renderer drops zero-value lines, so listing all four
-    // here is safe — only the populated ones appear.
+    // Transit / Gasoline / Vehicle keys are always present in
+    // result.expenses; the model zeros the inapplicable ones for this
+    // household type (transit-only households have $0 vehicle keys;
+    // car households have $0 transit). The summary list filters $0
+    // out; the detail panel keeps them with a "no car modeled" or
+    // similar reason badge.
     lines: ['Transit', 'Gasoline', 'Vehicle (insurance & maint.)', 'Vehicle (purchase)'],
   },
   {
@@ -108,6 +110,13 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
   //     granular sub-lines, percentile context, geo-granularity badges)
   //     without compressing the summary view.
   const [detailOpen, setDetailOpen] = useState(false);
+  // "Show model values" reveals the BLS-derived comparison for lines
+  // where the shipped value diverges from pure-model output (e.g.
+  // transit-only households are modeled as carless, so the shipped
+  // Gasoline/Vehicle values are $0 even though BLS would say
+  // non-zero). Default off — the comparison is mostly noise unless
+  // you're actively reasoning about the model assumptions.
+  const [showModelValues, setShowModelValues] = useState(false);
   // Hover state for the pie. Drives the dynamic center label so we
   // don't need a separate floating tooltip — the center is the
   // tooltip, no fly-in animation, no collision with the static
@@ -433,10 +442,32 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                 lineHeight: 1.5,
               }}
             >
-              Every BLS CEX line item that flows into the seven rollups above, sorted by value
-              within each rollup. Lines that come back as $0 for this household (e.g. Childcare with
-              no kids, Vehicle (purchase) for a transit-city resident) are still listed with $0 —
-              useful for seeing what categories the model considered.
+              Every line item that flows into the seven rollups above, sorted by value within each
+              rollup. Lines that come back as $0 because of a model assumption (e.g. transit-only
+              households are modeled as carless; no-kids households have no childcare) are flagged
+              with the reason. Toggle "Show model values" to see what the BLS-only model would have
+              produced before those overrides.
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: rem(12),
+                  color: T.inkSoft,
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={showModelValues}
+                  onChange={(e) => setShowModelValues(e.target.checked)}
+                  style={{ cursor: 'pointer' }}
+                />
+                Show pure-model values (BLS before our overrides)
+              </label>
             </div>
             {SECTION_ORDER.map((kind) => {
               const sectionRows = allRows.filter((r) => r.def.kind === kind);
@@ -513,30 +544,75 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                         </div>
                         {[...r.lines]
                           .sort((a, b) => b.value - a.value)
-                          .map((line) => (
-                            <div
-                              key={line.label}
-                              style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                gap: 12,
-                                padding: '3px 0 3px 14px',
-                                fontSize: rem(12),
-                                color: T.inkSoft,
-                              }}
-                            >
-                              <span style={{ minWidth: 0 }}>{line.label}</span>
-                              <span
+                          .map((line) => {
+                            const note = result.expenseModelNotes[line.label];
+                            // A line is "overridden" when expenseModelNotes
+                            // has an entry AND the modelValue (when known)
+                            // differs from the shipped value. Lines without
+                            // a BLS counterpart (modelValue: null) are
+                            // always treated as overridden — there's no
+                            // pure-model value to fall back to.
+                            const isOverridden =
+                              !!note &&
+                              (note.modelValue === null ||
+                                Math.abs(note.modelValue - line.value) > 0.5);
+                            return (
+                              <div
+                                key={line.label}
                                 style={{
-                                  fontFamily: fonts.mono,
-                                  color: T.ink,
-                                  flexShrink: 0,
+                                  padding: '3px 0 3px 14px',
+                                  fontSize: rem(12),
+                                  color: T.inkSoft,
                                 }}
                               >
-                                {fmt(line.value)}
-                              </span>
-                            </div>
-                          ))}
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    gap: 12,
+                                  }}
+                                >
+                                  <span style={{ minWidth: 0 }}>{line.label}</span>
+                                  <span
+                                    style={{
+                                      fontFamily: fonts.mono,
+                                      flexShrink: 0,
+                                      display: 'inline-flex',
+                                      alignItems: 'baseline',
+                                      gap: 6,
+                                    }}
+                                  >
+                                    {showModelValues && isOverridden && (
+                                      <>
+                                        <span
+                                          style={{
+                                            color: T.inkMuted,
+                                            textDecoration: 'line-through',
+                                          }}
+                                        >
+                                          {note.modelValue !== null ? fmt(note.modelValue) : 'n/a'}
+                                        </span>
+                                        <span style={{ color: T.inkMuted }}>→</span>
+                                      </>
+                                    )}
+                                    <span style={{ color: T.ink }}>{fmt(line.value)}</span>
+                                  </span>
+                                </div>
+                                {isOverridden && note && (
+                                  <div
+                                    style={{
+                                      fontSize: rem(11),
+                                      color: T.inkMuted,
+                                      fontStyle: 'italic',
+                                      paddingTop: 2,
+                                    }}
+                                  >
+                                    {note.reason}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                       </div>
                     ))}
                   </div>

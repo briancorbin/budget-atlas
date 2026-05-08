@@ -168,6 +168,24 @@ export interface BudgetResult {
   monthlyNet: number;
   // Expenses
   expenses: Record<string, number>;
+  /**
+   * For lines where the shipped value differs from the underlying
+   * BLS-derived "pure model" value (e.g. transit-city childless
+   * households are modeled as carless, so Gasoline/Vehicle/* are
+   * forced to $0 even though BLS says non-zero), record the model
+   * delta + a short human reason. The detail-view UI uses this to
+   * render a "show model values" comparison toggle.
+   *
+   *   - `modelValue: number | null` — the value the BLS-only model
+   *     would produce (null if there's no BLS counterpart, e.g.
+   *     Childcare which is sourced from cityData, not CEX).
+   *   - `reason: string` — short editorial gloss ("No car modeled —
+   *     transit-only household", "No kids modeled", etc.).
+   *
+   * Keys that aren't present here mean the shipped value already IS
+   * the model value — no override happened.
+   */
+  expenseModelNotes: Readonly<Record<string, { modelValue: number | null; reason: string }>>;
   totalExpenses: number;
   /**
    * Sum of "essential" expense lines: housing, utilities, food at home,
