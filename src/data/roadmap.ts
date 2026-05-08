@@ -277,7 +277,9 @@ export const ROADMAP: readonly RoadmapItem[] = [
     id: 131,
     title: 'BLS CEX line-item COL schema',
     category: 'Cost of living',
-    status: 'planned',
+    status: 'in-progress',
+    startedAt: '2026-05-08',
+    progress: 5,
     summary:
       'Expand cost-of-living from 6 rolled-up fields to ~17 BLS Consumer Expenditure Survey line items with a city → state → division → region inheritance chain, so every dollar in the breakdown traces to a specific CEX row at the most-specific available granularity.',
   },
