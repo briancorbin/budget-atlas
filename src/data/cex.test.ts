@@ -148,6 +148,18 @@ describe('quintileFromIncome (BLS CEX 2024 Table 1101 thresholds)', () => {
     expect(quintileFromIncome(155_924)).toBe('q4');
     expect(quintileFromIncome(155_925)).toBe('q5');
   });
+
+  it('floors fractional dollars before bucketing', () => {
+    // $29,931.99 should still be q1 (below the published q2 floor of $29,932).
+    // Without flooring, the inclusive `<= q1Max` test would fail and the
+    // value would slip into q2.
+    expect(quintileFromIncome(29_931.99)).toBe('q1');
+    expect(quintileFromIncome(29_931.5)).toBe('q1');
+    expect(quintileFromIncome(29_932.0)).toBe('q2');
+    expect(quintileFromIncome(29_932.99)).toBe('q2');
+    expect(quintileFromIncome(155_924.5)).toBe('q4');
+    expect(quintileFromIncome(155_925.0)).toBe('q5');
+  });
 });
 
 describe('blendCexSpending', () => {

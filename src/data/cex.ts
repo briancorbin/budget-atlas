@@ -176,13 +176,24 @@ export const QUINTILE_THRESHOLDS_2024: Readonly<{
   q4Max: 155_924, // q5 floor: $155,925
 };
 
-/** Pick a household's income quintile from gross income. */
+/**
+ * Pick a household's income quintile from gross income.
+ *
+ * Floors the input to whole dollars before comparing — BLS publishes the
+ * quintile floors as integer dollar values, and our `qNMax` constants are
+ * stored as `floor − 1`. Without normalization, $29,931.99 would compare
+ * as `> q1Max` (29,931) and bucket into q2, even though it's below the
+ * published q2 floor of $29,932. The app's income inputs are integers
+ * today, but the function signature doesn't enforce that — defensive
+ * floor keeps the bucketing aligned with the published spec.
+ */
 export function quintileFromIncome(grossIncome: number): IncomeQuintile {
   const t = QUINTILE_THRESHOLDS_2024;
-  if (grossIncome <= t.q1Max) return 'q1';
-  if (grossIncome <= t.q2Max) return 'q2';
-  if (grossIncome <= t.q3Max) return 'q3';
-  if (grossIncome <= t.q4Max) return 'q4';
+  const dollars = Math.floor(grossIncome);
+  if (dollars <= t.q1Max) return 'q1';
+  if (dollars <= t.q2Max) return 'q2';
+  if (dollars <= t.q3Max) return 'q3';
+  if (dollars <= t.q4Max) return 'q4';
   return 'q5';
 }
 
