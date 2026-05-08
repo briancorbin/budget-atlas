@@ -268,12 +268,11 @@ export function CityComparison({
               }}
             >
               <strong style={{ fontStyle: 'normal', color: T.ink }}>Top marginal rates lie:</strong>{' '}
-              {surprise.flat.cityData.state} owes more here (
-              {fmt(surprise.flat.stateTax).replace('.00', '')}/yr) on a flat {flatRate}% rate than{' '}
-              {surprise.grad.cityData.state} owes ({fmt(surprise.grad.stateTax).replace('.00', '')}
-              /yr) on graduated brackets that top out at {gradTopRate}%. The graduated structure
-              taxes bottom dollars gently — the headline top rate isn't what most middle-income
-              households actually pay.
+              {surprise.flat.cityData.state} owes more state income tax here (
+              {fmt(surprise.flat.stateTax)}/yr) on a flat {flatRate}% rate than{' '}
+              {surprise.grad.cityData.state} owes ({fmt(surprise.grad.stateTax)}/yr) on graduated
+              brackets that top out at {gradTopRate}%. The graduated structure taxes bottom dollars
+              gently — the headline top rate isn't what most middle-income households actually pay.
             </div>
           );
         })()}

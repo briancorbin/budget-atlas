@@ -46,6 +46,14 @@ const METRIC = {
   unitNoun: 'total resources',
 } satisfies { longLabel: string; key: keyof SweepPoint; unitNoun: string };
 
+// Pixel widths the chart layout depends on. The Y-axis width includes the
+// rotated axis label; the right margin and small slop are part of the
+// gross-dollar staggering math (see `plotWidthPx` below). Keeping these as
+// named constants so the YAxis prop and the staggering math can't drift.
+const Y_AXIS_WIDTH_PX = 68;
+const CHART_RIGHT_MARGIN_PX = 24;
+const CHART_LAYOUT_SLOP_PX = 8;
+
 /**
  * Income-sweep view that exposes the discontinuities baked into the safety
  * net. Holds the household configuration constant (city, kids, filing,
@@ -235,7 +243,10 @@ export function CliffCurve({
     // label font size (close enough for the all-caps short labels we
     // ship — Medicaid / SNAP / CHIP), converted to gross-dollar
     // clearance via the measured plot width.
-    const plotWidthPx = Math.max(50, chartWidthPx - 56 - 24 - 8);
+    const plotWidthPx = Math.max(
+      50,
+      chartWidthPx - Y_AXIS_WIDTH_PX - CHART_RIGHT_MARGIN_PX - CHART_LAYOUT_SLOP_PX,
+    );
     const pxPerDollar = plotWidthPx / Math.max(1, maxGross);
     const labelHalfWidthDollars = (label: string) => (label.length * 5.5) / 2 / pxPerDollar;
     const placed: { gross: number; halfWidth: number; row: number }[] = [];
@@ -372,9 +383,9 @@ export function CliffCurve({
                 tickFormatter={(v) => (v === 0 ? '$0' : `$${Math.round(v / 1000)}K`)}
                 stroke={T.inkMuted}
                 tick={{ fontSize: 11, fontFamily: fonts.mono, fill: T.inkSoft }}
-                width={68}
+                width={Y_AXIS_WIDTH_PX}
                 label={{
-                  value: 'Annual take-home + benefit value',
+                  value: METRIC.longLabel,
                   angle: -90,
                   position: 'insideLeft',
                   offset: 14,
