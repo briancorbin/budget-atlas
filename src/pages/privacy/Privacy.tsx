@@ -124,9 +124,10 @@ function Intro() {
         Privacy, in one page.
       </h1>
       <p style={proseStyle}>
-        The short version: <strong style={{ color: T.ink }}>this is a static website</strong>. No
-        backend, no database, no accounts, no forms, no cookies. Nothing you input — your income,
-        location, household — is ever sent anywhere.
+        The short version:{' '}
+        <strong style={{ color: T.ink }}>this site runs entirely in your browser</strong>. No
+        accounts, no forms, no cookies. Nothing you input — your income, location, household — is
+        ever sent to a server we operate.
       </p>
       <p style={proseStyle}>
         We do run one piece of aggregate, cookieless analytics (Cloudflare Web Analytics) so we know
@@ -144,10 +145,9 @@ function Intro() {
 function NoBackend() {
   return (
     <section style={{ marginBottom: 40 }}>
-      <SectionTitle kicker="The architecture">No backend</SectionTitle>
+      <SectionTitle kicker="The architecture">Your data stays in your browser</SectionTitle>
       <p style={proseStyle}>
-        The Budget Atlas runs entirely in your browser. The site is built as a static bundle (HTML,
-        CSS, JavaScript) and served from{' '}
+        The Budget Atlas is a static bundle (HTML, CSS, JavaScript) served from{' '}
         <a
           href="https://workers.cloudflare.com/"
           target="_blank"
@@ -162,6 +162,26 @@ function NoBackend() {
         When you adjust an income, change a city, or toggle a benefit, the calculation happens in
         your browser using the same code that the rest of the page renders with. No values you type
         leave the device.
+      </p>
+      <p style={proseStyle}>
+        <em>One precision footnote:</em> the site does run a small server-side piece — a Cloudflare
+        Worker plus a small database that powers the live citation-status indicators on the{' '}
+        <a href="/sources" style={linkStyle}>
+          /sources
+        </a>{' '}
+        page. It works like a public link checker: it periodically hits each URL in our citation
+        list and stores the HTTP status code so we can flag broken citations. It never sees what you
+        type into the atlas, never receives household data of any kind, and only knows about our own
+        published source URLs. The full source is in{' '}
+        <a
+          href="https://github.com/TheBudgetAtlas/thebudgetatlas/blob/main/worker/index.ts"
+          target="_blank"
+          rel="noreferrer"
+          style={linkStyle}
+        >
+          worker/index.ts
+        </a>
+        .
       </p>
     </section>
   );
