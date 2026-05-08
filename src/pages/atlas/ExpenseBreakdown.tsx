@@ -1,9 +1,9 @@
 import type { BudgetResult } from '@/types';
 import { useState } from 'react';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { theme as T, fonts, PIE_COLORS, rem } from '@/theme';
 import { fmt } from '@/lib/format';
-import { SectionTitle, CustomTooltip } from '@/components/ui';
+import { SectionTitle } from '@/components/ui';
 
 /**
  * Rollup definitions. Each rollup is a high-level category visible in the
@@ -94,6 +94,11 @@ interface RollupRow {
 
 export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // Hover state for the pie. Drives the dynamic center label so we
+  // don't need a separate floating tooltip — the center is the
+  // tooltip, no fly-in animation, no collision with the static
+  // "TOTAL / MO" text.
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const toggle = (id: string) =>
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -162,7 +167,7 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={rows.map((r) => ({ name: r.def.label, value: r.total }))}
+                  data={rows.map((r) => ({ id: r.def.id, name: r.def.label, value: r.total }))}
                   dataKey="value"
                   nameKey="name"
                   cx="50%"
@@ -170,33 +175,72 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                   innerRadius={60}
                   outerRadius={120}
                   paddingAngle={2}
+                  isAnimationActive={false}
+                  // Recharts types the data callback as PieSectorDataItem,
+                  // but the slice's underlying data object (with our `id`
+                  // field) is passed through under `payload` at runtime.
+                  onMouseEnter={(_, index) => setHoveredId(rows[index]?.def.id ?? null)}
+                  onMouseLeave={() => setHoveredId(null)}
                 >
                   {rows.map((r) => (
                     <Cell key={r.def.id} fill={r.color} stroke={T.surface} strokeWidth={2} />
                   ))}
                 </Pie>
-                <Tooltip content={CustomTooltip} />
               </PieChart>
             </ResponsiveContainer>
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                pointerEvents: 'none',
-                textAlign: 'center',
-              }}
-            >
-              <div style={{ fontSize: rem(11), color: T.inkMuted, letterSpacing: '0.1em' }}>
-                TOTAL / MO
-              </div>
-              <div
-                style={{ fontFamily: fonts.mono, fontSize: rem(24), color: T.ink, marginTop: 4 }}
-              >
-                {fmt(result.totalExpenses)}
-              </div>
-            </div>
+            {(() => {
+              // Center "tooltip": shows the hovered slice's name + value
+              // when one's hovered, otherwise the running total. Replaces
+              // the floating Recharts tooltip — no fly-in animation, no
+              // collision, always positioned in the donut hole.
+              const hovered = hoveredId ? rows.find((r) => r.def.id === hoveredId) : null;
+              return (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    pointerEvents: 'none',
+                    textAlign: 'center',
+                    width: 140,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: rem(11),
+                      color: T.inkMuted,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {hovered ? hovered.def.label : 'Total / mo'}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: fonts.mono,
+                      fontSize: rem(24),
+                      color: hovered ? hovered.color : T.ink,
+                      marginTop: 4,
+                    }}
+                  >
+                    {fmt(hovered ? hovered.total : result.totalExpenses)}
+                  </div>
+                  {hovered && (
+                    <div
+                      style={{
+                        fontSize: rem(10),
+                        color: T.inkMuted,
+                        marginTop: 4,
+                        fontFamily: fonts.mono,
+                      }}
+                    >
+                      {((hovered.total / result.totalExpenses) * 100).toFixed(1)}% of expenses
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
