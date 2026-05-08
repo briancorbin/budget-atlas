@@ -279,9 +279,17 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Cost of living',
     status: 'in-progress',
     startedAt: '2026-05-08',
-    progress: 30,
+    progress: 50,
     summary:
-      'Expand cost-of-living to ~15 BLS CEX line items with two axes: geographic (city → state → division → region) and income (national-quintile shape × geo factor). Foundation + 2023-2024 region & division data landed; income-quintile data + lib/budget.ts wire-up still ahead.',
+      'Expand cost-of-living to ~15 BLS CEX line items with two axes: geographic (city → state → division → region) and income (national-quintile shape × geo factor). Schema + 2023-2024 geo data + 2024 income-quintile data all landed; lib/budget.ts wire-up and city/MSA axis still ahead.',
+  },
+  {
+    id: 178,
+    title: 'Drill-down monthly cost view',
+    category: 'Cost of living',
+    status: 'planned',
+    summary:
+      "Expand the monthly cost-of-living section into a drill-down. Each rolled-up line opens to its BLS CEX sub-categories (food at home vs away, premiums vs OOP, gas vs vehicle purchase vs other vehicle) with the household's income quintile and threshold context surfaced, plus a per-cell indicator of which geographic granularity (city / state / division / region) sourced the value. Companion to the BLS CEX line-item schema (#131) — once the data is wired into the model, this is what makes the depth visible to the reader.",
   },
 ];
 
