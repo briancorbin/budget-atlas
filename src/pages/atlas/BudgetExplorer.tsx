@@ -20,6 +20,7 @@ import { BracketWalkthrough } from './BracketWalkthrough';
 import { ExpenseBreakdown } from './ExpenseBreakdown';
 import { DiscretionaryPlan } from './DiscretionaryPlan';
 import { CityComparison } from './CityComparison';
+import { IncomePosition } from './IncomePosition';
 import { CliffCurve } from './CliffCurve';
 import { Benefits } from './Benefits';
 import { Notes } from './Notes';
@@ -34,6 +35,7 @@ const PAGE_NAV_SECTIONS: readonly PageNavSection[] = [
   { id: 'tax-brackets', label: 'Tax brackets' },
   { id: 'expenses', label: 'Expenses' },
   { id: 'plan', label: 'Surplus plan' },
+  { id: 'population', label: 'Population' },
   { id: 'geography', label: 'Geography' },
   { id: 'cliffs', label: 'Cliffs' },
   { id: 'notes', label: 'Notes' },
@@ -263,6 +265,9 @@ export function BudgetExplorer() {
         <section id="plan" style={{ scrollMarginTop: 24 }}>
           <DiscretionaryPlan result={result} />
           <ShareLink shareUrl={shareUrl} />
+        </section>
+        <section id="population" style={{ scrollMarginTop: 24 }}>
+          <IncomePosition result={result} />
         </section>
         <section id="geography" style={{ scrollMarginTop: 24 }}>
           <CityComparison
