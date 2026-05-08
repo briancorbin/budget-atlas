@@ -292,6 +292,14 @@ export const ROADMAP: readonly RoadmapItem[] = [
       "Condense the 15-line monthly cost-of-living view back to a scannable few rolled-up categories by default; let users expand any line to drill into its BLS CEX sub-categories (food at home vs away, premiums vs OOP, gas vs vehicle purchase vs other vehicle), with the household's income quintile and threshold context surfaced and a per-cell indicator of which geographic granularity (MSA / division / region) sourced the value. Companion to the BLS CEX line-item schema (#131) — the schema gave us the depth; this is what keeps the surface clean while still letting curious readers go deep.",
   },
   {
+    id: 205,
+    title: 'Expand income thermometer',
+    category: 'Geography',
+    status: 'planned',
+    summary:
+      "The thermometer (#187) currently shows a fixed national + regional view. Expand it: scope toggle (national / region / state / MSA where available), comparison mode (e.g. Midwest as a whole vs. NYC, or two cities side-by-side), and richer per-scope context (median + mean + percentile floors, not just one anchor). Turns a single-purpose chart into a small distribution explorer.",
+  },
+  {
     id: 204,
     title: 'State-level median income marker',
     category: 'Geography',
