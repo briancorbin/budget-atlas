@@ -289,7 +289,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     startedAt: '2026-05-08',
     progress: 80,
     summary:
-      'Expand cost-of-living to ~15 BLS CEX line items with two axes: geographic (city → MSA → division → region) and income (national-quintile shape × geo factor). Schema + 2023-2024 geo data (incl. 22 MSAs) + 2024 income-quintile data all landed; the model consumes the line items end-to-end. Drill-down UI (#178) still ahead.',
+      'Expand cost-of-living to ~15+ BLS CEX line items with two axes: geographic (city → MSA → division → region) and income (national-quintile shape × geo factor). 15 line items + 2023-2024 geo data + 2024 income-quintile data all landed; model consumes them end-to-end. Still ahead: pull "Telephone services" + "Personal insurance" sub-lines (currently hand formulas), drill-down UI (#178).',
   },
   {
     id: 178,
