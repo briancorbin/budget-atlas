@@ -508,7 +508,19 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
               Every line item that flows into the seven rollups above, sorted by value within each
               rollup. Where the model overrides the BLS value (e.g. transit-only households are
               modeled as carless; no-kids households have no childcare), the BLS-only value appears
-              struck through alongside the shipped value with a short reason.
+              struck through alongside the shipped value with a short reason. One known small
+              overlap: BLS's Education line includes a small share of daycare/preschool spending
+              (averaged across all CUs), so households with kids in care see a few percent of
+              modeled childcare double-counted between Education and Childcare — tracked in{' '}
+              <a
+                href="https://github.com/TheBudgetAtlas/thebudgetatlas/issues/190"
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: T.accent }}
+              >
+                issue #190
+              </a>
+              .
             </div>
             {SECTION_ORDER.map((kind) => {
               const sectionRows = allRows.filter((r) => r.def.kind === kind);
