@@ -6,7 +6,7 @@ The point is calibration over time. After 50+ entries the patterns become visibl
 
 ## Conventions
 
-- **Author-only content.** Entries here are exclusively from the maintainer's own observations. AI assistants must never propose, draft, or pre-fill entries — even on the maintainer's behalf. Transcribing dictated content verbatim is fine; synthesizing or "putting words in the maintainer's mouth" is not. The whole point of the file is unfiltered first-person calibration; AI-laundered observations defeat that.
+- **Human-driven content.** Findings here are exclusively the maintainer's own observations. AI assistants must never propose, draft, or pre-fill entries — even on the maintainer's behalf. Light copy-editing of what the maintainer says (tightening grammar, breaking a long sentence, matching the file's prose style) is fine; substantive changes are not. The substance — what the observation _is_, what it concludes, what tags it picks up — must come from the human. AI-laundered observations defeat the file's purpose.
 - **Append, don't curate.** Date each entry; let contradictions stand. Reading "I thought X in May, then I thought ¬X in July" is the actual learning.
 - **One observation per entry.** Short is fine. A sentence is fine.
 - **Be honest about misses too.** Times AI made things worse, times I should have just done it solo, times I over-trusted output.
