@@ -9,9 +9,11 @@
 ## AI time log
 
 <!--
-Maintainer-tracked. Update this section as you work on the PR — it's a running estimate, not a one-time fill. Bump the numbers when review feedback adds another round of work, when scope grows, when you realize the original estimate was off. The final state at merge is what feeds AI_TIME_LOG.md. Calibration over time is the goal; precision isn't.
+Maintainer-tracked. Update this section as you work on the PR — it's a running estimate, not a one-time fill. Bump the numbers when review feedback adds another round of work, when scope grows, when you realize the original estimate was off.
 
-If you didn't use AI, leave this section blank or delete it.
+Pre-merge ritual: append a row to AI_TIME_LOG.md as part of this PR (not after merge). CI enforces this — the `ai-time-log-row` check fails if AI_TIME_LOG.md isn't modified. Escape hatch for trivial PRs (typo fix, Dependabot bump, non-author contribution): include "[skip-time-log]" in any commit message.
+
+If you didn't use AI, fill in the section honestly (zero AI time is a valid datum) or use the [skip-time-log] escape hatch.
 
   Solo est: hours you'd have spent on this alone, including research/debug.
   AI time:  hours of actual driving with the AI in the loop.
