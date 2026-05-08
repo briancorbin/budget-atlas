@@ -158,30 +158,36 @@ export function CliffCurve({
 
   const points = useMemo(() => {
     const out: SweepPoint[] = [];
-    // For two-income households the X axis represents the *household*
-    // gross. The fixed partner income is a floor — household gross can't
-    // be less than incomeB. Start the sweep there so the chart never
-    // shows impossible income points (the partner can't earn negative).
-    const startGross = Math.max(0, incomeB);
+    // The X axis represents household gross income, sweeping from $0 to
+    // maxGross. For dual-earner households we preserve the current
+    // partner-income ratio at every sweep point — both earners scale
+    // together. At g=0 both are 0; at g=current both match their actual
+    // values; above, both scale up. This keeps per-person FICA accurate
+    // (Social Security has a per-earner wage base cap) and gives a clean
+    // curve from $0 — the previous "floor at incomeB" approach started
+    // the line mid-chart and read as a bug.
+    const totalCurrent = (incomeA || 0) + (incomeB || 0);
+    const ratioB = totalCurrent > 0 ? incomeB / totalCurrent : 0;
     // Inject sample points immediately before and after each cliff so
     // linear line interpolation produces near-vertical drops AND the
     // per-cliff caption math reads the actual cliff magnitude rather
     // than a $500-window-smudged drop that mixes in tax/benefit phaseouts.
     const sampleGrosses = new Set<number>();
-    for (let g = startGross; g <= maxGross; g += stepSize) sampleGrosses.add(g);
+    for (let g = 0; g <= maxGross; g += stepSize) sampleGrosses.add(g);
     for (const c of cliffsBase) {
-      if (c.gross >= startGross && c.gross <= maxGross) {
-        sampleGrosses.add(Math.max(startGross, c.gross - 1));
+      if (c.gross >= 0 && c.gross <= maxGross) {
+        sampleGrosses.add(Math.max(0, c.gross - 1));
         sampleGrosses.add(Math.min(maxGross, c.gross + 1));
       }
     }
     const sortedGrosses = [...sampleGrosses].sort((a, b) => a - b);
 
     for (const g of sortedGrosses) {
-      const sweepIncomeA = Math.max(0, g - incomeB);
+      const sweepIncomeB = Math.round(g * ratioB);
+      const sweepIncomeA = g - sweepIncomeB;
       const r = computeBudget({
         incomeA: sweepIncomeA,
-        incomeB,
+        incomeB: sweepIncomeB,
         hasPartner,
         filing,
         city,
