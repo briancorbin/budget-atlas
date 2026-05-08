@@ -6,16 +6,18 @@ import { fmt } from '@/lib/format';
 import { SectionTitle } from '@/components/ui';
 
 /**
- * Rollup definitions. Each rollup is a high-level category visible in the
- * pie + the top-line list; clicking a rollup row reveals the constituent
- * lines that come from `result.expenses`. Order is essentials first
- * (sectioned), then mixed, then lifestyle — `kind` drives both badges
- * and section grouping.
+ * Rollup definitions. Each rollup is a high-level category visible in
+ * the pie + the top-line summary list. Constituent lines (from
+ * `result.expenses`) appear in the separate "Detailed breakdown"
+ * disclosure below the summary. Order is essentials first (sectioned),
+ * then mixed, then lifestyle — `kind` drives both badges and section
+ * grouping.
  *
  * Keys in `lines` must match the keys produced by `computeBudget` in
  * `result.expenses`. Lines that come back as 0 (e.g. Childcare for a
- * household with no kids, Education when not modeled) are dropped at
- * render time so they don't clutter the drill-down.
+ * household with no kids, Vehicle (purchase) for a transit-city
+ * resident) are dropped at render time so they don't clutter either
+ * the rollup totals or the detailed view.
  */
 type RollupKind = 'essential' | 'mixed' | 'lifestyle';
 interface RollupDef {
@@ -93,19 +95,22 @@ interface RollupRow {
 }
 
 export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  // Detailed breakdown is a separate disclosure below the pie + summary,
+  // not an inline expand on each rollup row. Reasons:
+  //   - Inline expand made the right column grow, which forced the left
+  //     (pie) column to grow too via grid stretch — pie ended up small in
+  //     a tall box.
+  //   - Mirrors the BracketWalkthrough pattern (single button, opens a
+  //     full panel below).
+  //   - Gives unlimited room to grow the detail view in future (more
+  //     granular sub-lines, percentile context, geo-granularity badges)
+  //     without compressing the summary view.
+  const [detailOpen, setDetailOpen] = useState(false);
   // Hover state for the pie. Drives the dynamic center label so we
   // don't need a separate floating tooltip — the center is the
   // tooltip, no fly-in animation, no collision with the static
   // "TOTAL / MO" text.
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const toggle = (id: string) =>
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
 
   // Build rollup rows from result.expenses.
   const rows: RollupRow[] = ROLLUPS.map((def, i) => {
@@ -172,7 +177,7 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
+                  innerRadius={75}
                   outerRadius={120}
                   paddingAngle={2}
                   isAnimationActive={false}
@@ -298,144 +303,75 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                   // against Infinity% / NaN%. Show an em dash when there's
                   // no take-home to compare against.
                   const pctIncome = result.monthlyNet > 0 ? r.total / result.monthlyNet : null;
-                  const isExpandable = r.lines.length > 1;
-                  const isExpanded = expanded.has(r.def.id);
-                  // Non-expandable rows render as a static <div>, not a
-                  // disabled <button> — assistive tech announces disabled
-                  // buttons as "unavailable" and skips them in keyboard
-                  // navigation, which is wrong for rows that simply
-                  // aren't collapsible.
-                  const RowTag = isExpandable ? 'button' : ('div' as const);
                   return (
                     <div
                       key={r.def.id}
                       style={{
+                        padding: '14px 18px',
                         borderBottom: i < sectionRows.length - 1 ? `1px solid ${T.border}` : 'none',
                       }}
                     >
-                      <RowTag
-                        {...(isExpandable
-                          ? {
-                              type: 'button' as const,
-                              onClick: () => toggle(r.def.id),
-                              'aria-expanded': isExpanded,
-                            }
-                          : {})}
+                      <div
                         style={{
-                          display: 'block',
-                          width: '100%',
-                          textAlign: 'left',
-                          padding: '14px 18px',
-                          background: 'transparent',
-                          border: 'none',
-                          cursor: isExpandable ? 'pointer' : 'default',
-                          fontFamily: 'inherit',
-                          color: 'inherit',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'baseline',
+                          marginBottom: 6,
                         }}
                       >
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'baseline',
-                            marginBottom: 6,
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <span
-                              style={{
-                                width: 8,
-                                height: 8,
-                                background: r.color,
-                                display: 'inline-block',
-                              }}
-                            />
-                            <span style={{ fontSize: rem(14), color: T.ink }}>{r.def.label}</span>
-                            <span
-                              style={{
-                                fontSize: rem(10),
-                                letterSpacing: '0.1em',
-                                textTransform: 'uppercase',
-                                color: T.inkMuted,
-                                border: `1px solid ${T.border}`,
-                                padding: '1px 6px',
-                                borderRadius: 2,
-                              }}
-                            >
-                              {KIND_LABEL[r.def.kind]}
-                            </span>
-                            {isExpandable && (
-                              <span
-                                aria-hidden="true"
-                                style={{
-                                  fontSize: rem(11),
-                                  color: T.inkMuted,
-                                  fontFamily: fonts.mono,
-                                }}
-                              >
-                                {isExpanded ? '▾' : '▸'}
-                              </span>
-                            )}
-                          </div>
-                          <span style={{ fontFamily: fonts.mono, fontSize: rem(14), color: T.ink }}>
-                            {fmt(r.total)}
-                          </span>
-                        </div>
-                        <div style={{ height: 3, background: T.bgAlt, position: 'relative' }}>
-                          <div
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span
                             style={{
-                              position: 'absolute',
-                              left: 0,
-                              top: 0,
-                              height: '100%',
-                              width: `${pct * 100}%`,
+                              width: 8,
+                              height: 8,
                               background: r.color,
+                              display: 'inline-block',
                             }}
                           />
+                          <span style={{ fontSize: rem(14), color: T.ink }}>{r.def.label}</span>
+                          <span
+                            style={{
+                              fontSize: rem(10),
+                              letterSpacing: '0.1em',
+                              textTransform: 'uppercase',
+                              color: T.inkMuted,
+                              border: `1px solid ${T.border}`,
+                              padding: '1px 6px',
+                              borderRadius: 2,
+                            }}
+                          >
+                            {KIND_LABEL[r.def.kind]}
+                          </span>
                         </div>
+                        <span style={{ fontFamily: fonts.mono, fontSize: rem(14), color: T.ink }}>
+                          {fmt(r.total)}
+                        </span>
+                      </div>
+                      <div style={{ height: 3, background: T.bgAlt, position: 'relative' }}>
                         <div
                           style={{
-                            fontSize: rem(11),
-                            color: T.inkMuted,
-                            marginTop: 4,
-                            fontFamily: fonts.mono,
+                            position: 'absolute',
+                            left: 0,
+                            top: 0,
+                            height: '100%',
+                            width: `${pct * 100}%`,
+                            background: r.color,
                           }}
-                        >
-                          {(pct * 100).toFixed(1)}% of expenses ·{' '}
-                          {pctIncome !== null
-                            ? `${(pctIncome * 100).toFixed(1)}% of take-home`
-                            : '— of take-home'}
-                        </div>
-                      </RowTag>
-                      {isExpandable && isExpanded && (
-                        <div
-                          style={{
-                            padding: '6px 18px 14px 36px',
-                            background: T.bg,
-                            borderTop: `1px solid ${T.border}`,
-                          }}
-                        >
-                          {[...r.lines]
-                            .sort((a, b) => b.value - a.value)
-                            .map((line) => (
-                              <div
-                                key={line.label}
-                                style={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  padding: '6px 0',
-                                  fontSize: rem(13),
-                                  color: T.inkSoft,
-                                }}
-                              >
-                                <span>{line.label}</span>
-                                <span style={{ fontFamily: fonts.mono, color: T.ink }}>
-                                  {fmt(line.value)}
-                                </span>
-                              </div>
-                            ))}
-                        </div>
-                      )}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          fontSize: rem(11),
+                          color: T.inkMuted,
+                          marginTop: 4,
+                          fontFamily: fonts.mono,
+                        }}
+                      >
+                        {(pct * 100).toFixed(1)}% of expenses ·{' '}
+                        {pctIncome !== null
+                          ? `${(pctIncome * 100).toFixed(1)}% of take-home`
+                          : '— of take-home'}
+                      </div>
                     </div>
                   );
                 })}
@@ -443,6 +379,127 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
             );
           })}
         </div>
+      </div>
+
+      {/* Detailed breakdown disclosure — separate from the pie + summary
+          so opening it doesn't resize the chart container. Mirrors the
+          BracketWalkthrough toggle pattern. Designed to grow with future
+          drill-down depth (geographic-granularity badges, percentile
+          context) without ever compressing the summary view above. */}
+      <div style={{ marginTop: 16 }}>
+        <button
+          type="button"
+          onClick={() => setDetailOpen((o) => !o)}
+          aria-expanded={detailOpen}
+          style={{
+            fontFamily: fonts.body,
+            fontSize: rem(12),
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            padding: '10px 14px',
+            background: detailOpen ? T.bgAlt : T.surface,
+            border: `1px solid ${T.border}`,
+            color: T.ink,
+            fontWeight: 600,
+          }}
+        >
+          {detailOpen ? '− Hide' : '+ View'} detailed breakdown
+        </button>
+        {detailOpen && (
+          <div
+            style={{
+              marginTop: 16,
+              background: T.surface,
+              border: `1px solid ${T.border}`,
+              padding: 24,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: fonts.body,
+                fontSize: rem(13),
+                color: T.inkSoft,
+                marginBottom: 16,
+                lineHeight: 1.5,
+              }}
+            >
+              Every BLS CEX line item that flows into the seven rollups above, sorted by value
+              within each rollup. Items that come back as $0 for this household (e.g. Childcare with
+              no kids, Vehicle (purchase) for a transit-city resident) drop out.
+            </div>
+            {SECTION_ORDER.map((kind) => {
+              const sectionRows = rows.filter((r) => r.def.kind === kind);
+              if (sectionRows.length === 0) return null;
+              return (
+                <div key={kind} style={{ marginBottom: 24 }}>
+                  <div
+                    style={{
+                      fontSize: rem(11),
+                      letterSpacing: '0.14em',
+                      color: T.inkMuted,
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
+                      marginBottom: 10,
+                      borderBottom: `1px solid ${T.border}`,
+                      paddingBottom: 6,
+                    }}
+                  >
+                    {SECTION_HEADER[kind].label}
+                  </div>
+                  {sectionRows.map((r) => (
+                    <div key={r.def.id} style={{ marginBottom: 14 }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'baseline',
+                          marginBottom: 6,
+                        }}
+                      >
+                        <span
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, color: T.ink }}
+                        >
+                          <span
+                            style={{
+                              width: 6,
+                              height: 6,
+                              background: r.color,
+                              display: 'inline-block',
+                            }}
+                          />
+                          <span style={{ fontWeight: 600, fontSize: rem(13) }}>{r.def.label}</span>
+                        </span>
+                        <span style={{ fontFamily: fonts.mono, fontSize: rem(13), color: T.ink }}>
+                          {fmt(r.total)}
+                        </span>
+                      </div>
+                      {[...r.lines]
+                        .sort((a, b) => b.value - a.value)
+                        .map((line) => (
+                          <div
+                            key={line.label}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              padding: '4px 0 4px 14px',
+                              fontSize: rem(12),
+                              color: T.inkSoft,
+                            }}
+                          >
+                            <span>{line.label}</span>
+                            <span style={{ fontFamily: fonts.mono, color: T.ink }}>
+                              {fmt(line.value)}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

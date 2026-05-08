@@ -376,7 +376,10 @@ export function HoverGloss({ children, gloss }: { children: ReactNode; gloss: Re
             padding: '10px 12px',
             background: T.surface,
             border: `1px solid ${T.border}`,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+            // Match Cite popover chrome — same shadow, same bg/border —
+            // so click-popovers and hover-glosses feel like the same
+            // family even though the trigger semantics differ.
+            boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
             fontFamily: fonts.body,
             fontSize: rem(12),
             lineHeight: 1.5,
