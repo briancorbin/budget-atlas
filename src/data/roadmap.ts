@@ -294,6 +294,14 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Condense the 15-line monthly cost-of-living view back to a scannable 7 rolled-up categories sectioned by Essentials / Mixed / Lifestyle, with each rollup expandable to drill into its sub-lines (food at home vs away, transit vs gasoline vs vehicle insurance vs vehicle purchase). Pie now reads cleanly. Still ahead: per-cell geographic-granularity indicator (msa/division/region) using cexProvenance, and the income-quintile context surfaced inline.',
   },
   {
+    id: 205,
+    title: 'Expand income thermometer',
+    category: 'Geography',
+    status: 'planned',
+    summary:
+      'Expand the income thermometer (#187) beyond a fixed national + regional view: scope toggles (national / region / state / MSA where available), comparison mode (Midwest vs. NYC, two cities side-by-side), richer per-scope anchors (median + mean + percentile floors).',
+  },
+  {
     id: 204,
     title: 'State-level median income marker',
     category: 'Geography',

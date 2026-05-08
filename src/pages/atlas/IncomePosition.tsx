@@ -1,7 +1,7 @@
 import type { BudgetResult } from '@/types';
 import { theme as T, fonts, rem } from '@/theme';
 import { fmt } from '@/lib/format';
-import { SectionTitle, Cite } from '@/components/ui';
+import { SectionTitle, Cite, HoverGloss } from '@/components/ui';
 import {
   QUINTILE_MEANS_2024_BEFORE_TAX,
   QUINTILE_THRESHOLDS_2024,
@@ -91,12 +91,23 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
       <SectionTitle kicker="Where this income sits">Your place in the distribution</SectionTitle>
 
       <div style={{ background: T.surface, border: `1px solid ${T.border}`, padding: 24 }}>
+        {/*
+          Five distinct horizontal lanes, top → bottom:
+            y=  0–14:  User income label
+            y= 14–22:  User marker (triangle tip touches bar top)
+            y= 22–46:  Bar  (band labels Q1–Q5 sit INSIDE the bar in light
+                            type so they don't compete with markers above)
+            y= 50–62:  Boundary tick labels ($30K / $57K / $95K / $156K)
+            y= 70–82:  Regional-avg mini-row: ▲ + "{Region} avg ($X)"
+          The user marker is just an arrow — no line through the bar — so
+          the band-color shifts read through. Regional avg gets its own
+          lane below the tick labels so the two never collide.
+        */}
         <div
           style={{
             position: 'relative',
-            height: 56,
-            marginBottom: 28,
-            // Pad the inside so labels at the extremes don't clip.
+            height: 86,
+            marginBottom: 8,
             marginLeft: 4,
             marginRight: 4,
           }}
@@ -105,7 +116,7 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
           <div
             style={{
               position: 'absolute',
-              top: 16,
+              top: 22,
               left: 0,
               right: 0,
               height: 24,
@@ -114,6 +125,10 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
           >
             {bands.map((z) => {
               const w = pos(z.end) - pos(z.start);
+              // Q1/Q2 are light, Q3+ are darker — pick a band-label color
+              // that reads on each background.
+              const labelColor =
+                z.id === 'q1' || z.id === 'q2' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.85)';
               return (
                 <div
                   key={z.id}
@@ -127,12 +142,13 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
                   <div
                     style={{
                       position: 'absolute',
-                      top: -16,
-                      left: 0,
+                      top: 6,
+                      left: 6,
                       fontSize: rem(10),
                       letterSpacing: '0.12em',
-                      color: T.inkSoft,
+                      color: labelColor,
                       fontFamily: fonts.body,
+                      fontWeight: 600,
                     }}
                   >
                     {z.id.toUpperCase()}
@@ -150,7 +166,7 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
               key={x}
               style={{
                 position: 'absolute',
-                top: 42,
+                top: 50,
                 left: `${pos(x)}%`,
                 transform: 'translateX(-50%)',
                 fontSize: rem(10),
@@ -163,48 +179,13 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
             </div>
           ))}
 
-          {/* Regional mean marker (drawn behind the user's marker so the
-              user's pin reads on top when they collide). */}
+          {/* User's income marker — arrow only, no line through the bar.
+              The triangle tip touches the bar top so the X position is
+              unambiguous, and the band color underneath stays visible. */}
           <div
             style={{
               position: 'absolute',
-              top: 12,
-              left: `${pos(regionalMean)}%`,
-              transform: 'translateX(-50%)',
-              pointerEvents: 'none',
-            }}
-          >
-            <div
-              style={{
-                width: 2,
-                height: 32,
-                background: T.ink,
-                opacity: 0.55,
-                margin: '0 auto',
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                top: 36,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                fontSize: rem(10),
-                color: T.inkSoft,
-                fontFamily: fonts.body,
-                whiteSpace: 'nowrap',
-                fontStyle: 'italic',
-              }}
-            >
-              {region} avg
-            </div>
-          </div>
-
-          {/* User's income marker */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 8,
+              top: 14,
               left: `${pos(income)}%`,
               transform: 'translateX(-50%)',
               pointerEvents: 'none',
@@ -219,20 +200,12 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
                 borderTop: `8px solid ${T.accent}`,
               }}
             />
-            <div
-              style={{
-                width: 2,
-                height: 36,
-                background: T.accent,
-                margin: '0 auto',
-              }}
-            />
           </div>
           {/* Income label, above the marker */}
           <div
             style={{
               position: 'absolute',
-              top: -16,
+              top: 0,
               left: `${pos(income)}%`,
               transform: 'translateX(-50%)',
               fontSize: rem(11),
@@ -244,6 +217,31 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
           >
             {fmt(income)}
           </div>
+
+          {/* Regional-avg mini-row in its own lane below the tick labels.
+              The ▲ glyph anchors the X position; the label flows to the
+              right so it doesn't have to stack above/below. */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 70,
+              left: `${pos(regionalMean)}%`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: rem(10),
+              color: T.inkSoft,
+              fontFamily: fonts.body,
+              fontStyle: 'italic',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+            }}
+          >
+            <span style={{ transform: 'translateX(-50%)', color: T.ink, opacity: 0.55 }}>▲</span>
+            <span>
+              {region} avg · {fmt(regionalMean)}
+            </span>
+          </div>
         </div>
 
         <div
@@ -254,10 +252,22 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
             lineHeight: 1.6,
           }}
         >
-          {fmt(income)}/yr puts this household in the <strong>{qLabel[quintile]}</strong> of US
-          households — {fmt(meanDelta)} {aboveOrBelow} the {quintile.toUpperCase()} mean of{' '}
-          {fmt(meanForQ)}. The average {region} household earns {fmt(regionalMean)}; this household
-          is {fmt(regionDelta)} {regionAboveOrBelow}.
+          {fmt(income)}/yr puts this household in the <strong>{qLabel[quintile]}</strong> of US{' '}
+          <HoverGloss
+            gloss={
+              <>
+                BLS surveys <strong>consumer units</strong> — people who share major expenses.
+                Roughly the same as a household (a married couple = one CU = one household), with
+                edge cases: unrelated roommates with separate finances count as separate CUs even in
+                one address. ~135.8M CUs in the 2024 sample.
+              </>
+            }
+          >
+            households
+          </HoverGloss>{' '}
+          — {fmt(meanDelta)} {aboveOrBelow} the {quintile.toUpperCase()} mean of {fmt(meanForQ)}.
+          The average {region} household earns {fmt(regionalMean)}; this household is{' '}
+          {fmt(regionDelta)} {regionAboveOrBelow}.
         </div>
 
         <div
