@@ -288,7 +288,7 @@ export function BudgetExplorer() {
           />
         </section>
         <section id="notes" style={{ scrollMarginTop: 24 }}>
-          <Notes filing={filing} stateTaxSource={result.stateData.taxSource} />
+          <Notes stateTaxSource={result.stateData.taxSource} />
         </section>
       </div>
     </div>

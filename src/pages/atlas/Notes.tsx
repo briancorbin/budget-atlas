@@ -1,7 +1,7 @@
-import type { FilingStatus, Source } from '@/types';
+import type { Source } from '@/types';
+import { navigate } from '@/lib/nav';
 import { theme as T, fonts, rem } from '@/theme';
-import { fmt } from '@/lib/format';
-import { FEDERAL_TAX_SOURCE, SS_WAGE_BASE_SOURCE, STD_DEDUCTION_2026 } from '@/data/federalTax';
+import { FEDERAL_TAX_SOURCE, SS_WAGE_BASE_SOURCE } from '@/data/federalTax';
 import { STATE_TAX_SOURCE, STATE_MIN_WAGE_SOURCE } from '@/data/states';
 import { CITY_COL_SOURCES } from '@/data/cities';
 import { PageSources } from '@/components/ui';
@@ -17,81 +17,24 @@ function buildFooterSources(stateSource?: Source): readonly Source[] {
   ];
 }
 
-export function Notes({
-  filing,
-  stateTaxSource,
-}: {
-  filing: FilingStatus;
-  stateTaxSource?: Source;
-}) {
+/**
+ * Notes section — kept lean. Caveats (what the model deliberately
+ * simplifies) lives here as the page's honesty pass and source-list
+ * grounding. The longer teaching content (how progressive tax math
+ * works, two-earner FICA, marriage bonus / penalty, the childcare and
+ * no-income-tax surprises) used to live here too but was moved to
+ * /about's "How the math works" section — that content is evergreen
+ * and didn't need to crowd every explorer view.
+ */
+export function Notes({ stateTaxSource }: { stateTaxSource?: Source }) {
   const footerSources = buildFooterSources(stateTaxSource);
-  const filingLabel =
-    filing === 'married'
-      ? 'married filing jointly'
-      : filing === 'head'
-        ? 'head of household'
-        : 'single';
-
-  const notes = [
-    {
-      title: 'How taxes work here',
-      body: (
-        <>
-          The U.S. federal system is progressive — only the dollars within each bracket are taxed at
-          that rate. The 2026 standard deduction ({fmt(STD_DEDUCTION_2026[filing])} for{' '}
-          {filingLabel}) is subtracted before brackets apply. State tax uses the same machinery:
-          each state's actual graduated brackets and standard deduction, applied to gross income.
-          No-tax states (TX, FL, WA, etc.) use a single 0% bracket; flat-tax states (CO, IL, PA) use
-          a single positive bracket.
-        </>
-      ),
-    },
-    {
-      title: 'The childcare cliff',
-      body: (
-        <>
-          Try setting kids to 2 in San Francisco vs. rural Iowa at the same income. Childcare alone
-          can run $25–35K/yr per child in major metros — often more than rent and frequently the
-          single largest budget line for working parents until kids reach school age.
-        </>
-      ),
-    },
-    {
-      title: 'The no-income-tax illusion',
-      body: (
-        <>
-          Texas, Tennessee, Florida, Washington and Wyoming impose 0% income tax — but they recover
-          revenue through property tax (Texas effective rates near 1.6%) and sales tax. For a
-          moderate income, the savings are real; for renters at low incomes, sales tax is regressive
-          and bites harder than it appears.
-        </>
-      ),
-    },
-    {
-      title: 'Two earners, one return — or two',
-      body: (
-        <>
-          Married couples filing jointly combine income on one return; cohabitating partners file
-          separately as singles, each with their own standard deduction. For asymmetric incomes
-          (e.g. $200K + $80K), MFJ usually wins — a "marriage bonus." For two near-equal high
-          earners, MFJ can produce a small "marriage penalty" above ~$770K combined. FICA is always
-          calculated per person, so two earners at $150K each pay more Social Security tax than one
-          earner at $300K.
-        </>
-      ),
-    },
-    {
-      title: 'Caveats',
-      body: (
-        <>
-          Models always simplify. This one assumes employer-sponsored health insurance, no student
-          loans, no debt servicing, no employer 401(k) pre-tax contributions, no homeownership
-          (rents only), and average local prices. EITC and Child Tax Credit are approximated. Real
-          households have wide variance even within the same city and income.
-        </>
-      ),
-    },
-  ];
+  const linkStyle = {
+    color: T.accent,
+    textDecoration: 'none',
+    fontWeight: 600,
+    borderBottom: `1px solid ${T.border}`,
+    paddingBottom: 1,
+  } as const;
 
   return (
     <>
@@ -104,28 +47,39 @@ export function Notes({
           color: T.inkSoft,
           fontFamily: fonts.body,
           lineHeight: 1.7,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: 32,
+          maxWidth: 680,
         }}
       >
-        {notes.map((n) => (
-          <div key={n.title}>
-            <div
-              style={{
-                fontSize: rem(11),
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                color: T.accent,
-                fontWeight: 600,
-                marginBottom: 8,
-              }}
-            >
-              {n.title}
-            </div>
-            <p style={{ marginTop: 0 }}>{n.body}</p>
-          </div>
-        ))}
+        <div
+          style={{
+            fontSize: rem(11),
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: T.accent,
+            fontWeight: 600,
+            marginBottom: 8,
+          }}
+        >
+          Caveats
+        </div>
+        <p style={{ marginTop: 0 }}>
+          Models always simplify. This one assumes employer-sponsored health insurance, no student
+          loans, no debt servicing, no employer 401(k) pre-tax contributions, no homeownership
+          (rents only), and average local prices. EITC and Child Tax Credit are approximated. Real
+          households have wide variance even within the same city and income. For a longer
+          explanation of how the tax math works,{' '}
+          <a
+            href="/about"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/about');
+            }}
+            style={linkStyle}
+          >
+            see the About page
+          </a>
+          .
+        </p>
       </div>
 
       <PageSources sources={footerSources} heading="Sources backing this calculation" />

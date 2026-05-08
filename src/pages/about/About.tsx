@@ -1,6 +1,8 @@
 import { theme as T, fonts, rem } from '@/theme';
 import { navigate } from '@/lib/nav';
 import { SectionTitle } from '@/components/ui';
+import { fmt } from '@/lib/format';
+import { STD_DEDUCTION_2026 } from '@/data/federalTax';
 
 const GITHUB_URL = 'https://github.com/TheBudgetAtlas/thebudgetatlas';
 const CONTACT_EMAIL = 'brian@thebudgetatlas.com';
@@ -23,6 +25,7 @@ export function About({ onBack }: { onBack: () => void }) {
         <Intro />
         <WhyThisExists />
         <BiggerGoal />
+        <HowTheMathWorks />
         <StillImproving />
         <AboutMe />
         <AIExperiment />
@@ -200,6 +203,48 @@ function BiggerGoal() {
           roadmap
         </a>
         . But that's the direction this is pointed.
+      </p>
+    </section>
+  );
+}
+
+function HowTheMathWorks() {
+  return (
+    <section style={{ marginBottom: 56 }}>
+      <SectionTitle kicker="How the math works">Under the hood</SectionTitle>
+      <p style={proseStyle}>
+        The U.S. federal income tax is progressive — only the dollars within each bracket are taxed
+        at that bracket's rate, not the whole income at the top rate. The 2026 standard deduction (
+        {fmt(STD_DEDUCTION_2026.single)} single, {fmt(STD_DEDUCTION_2026.married)} married filing
+        jointly, {fmt(STD_DEDUCTION_2026.head)} head of household) is subtracted before the brackets
+        apply. State income tax uses the same machinery: each state's actual graduated brackets and
+        standard deduction, applied to gross income. No-tax states (TX, FL, WA, etc.) use a single
+        0% bracket; flat-tax states (CO, IL, PA) use a single positive bracket.
+      </p>
+      <p style={proseStyle}>
+        Married couples filing jointly combine income on one return; cohabitating partners file
+        separately as singles, each with their own standard deduction. For asymmetric incomes (e.g.
+        $200K + $80K), MFJ usually wins — a "marriage bonus." For two near-equal high earners, MFJ
+        can produce a small "marriage penalty" above ~$770K combined. FICA is always calculated per
+        person, so two earners at $150K each pay <em>more</em> Social Security tax than one earner
+        at $300K — the SS wage base is per-person, not per-household.
+      </p>
+      <p style={proseStyle}>Two surprises worth playing with in the explorer:</p>
+      <p style={proseStyle}>
+        <strong>The childcare cliff.</strong> Try setting kids to 2 in San Francisco vs. rural Iowa
+        at the same income. Childcare alone can run $25–35K/yr per child in major metros — often
+        more than rent and frequently the single largest budget line for working parents until kids
+        reach school age.
+      </p>
+      <p style={proseStyle}>
+        <strong>The no-income-tax illusion.</strong> Texas, Tennessee, Florida, Washington, and
+        Wyoming impose 0% income tax — but they recover revenue through property tax (Texas
+        effective rates near 1.6%) and sales tax. For a moderate income, the savings are real; for
+        renters at low incomes, sales tax is regressive and bites harder than it appears. There's a
+        related illusion in graduated-vs-flat states: at moderate incomes a graduated state with a
+        scary-sounding top rate (CA 12.3%) can owe <em>less</em> state tax than a flat-rate state
+        with a friendlier-sounding number (GA 5.39%), because the graduated structure taxes the
+        bottom dollars gently.
       </p>
     </section>
   );
