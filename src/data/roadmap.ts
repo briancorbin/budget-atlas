@@ -297,7 +297,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Geography',
     status: 'planned',
     summary:
-      'The thermometer (#187) currently shows a fixed national + regional view. Expand it: scope toggle (national / region / state / MSA where available), comparison mode (e.g. Midwest as a whole vs. NYC, or two cities side-by-side), and richer per-scope context (median + mean + percentile floors, not just one anchor). Turns a single-purpose chart into a small distribution explorer.',
+      'Expand the income thermometer (#187) beyond a fixed national + regional view: scope toggles (national / region / state / MSA where available), comparison mode (Midwest vs. NYC, two cities side-by-side), richer per-scope anchors (median + mean + percentile floors).',
   },
   {
     id: 204,
