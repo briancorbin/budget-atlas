@@ -16,6 +16,10 @@ The point is calibration over time. After 50+ entries the patterns become visibl
 
 <!-- Newest entries at the top. -->
 
+### 2026-05-08 — Data import + sifting is where multi-day work collapses to hours `[skill] [time-log]`
+
+This would have taken an enormous amount of time on my own. Getting this information imported. Sorting through it. Checking it. The 3-hour solo estimates I logged on these PRs are a pipe dream — this was easily a multi-day effort across all of these PRs and files. AI is incredible at sifting through, sorting, and organizing data intelligently, which would normally take a lot more time by hand.
+
 ### 2026-05-08 — Take notes after every day of work, don't wait until morning
 
 Lesson learned. My memory is fuzzy now. Maybe I'm just tired though.

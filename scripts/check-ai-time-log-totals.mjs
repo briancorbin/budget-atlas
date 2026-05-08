@@ -52,10 +52,10 @@ for (let i = headerIdx + 2; i < lines.length; i += 1) {
     .split('|')
     .slice(1, -1)
     .map((c) => c.trim());
-  if (cells.length < 8) continue;
-  const solo = parseHours(cells[4]);
-  const ai = parseHours(cells[5]);
-  const saved = parseHours(cells[6]);
+  if (cells.length < 9) continue;
+  const solo = parseHours(cells[5]);
+  const ai = parseHours(cells[6]);
+  const saved = parseHours(cells[7]);
   if (solo === null || ai === null || saved === null) continue;
   dataRows.push({ solo, ai, saved, line: i + 1, scope: cells[2] });
 }
