@@ -13,15 +13,17 @@ import {
 
 /**
  * Per-line categorization for the essentials vs. lifestyle split (#203).
- * Keys are the labels used in `BudgetResult.expenses`. The combined
- * "Groceries" line is gray-zone — it sums the essential foodAtHome with
- * the lifestyle foodAway, but the SNAP offset comes off foodAtHome
- * specifically; we file the bundle under 'essential' since SNAP
- * eligibility implies the food-essential portion dominates for those
- * households. "Transportation" is similarly bundled — for transit
- * cities with no kids it's pure transit pass (essential); otherwise
- * it includes vehiclePurchase (lifestyle), so we file it under
- * 'mixed'. UI may treat 'mixed' as essential or break the line down.
+ * Keys are the labels used in `BudgetResult.expenses` — granular sub-
+ * lines, not rolled-up parents. Food and transportation get split into
+ * their constituent lines so each one lands cleanly in 'essential' or
+ * 'lifestyle': 'Food at home' is essential, 'Food away' is lifestyle;
+ * 'Transit' / 'Gasoline' / 'Vehicle (insurance & maint.)' are essential,
+ * 'Vehicle (purchase)' is lifestyle. The ExpenseBreakdown component
+ * groups these under "Mixed" rollups in the UI when both kinds appear.
+ *
+ * Apparel and Personal Care are gray-zone (the BLS lines bundle
+ * essentials with discretionary), filed as lifestyle because the
+ * discretionary share dominates spending in those categories.
  */
 export const EXPENSE_CATEGORY: Record<string, 'essential' | 'lifestyle'> = {
   Housing: 'essential',
@@ -270,7 +272,7 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   const benefitsApplied: Record<string, number> = {};
   // SNAP redeems against foodAtHome only (no restaurants), so the
   // offset reduces the essential foodAtHome line; foodAway is
-  // unaffected. Keep `groceriesAfterBenefits` for the summed display.
+  // unaffected.
   let foodAtHomeAfterBenefits = foodAtHome;
   let healthcareAfterBenefits = healthcare;
 
