@@ -33,7 +33,7 @@ const PAGE_NAV_SECTIONS: readonly PageNavSection[] = [
   { id: 'income-flow', label: 'Take-home' },
   { id: 'tax-brackets', label: 'Tax brackets' },
   { id: 'expenses', label: 'Expenses' },
-  { id: 'plan', label: 'Discretionary plan' },
+  { id: 'plan', label: 'Surplus plan' },
   { id: 'geography', label: 'Geography' },
   { id: 'cliffs', label: 'Cliffs' },
   { id: 'notes', label: 'Notes' },

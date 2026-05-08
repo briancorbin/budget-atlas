@@ -179,6 +179,22 @@ describe('computeBudget — pinned regressions', () => {
     expect(q5.expenses['Apparel']).toBeGreaterThan(q3.expenses['Apparel']);
   });
 
+  it('essentials + lifestyle = total expenses, and discretionaryIncome ≥ surplus', () => {
+    // Pins the #203 split: every dollar of expense lands in exactly one
+    // bucket, the two sum to the full total, and the textbook
+    // "discretionary income" (income − essentials) is always ≥ the
+    // legacy "surplus" (income − total expenses) because it credits
+    // back the lifestyle spending the household *could* step down.
+    const r = computeBudget(input({ incomeA: 75_000, city: 'cmh' }));
+    const sum = r.essentialExpenses + r.lifestyleExpenses;
+    expect(sum).toBeCloseTo(r.totalExpenses, 1);
+    expect(r.discretionaryIncome).toBeGreaterThanOrEqual(r.discretionary);
+    expect(r.discretionaryIncome - r.discretionary).toBeCloseTo(r.lifestyleExpenses, 1);
+    // A moderate-income household should have *some* lifestyle spending
+    // baked in — if this drops to 0, something has miscategorized.
+    expect(r.lifestyleExpenses).toBeGreaterThan(100);
+  });
+
   it('income-axis is smooth across the q4→q5 boundary (no artifact step)', () => {
     // Regression for the artifact pit at $155,924 (q4Max). Pre-smoothing
     // the spending shape snapped from q4 to q5 the moment income crossed

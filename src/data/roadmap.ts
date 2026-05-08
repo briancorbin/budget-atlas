@@ -295,7 +295,9 @@ export const ROADMAP: readonly RoadmapItem[] = [
     id: 203,
     title: 'Essentials vs. lifestyle split',
     category: 'Cost of living',
-    status: 'planned',
+    status: 'in-progress',
+    startedAt: '2026-05-08',
+    progress: 80,
     summary:
       "Today's 'Discretionary' line is misnamed: it's the surplus AFTER deducting every line including dining out and entertainment, not income minus necessities. Split the BLS CEX line items into essentials (rent, utilities, groceries, healthcare, childcare, utilitarian transport) vs. lifestyle (dining out, entertainment, vehicle upgrades, fashion, furnishings) and surface two numbers: discretionary income (textbook) = take-home − essentials, and surplus = discretionary income − lifestyle. Reframes the cliff curve and unblocks the two-sided plan in #201.",
   },

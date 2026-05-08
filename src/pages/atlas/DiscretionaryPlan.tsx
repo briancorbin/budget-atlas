@@ -70,9 +70,10 @@ export function DiscretionaryPlan({ result }: { result: BudgetResult }) {
             fontStyle: 'italic',
           }}
         >
-          Suggested allocation of the {fmt(result.discretionary)}/mo discretionary surplus,
-          following a rough 50 / 20 / 20 / 10 split (savings · vacation · splurge · emergency
-          cushion).
+          Suggested allocation of the {fmt(result.discretionary)}/mo surplus that's left after
+          essentials AND the modeled lifestyle (dining out, entertainment, etc. — already a
+          {fmt(result.lifestyleExpenses)}/mo line). Rough 50 / 20 / 20 / 10 split (savings ·
+          vacation · splurge · emergency cushion).
         </div>
         <div
           style={{

@@ -12,6 +12,36 @@ import {
 } from '@/data/cex';
 
 /**
+ * Per-line categorization for the essentials vs. lifestyle split (#203).
+ * Keys are the labels used in `BudgetResult.expenses`. The combined
+ * "Groceries" line is gray-zone — it sums the essential foodAtHome with
+ * the lifestyle foodAway, but the SNAP offset comes off foodAtHome
+ * specifically; we file the bundle under 'essential' since SNAP
+ * eligibility implies the food-essential portion dominates for those
+ * households. "Transportation" is similarly bundled — for transit
+ * cities with no kids it's pure transit pass (essential); otherwise
+ * it includes vehiclePurchase (lifestyle), so we file it under
+ * 'mixed'. UI may treat 'mixed' as essential or break the line down.
+ */
+export const EXPENSE_CATEGORY: Record<string, 'essential' | 'lifestyle' | 'mixed'> = {
+  Housing: 'essential',
+  Utilities: 'essential',
+  Groceries: 'essential',
+  Transportation: 'mixed',
+  Healthcare: 'essential',
+  Childcare: 'essential',
+  'Phone & Internet': 'essential',
+  Insurance: 'essential',
+  Education: 'essential',
+  'Housekeeping Supplies': 'essential',
+  Apparel: 'lifestyle',
+  Entertainment: 'lifestyle',
+  'Personal Care': 'lifestyle',
+  'Household Operations': 'lifestyle',
+  Furnishings: 'lifestyle',
+};
+
+/**
  * Given household inputs, compute taxes, expenses, and discretionary income.
  *
  * Tax handling distinguishes three real cases:
@@ -181,19 +211,29 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   // same parent label, but our model keeps it broken out).
   const utilities = cexMonthly('utilitiesElectricGas') + cexMonthly('utilitiesWaterPublic');
 
-  // Groceries = food at home + food away. CEX splits these; we sum to a
-  // single line. The SNAP benefit subsequently offsets grocery spending,
-  // so keeping the line unified preserves the existing benefits flow.
-  const groceries = cexMonthly('foodAtHome') + cexMonthly('foodAway');
+  // Groceries = food at home + food away. CEX splits these; we keep
+  // them broken out for the essentials vs. lifestyle split (#203):
+  // foodAtHome is essential, foodAway (dining out) is lifestyle. SNAP
+  // can only be redeemed at qualifying retailers (no restaurants), so
+  // the SNAP offset comes off foodAtHome specifically, not the
+  // combined groceries line.
+  const foodAtHome = cexMonthly('foodAtHome');
+  const foodAway = cexMonthly('foodAway');
 
   // Transportation: big transit cities + childless → transit pass per
   // adult (transit isn't in CEX; keep cityData.transit). Otherwise use
   // CEX vehicle line items (gasoline + vehicle purchase + other).
+  // Broken out for the essentials vs. lifestyle split (#203): transit
+  // pass / gasoline / vehicleOther (insurance, registration, maint)
+  // are essential; vehiclePurchase is lifestyle (a car upgrade beyond
+  // a baseline working vehicle).
   const isTransitCity = ['nyc', 'sf', 'bos', 'dc', 'chi'].includes(city);
-  const transportation =
-    isTransitCity && kids === 0
-      ? cityData.transit * adults
-      : cexMonthly('gasoline') + cexMonthly('vehiclePurchase') + cexMonthly('vehicleOther');
+  const usesTransit = isTransitCity && kids === 0;
+  const transitCost = usesTransit ? cityData.transit * adults : 0;
+  const gasoline = usesTransit ? 0 : cexMonthly('gasoline');
+  const vehicleOther = usesTransit ? 0 : cexMonthly('vehicleOther');
+  const vehiclePurchase = usesTransit ? 0 : cexMonthly('vehiclePurchase');
+  const transportation = transitCost + gasoline + vehicleOther + vehiclePurchase;
 
   // Healthcare = KFF employer-plan premium (still cityData) + CEX OOP.
   // Medicaid covers both — zeros the entire line. CHIP value is the kids'
@@ -225,7 +265,10 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   // here so the budget can never apply a benefit the household isn't
   // eligible for, even if the UI somehow lets them claim it).
   const benefitsApplied: Record<string, number> = {};
-  let groceriesAfterBenefits = groceries;
+  // SNAP redeems against foodAtHome only (no restaurants), so the
+  // offset reduces the essential foodAtHome line; foodAway is
+  // unaffected. Keep `groceriesAfterBenefits` for the summed display.
+  let foodAtHomeAfterBenefits = foodAtHome;
   let healthcareAfterBenefits = healthcare;
 
   const benefitInputs = {
@@ -245,8 +288,8 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   if (claimedBenefits?.has('snap')) {
     const snap = checkSnap(benefitInputs);
     if (snap.eligible && snap.monthlyBenefit > 0) {
-      const offset = Math.min(snap.monthlyBenefit, groceries);
-      groceriesAfterBenefits = groceries - offset;
+      const offset = Math.min(snap.monthlyBenefit, foodAtHome);
+      foodAtHomeAfterBenefits = foodAtHome - offset;
       benefitsApplied['SNAP'] = offset;
     }
   }
@@ -277,23 +320,53 @@ export function computeBudget(input: BudgetInput): BudgetResult {
 
   const totalBenefits = Object.values(benefitsApplied).reduce((s, n) => s + n, 0);
 
-  const totalExpenses =
+  // Essentials vs. lifestyle split (#203). The model previously
+  // labeled "take-home − total expenses" as "Discretionary," but that
+  // number actually deducts every line including foodAway, entertainment,
+  // and vehiclePurchase — which IS the discretionary spending. Splitting
+  // gives two honest readings:
+  //
+  //   discretionaryIncome = take-home − essentials   (textbook)
+  //   surplus             = discretionaryIncome − lifestyle
+  //                       = take-home − total expenses  (legacy
+  //                                                     `discretionary`
+  //                                                     field)
+  //
+  // Categorization is conservative. Unambiguously lifestyle: foodAway,
+  // entertainment, vehiclePurchase, furnishings, householdOperations.
+  // Gray-zone items (apparel, personalCare) bundle essentials with
+  // discretionary in a single BLS line; we file them as lifestyle
+  // because the discretionary share dominates. Education is essential
+  // when present (tuition, school fees). vehicleOther (insurance,
+  // registration, maintenance) is essential. Per-line user override is
+  // roadmap #5.
+  const groceriesAfterBenefits = foodAtHomeAfterBenefits + foodAway;
+  const essentialExpenses =
     housing +
     utilities +
-    groceriesAfterBenefits +
-    transportation +
+    foodAtHomeAfterBenefits +
+    transitCost +
+    gasoline +
+    vehicleOther +
     healthcareAfterBenefits +
     childcare +
     phoneInternet +
     insuranceOther +
+    education +
+    housekeepingSupplies;
+  const lifestyleExpenses =
+    foodAway +
+    vehiclePurchase +
     apparel +
     entertainment +
     personalCare +
-    education +
     householdOperations +
-    housekeepingSupplies +
     furnishings;
 
+  const totalExpenses = essentialExpenses + lifestyleExpenses;
+
+  const discretionaryIncome = monthlyNet - essentialExpenses;
+  const annualDiscretionaryIncome = discretionaryIncome * 12;
   const discretionary = monthlyNet - totalExpenses;
   const annualDiscretionary = discretionary * 12;
 
@@ -339,6 +412,10 @@ export function computeBudget(input: BudgetInput): BudgetResult {
       Furnishings: furnishings,
     },
     totalExpenses,
+    essentialExpenses,
+    lifestyleExpenses,
+    discretionaryIncome,
+    annualDiscretionaryIncome,
     discretionary,
     annualDiscretionary,
     benefitsApplied,

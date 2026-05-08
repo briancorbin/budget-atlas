@@ -3,6 +3,13 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { theme as T, fonts, PIE_COLORS, rem } from '@/theme';
 import { fmt } from '@/lib/format';
 import { SectionTitle, CustomTooltip } from '@/components/ui';
+import { EXPENSE_CATEGORY } from '@/lib/budget';
+
+const CATEGORY_LABEL: Record<string, string> = {
+  essential: 'Essential',
+  lifestyle: 'Lifestyle',
+  mixed: 'Mixed',
+};
 
 export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
   const entries = Object.entries(result.expenses)
@@ -12,6 +19,29 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
   return (
     <div style={{ marginBottom: 48 }}>
       <SectionTitle kicker="Where every dollar goes — Part II">Monthly cost of living</SectionTitle>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: 24,
+          flexWrap: 'wrap',
+          marginBottom: 16,
+          fontFamily: fonts.body,
+          fontSize: rem(13),
+          color: T.inkSoft,
+        }}
+      >
+        <div>
+          <strong style={{ color: T.ink }}>Essentials:</strong>{' '}
+          <span style={{ fontFamily: fonts.mono }}>{fmt(result.essentialExpenses)}/mo</span> ·
+          baseline cost of running this household
+        </div>
+        <div>
+          <strong style={{ color: T.ink }}>Lifestyle:</strong>{' '}
+          <span style={{ fontFamily: fonts.mono }}>{fmt(result.lifestyleExpenses)}/mo</span> ·
+          dining out, entertainment, vehicle upgrades, apparel
+        </div>
+      </div>
 
       <div
         style={{
@@ -105,6 +135,21 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                       style={{ width: 8, height: 8, background: color, display: 'inline-block' }}
                     />
                     <span style={{ fontSize: rem(14), color: T.ink }}>{name}</span>
+                    {EXPENSE_CATEGORY[name] && (
+                      <span
+                        style={{
+                          fontSize: rem(10),
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: T.inkMuted,
+                          border: `1px solid ${T.border}`,
+                          padding: '1px 6px',
+                          borderRadius: 2,
+                        }}
+                      >
+                        {CATEGORY_LABEL[EXPENSE_CATEGORY[name]!]}
+                      </span>
+                    )}
                   </div>
                   <span style={{ fontFamily: fonts.mono, fontSize: rem(14), color: T.ink }}>
                     {fmt(val)}

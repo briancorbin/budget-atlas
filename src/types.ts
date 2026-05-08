@@ -169,11 +169,45 @@ export interface BudgetResult {
   // Expenses
   expenses: Record<string, number>;
   totalExpenses: number;
+  /**
+   * Sum of "essential" expense lines: housing, utilities, food at home,
+   * baseline transportation (transit pass / gasoline / vehicle insurance
+   * + maintenance), healthcare after benefits, childcare, phone+internet,
+   * insurance, education, housekeeping supplies. Excludes the lifestyle
+   * lines below.
+   */
+  essentialExpenses: number;
+  /**
+   * Sum of "lifestyle" expense lines that the household *could*
+   * step down: dining out (foodAway), vehiclePurchase (car upgrade
+   * beyond a baseline working vehicle), apparel, entertainment,
+   * personal care, household operations (cleaning services etc),
+   * furnishings. Apparel and personal care are gray-zone (BLS bundles
+   * essentials with discretionary in those lines); filed as lifestyle
+   * because the discretionary share dominates.
+   */
+  lifestyleExpenses: number;
+  /**
+   * Take-home minus essentials only. The textbook definition of
+   * discretionary income — the household's room to maneuver after
+   * necessities are covered. Distinct from the legacy `discretionary`
+   * field, which is take-home minus *all* expenses (including
+   * lifestyle spending). discretionaryIncome ≥ discretionary always.
+   */
+  discretionaryIncome: number;
+  annualDiscretionaryIncome: number;
   // Premium-only portion of the healthcare expense (KFF employer-share,
   // monthly). The rest of the Healthcare line is CEX out-of-pocket.
   // Surfaced so benefit checks can isolate the premium — CHIP value is
   // the kids' premium share specifically, not premium + OOP.
   healthcarePremium: number;
+  /**
+   * Legacy "what's left after every modeled expense including dining out
+   * and entertainment." Despite the name, this is *not* the textbook
+   * discretionary-income figure (see `discretionaryIncome` above) — it's
+   * the surplus. Kept for back-compat with the existing UI; the
+   * StatRow / StatusBanner labels have been corrected to "Surplus."
+   */
   discretionary: number;
   annualDiscretionary: number;
   // Benefits applied (per-program monthly benefit actually used in this calc)

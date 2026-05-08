@@ -196,7 +196,7 @@ export function CityComparison({
                 </div>
                 <div style={{ borderTop: `1px solid ${T.border}`, marginTop: 18, paddingTop: 14 }}>
                   <div style={{ fontSize: rem(11), color: T.inkMuted, letterSpacing: '0.12em' }}>
-                    DISCRETIONARY / MO
+                    SURPLUS / MO
                   </div>
                   <div
                     style={{

@@ -33,14 +33,19 @@ export function StatRow({ result }: { result: BudgetResult }) {
         accent={T.positive}
       />
       <Stat
-        label="Monthly expenses"
-        value={fmt(result.totalExpenses)}
-        sub={`Household of ${result.householdSize}`}
+        label="Essentials / mo"
+        value={fmt(result.essentialExpenses)}
+        sub="Housing, food at home, utilities, healthcare, childcare, baseline transit"
       />
       <Stat
-        label="Discretionary"
+        label="Lifestyle / mo"
+        value={fmt(result.lifestyleExpenses)}
+        sub="Dining out, entertainment, vehicle upgrades, apparel"
+      />
+      <Stat
+        label="Surplus / mo"
         value={fmtSigned(result.discretionary)}
-        sub={sustainable ? 'Per month, after needs' : 'Shortfall — unsustainable'}
+        sub={sustainable ? 'After essentials AND lifestyle' : 'Shortfall — unsustainable'}
         accent={sustainable ? T.positive : T.accent}
       />
     </div>
@@ -63,10 +68,12 @@ export function StatusBanner({ result }: { result: BudgetResult }) {
     >
       {sustainable ? (
         <>
-          <strong style={{ color: T.positive }}>Sustainable.</strong> After all essentials, this
-          household has <strong>{fmt(result.discretionary)}/month</strong> (
-          {fmt(result.annualDiscretionary)}/yr) for savings, vacations, retirement, and personal
-          spending.
+          <strong style={{ color: T.positive }}>Sustainable.</strong> After essentials, this
+          household has <strong>{fmt(result.discretionaryIncome)}/month</strong> of discretionary
+          income — of which the modeled lifestyle spends{' '}
+          <strong>{fmt(result.lifestyleExpenses)}</strong> (dining out, entertainment, etc.),
+          leaving <strong>{fmt(result.discretionary)}/mo</strong> ({fmt(result.annualDiscretionary)}
+          /yr) of surplus for savings, vacations, retirement, and the rest.
         </>
       ) : (
         <>
