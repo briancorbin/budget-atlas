@@ -12,6 +12,7 @@ import {
   type SharedConfig,
 } from '@/lib/configShare';
 import { Masthead } from './Masthead';
+import { MethodologyNote } from './MethodologyNote';
 import { CustomizePanel, type InputsState } from './Inputs';
 import { ShareLink } from './ShareLink';
 import { StatRow, StatusBanner } from './Summary';
@@ -228,6 +229,7 @@ export function BudgetExplorer() {
       <PageNav sections={PAGE_NAV_SECTIONS} />
       <div style={{ maxWidth: 1240, margin: '0 auto' }}>
         <Masthead />
+        <MethodologyNote />
         <section id="customize" style={{ scrollMarginTop: 24 }}>
           <CustomizePanel {...inputState} />
         </section>

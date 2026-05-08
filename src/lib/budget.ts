@@ -13,21 +13,117 @@ import {
 
 /**
  * Per-line categorization for the essentials vs. lifestyle split (#203).
- * Keys are the labels used in `BudgetResult.expenses`. The combined
- * "Groceries" line is gray-zone — it sums the essential foodAtHome with
- * the lifestyle foodAway, but the SNAP offset comes off foodAtHome
- * specifically; we file the bundle under 'essential' since SNAP
- * eligibility implies the food-essential portion dominates for those
- * households. "Transportation" is similarly bundled — for transit
- * cities with no kids it's pure transit pass (essential); otherwise
- * it includes vehiclePurchase (lifestyle), so we file it under
- * 'mixed'. UI may treat 'mixed' as essential or break the line down.
+ * Keys are the labels used in `BudgetResult.expenses` — granular sub-
+ * lines, not rolled-up parents. Food and transportation get split into
+ * their constituent lines so each one lands cleanly in 'essential' or
+ * 'lifestyle': 'Food at home' is essential, 'Food away' is lifestyle;
+ * 'Transit' / 'Gasoline' / 'Vehicle (insurance & maint.)' are essential,
+ * 'Vehicle (purchase)' is lifestyle. The ExpenseBreakdown component
+ * groups these under "Mixed" rollups in the UI when both kinds appear.
+ *
+ * Apparel and Personal Care are gray-zone (the BLS lines bundle
+ * essentials with discretionary), filed as lifestyle because the
+ * discretionary share dominates spending in those categories.
  */
-export const EXPENSE_CATEGORY: Record<string, 'essential' | 'lifestyle' | 'mixed'> = {
+/**
+ * Per-line source attribution. Drives the small "source: X" label in
+ * the detail-view UI so a reader can tell at a glance whether a number
+ * came from BLS CEX, a commercial dataset, or a hand-tuned formula.
+ *
+ * Healthcare is mixed: the premium component comes from KFF (reference
+ * tier), the OOP component from BLS CEX (primary tier). Both are
+ * surfaced.
+ *
+ * Audit gaps: Phone & Internet, Insurance, and Transit currently
+ * carry no formal source (Phone+Internet and Insurance are hand
+ * formulas in this file; Transit is a per-city curated value in
+ * cityData with no published source citation). These are flagged as
+ * `tier: 'none'` so the UI can render them honestly rather than
+ * pretending they're cited.
+ */
+export interface ExpenseSource {
+  label: string;
+  /**
+   * The visual tier here labels how a *line* is sourced (not just the
+   * tier of a single source). Single-source lines use the underlying
+   * source's tier (primary / reference / commercial). Lines that
+   * combine multiple sources use 'mixed'. Lines without a formal
+   * source use 'none'. This is decoupled from `Source.tier` in
+   * sources.ts which classifies individual sources only.
+   */
+  tier: 'primary' | 'reference' | 'commercial' | 'mixed' | 'none';
+  /** Short description shown in the hover popover. */
+  description: string;
+}
+
+const BLS_CEX: ExpenseSource = {
+  label: 'BLS CEX',
+  tier: 'primary',
+  description:
+    'Bureau of Labor Statistics Consumer Expenditure Survey — the primary US-government dataset on household spending. We use Table 1101 (income quintiles) for the income axis and the region / division / MSA cross-tabs for the geographic axis, blended via the synthetic factor (nationalQuintile × geoAllCU/nationalAllCU).',
+};
+
+export const EXPENSE_SOURCE: Record<string, ExpenseSource> = {
+  Housing: {
+    label: 'RentCafe / Zillow',
+    tier: 'commercial',
+    description:
+      "City-specific median rents, hand-curated per city in src/data/cities.ts. RentCafe and Zillow publish monthly market data; values are rounded to the nearest $50–100. 1BR for solo / couple-no-kids, 3BR for any household with kids. Replaces BLS's 'Shelter' line, which is averaged across owners and renters and isn't useful as a renter-specific number.",
+  },
+  Utilities: BLS_CEX,
+  'Food at home': BLS_CEX,
+  'Food away': BLS_CEX,
+  Transit: {
+    label: 'Transit-agency rates',
+    tier: 'none',
+    description:
+      "Hand-curated monthly transit-pass costs per city in src/data/cities.ts (e.g. NYC OMNY $132, SF Muni $81). Sourced from each city's transit agency website but not formally cited in our sources registry — known audit gap.",
+  },
+  Gasoline: BLS_CEX,
+  'Vehicle (insurance & maint.)': BLS_CEX,
+  'Vehicle (purchase)': BLS_CEX,
+  Healthcare: {
+    label: 'KFF (premium) + BLS CEX (OOP)',
+    tier: 'mixed',
+    description:
+      'Healthcare splits two ways. The premium portion comes from KFF Employer Health Benefits Survey (worker share of an employer-sponsored plan, single vs. family). The out-of-pocket portion (deductibles, copays, drugs, supplies) comes from BLS CEX with insurance premium explicitly excluded — so KFF and BLS are added without double-counting.',
+  },
+  Childcare: {
+    label: 'Care.com',
+    tier: 'commercial',
+    description:
+      "Care.com Cost of Care Report — annual commercial survey of US childcare costs. We use the preschool monthly value × kids × 0.85 (mix-of-ages discount for after-school / part-time). Note: BLS's Education line includes a small daycare share that overlaps slightly with this — see issue #190.",
+  },
+  'Phone & Internet': {
+    label: 'Hand formula (uncited)',
+    tier: 'none',
+    description:
+      'Hand-tuned formula in lib/budget.ts: $130 baseline + $50 per second adult + $25 per kid. No published source; the values are rough averages of typical phone+internet bundles. Known audit gap — should be replaced with a cited source.',
+  },
+  Insurance: {
+    label: 'Hand formula (uncited)',
+    tier: 'none',
+    description:
+      "Hand-tuned formula for renters' / life / other personal insurance: $90 baseline + $15/kid + $40 if family. No published source. Distinct from healthcare premiums (KFF) and from BLS's 'Personal insurance and pensions' which we don't pull. Known audit gap.",
+  },
+  Apparel: BLS_CEX,
+  Entertainment: BLS_CEX,
+  'Personal Care': BLS_CEX,
+  Education: BLS_CEX,
+  'Household Operations': BLS_CEX,
+  'Housekeeping Supplies': BLS_CEX,
+  Furnishings: BLS_CEX,
+};
+
+export const EXPENSE_CATEGORY: Record<string, 'essential' | 'lifestyle'> = {
   Housing: 'essential',
   Utilities: 'essential',
-  Groceries: 'essential',
-  Transportation: 'mixed',
+  'Food at home': 'essential',
+  'Food away': 'lifestyle',
+  Transit: 'essential',
+  Gasoline: 'essential',
+  'Vehicle (insurance & maint.)': 'essential',
+  'Vehicle (purchase)': 'lifestyle',
   Healthcare: 'essential',
   Childcare: 'essential',
   'Phone & Internet': 'essential',
@@ -230,10 +326,17 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   const isTransitCity = ['nyc', 'sf', 'bos', 'dc', 'chi'].includes(city);
   const usesTransit = isTransitCity && kids === 0;
   const transitCost = usesTransit ? cityData.transit * adults : 0;
-  const gasoline = usesTransit ? 0 : cexMonthly('gasoline');
-  const vehicleOther = usesTransit ? 0 : cexMonthly('vehicleOther');
-  const vehiclePurchase = usesTransit ? 0 : cexMonthly('vehiclePurchase');
-  const transportation = transitCost + gasoline + vehicleOther + vehiclePurchase;
+  // For each car line, capture the BLS-modeled value separately from
+  // the shipped value. When `usesTransit` is true the shipped value is
+  // forced to 0 (model assumption: transit-only household has no car),
+  // but the BLS number stays available so the UI can show the
+  // model-vs-shipped comparison and explain the override.
+  const gasolineBls = cexMonthly('gasoline');
+  const vehicleOtherBls = cexMonthly('vehicleOther');
+  const vehiclePurchaseBls = cexMonthly('vehiclePurchase');
+  const gasoline = usesTransit ? 0 : gasolineBls;
+  const vehicleOther = usesTransit ? 0 : vehicleOtherBls;
+  const vehiclePurchase = usesTransit ? 0 : vehiclePurchaseBls;
 
   // Healthcare = KFF employer-plan premium (still cityData) + CEX OOP.
   // Medicaid covers both — zeros the entire line. CHIP value is the kids'
@@ -267,7 +370,7 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   const benefitsApplied: Record<string, number> = {};
   // SNAP redeems against foodAtHome only (no restaurants), so the
   // offset reduces the essential foodAtHome line; foodAway is
-  // unaffected. Keep `groceriesAfterBenefits` for the summed display.
+  // unaffected.
   let foodAtHomeAfterBenefits = foodAtHome;
   let healthcareAfterBenefits = healthcare;
 
@@ -340,7 +443,6 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   // when present (tuition, school fees). vehicleOther (insurance,
   // registration, maintenance) is essential. Per-line user override is
   // roadmap #5.
-  const groceriesAfterBenefits = foodAtHomeAfterBenefits + foodAway;
   const essentialExpenses =
     housing +
     utilities +
@@ -394,11 +496,25 @@ export function computeBudget(input: BudgetInput): BudgetResult {
     netIncome,
     monthlyNet,
     healthcarePremium,
+    // Granular line items — every key is non-overlapping, so summing
+    // values yields totalExpenses exactly. Food and Transportation are
+    // exposed as their constituent parts (foodAtHome + foodAway, and
+    // transit / gasoline / vehicleOther / vehiclePurchase) rather than
+    // pre-rolled, so the drill-down UI can show the essentials-vs-
+    // lifestyle split inside those parents. ALL keys are always present
+    // — when a category doesn't apply to the household type the value
+    // is $0 (e.g. Vehicle (purchase) for a transit-only household).
+    // expenseModelNotes below records why a $0 line is $0 so the UI
+    // can distinguish "model assumed N/A" from "BLS itself returned 0."
     expenses: {
       Housing: housing,
       Utilities: utilities,
-      Groceries: groceriesAfterBenefits,
-      Transportation: transportation,
+      'Food at home': foodAtHomeAfterBenefits,
+      'Food away': foodAway,
+      Transit: transitCost,
+      Gasoline: gasoline,
+      'Vehicle (insurance & maint.)': vehicleOther,
+      'Vehicle (purchase)': vehiclePurchase,
       Healthcare: healthcareAfterBenefits,
       Childcare: childcare,
       'Phone & Internet': phoneInternet,
@@ -410,6 +526,46 @@ export function computeBudget(input: BudgetInput): BudgetResult {
       'Household Operations': householdOperations,
       'Housekeeping Supplies': housekeepingSupplies,
       Furnishings: furnishings,
+    },
+    expenseModelNotes: {
+      // Vehicle/gasoline lines are forced to $0 for transit-only
+      // households. BLS-derived values (`*Bls`) are preserved so the
+      // detail view can show "BLS says $X, model overrode to $0
+      // because the household uses transit."
+      ...(usesTransit
+        ? {
+            Gasoline: {
+              modelValue: gasolineBls,
+              reason: 'No car modeled — transit-only household',
+            },
+            'Vehicle (insurance & maint.)': {
+              modelValue: vehicleOtherBls,
+              reason: 'No car modeled — transit-only household',
+            },
+            'Vehicle (purchase)': {
+              modelValue: vehiclePurchaseBls,
+              reason: 'No car modeled — transit-only household',
+            },
+          }
+        : {
+            // For car households, Transit is forced to $0 — no BLS
+            // counterpart since transit pass costs are sourced from
+            // cityData, not CEX. modelValue stays null.
+            Transit: {
+              modelValue: null,
+              reason: 'Modeled with a car instead of transit',
+            },
+          }),
+      // Childcare is forced to $0 when no kids; no BLS counterpart
+      // (childcare is sourced from cityData, not CEX).
+      ...(kids === 0
+        ? {
+            Childcare: {
+              modelValue: null,
+              reason: 'No kids modeled',
+            },
+          }
+        : {}),
     },
     totalExpenses,
     essentialExpenses,

@@ -209,6 +209,14 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Today every dollar is treated as W-2 wages. Add the income types that get taxed differently — Social Security, pensions and traditional 401(k), Roth withdrawals, long-term capital gains, municipal bond interest, unemployment, SE income. Likely shipped in waves; SS + retirement first.',
   },
   {
+    id: 206,
+    title: 'Marginalia (weekly notes)',
+    category: 'Transparency',
+    status: 'planned',
+    summary:
+      "Weekly-cadence microsite for project updates, time-save retros, and lessons learned — same editorial voice as the explorer. Likely static markdown at blog.thebudgetatlas.com (Cloudflare Pages). Working name 'Marginalia' (editorial-margin notes + financial-margin pun); open to alternatives (The Margin, Field Notes, Dispatches).",
+  },
+  {
     id: 21,
     title: 'Funding transparency dashboard',
     category: 'Transparency',
@@ -281,15 +289,17 @@ export const ROADMAP: readonly RoadmapItem[] = [
     startedAt: '2026-05-08',
     progress: 80,
     summary:
-      'Expand cost-of-living to ~15 BLS CEX line items with two axes: geographic (city → MSA → division → region) and income (national-quintile shape × geo factor). Schema + 2023-2024 geo data (incl. 22 MSAs) + 2024 income-quintile data all landed; the model consumes the line items end-to-end. Drill-down UI (#178) still ahead.',
+      'Expand cost-of-living to ~15+ BLS CEX line items with two axes: geographic (city → MSA → division → region) and income (national-quintile shape × geo factor). 15 line items + 2023-2024 geo data + 2024 income-quintile data all landed; model consumes them end-to-end. Still ahead: pull "Telephone services" + "Personal insurance" sub-lines (currently hand formulas), drill-down UI (#178).',
   },
   {
     id: 178,
     title: 'Drill-down monthly cost view',
     category: 'Cost of living',
-    status: 'planned',
+    status: 'in-progress',
+    startedAt: '2026-05-08',
+    progress: 75,
     summary:
-      "Condense the 15-line monthly cost-of-living view back to a scannable few rolled-up categories by default; let users expand any line to drill into its BLS CEX sub-categories (food at home vs away, premiums vs OOP, gas vs vehicle purchase vs other vehicle), with the household's income quintile and threshold context surfaced and a per-cell indicator of which geographic granularity (MSA / division / region) sourced the value. Companion to the BLS CEX line-item schema (#131) — the schema gave us the depth; this is what keeps the surface clean while still letting curious readers go deep.",
+      'Condense the 15-line monthly cost-of-living view to 7 rolled-up categories sectioned Essentials / Mixed / Lifestyle, each expandable to drill into its sub-lines. Still ahead: per-cell geographic-granularity badge (msa/division/region) using cexProvenance, and inline income-quintile context.',
   },
   {
     id: 205,
@@ -311,9 +321,8 @@ export const ROADMAP: readonly RoadmapItem[] = [
     id: 203,
     title: 'Essentials vs. lifestyle split',
     category: 'Cost of living',
-    status: 'in-progress',
-    startedAt: '2026-05-08',
-    progress: 80,
+    status: 'shipped',
+    shippedAt: '2026-05-08',
     summary:
       "Today's 'Discretionary' line is misnamed: it's the surplus AFTER deducting every line including dining out and entertainment, not income minus necessities. Split the BLS CEX line items into essentials (rent, utilities, groceries, healthcare, childcare, utilitarian transport) vs. lifestyle (dining out, entertainment, vehicle upgrades, fashion, furnishings) and surface two numbers: discretionary income (textbook) = take-home − essentials, and surplus = discretionary income − lifestyle. Reframes the cliff curve and unblocks the two-sided plan in #201.",
   },
@@ -321,11 +330,26 @@ export const ROADMAP: readonly RoadmapItem[] = [
     id: 202,
     title: 'Smooth CEX quintile transitions',
     category: 'Cost of living',
-    status: 'in-progress',
-    startedAt: '2026-05-08',
-    progress: 90,
+    status: 'shipped',
+    shippedAt: '2026-05-08',
     summary:
       "BLS CEX spending shape is a step function across quintile boundaries (q1Max=$29,931, q4Max=$155,924). Crossing a boundary makes modeled expenses jump, producing artifact 'pits' on the cliff curve that look identical to real benefit cliffs. Linear interpolation between published quintile means ($16,658 / $42,925 / $74,474 / $121,548 / $264,510) eliminates the steps; the income axis is now continuous.",
+  },
+  {
+    id: 208,
+    title: 'Per-line baseline comparison',
+    category: 'UX & navigation',
+    status: 'planned',
+    summary:
+      "For every expense line, show the income-quintile baseline ('average for your income') alongside the model's adjusted value ('after kids / city / lifestyle apply'), so personalization becomes visible — readers see what each input did to the number. Pairs naturally with #5 (lifestyle granularity).",
+  },
+  {
+    id: 207,
+    title: 'BLS composition cross-tab',
+    category: 'Cost of living',
+    status: 'planned',
+    summary:
+      "Pull BLS CEX Table 1502 so per-line spending varies by family type — married+kids-under-6, single parent, no kids, etc. — instead of averaging across CU types. Won't break out exact kid count (BLS tops at 'any kids') but distinguishes no-kids from kids-present scenarios. Companion to #131.",
   },
   {
     id: 201,
