@@ -94,6 +94,15 @@ const SECTION_HEADER: Record<RollupKind, { label: string; description: string }>
 interface RollupRow {
   def: RollupDef;
   total: number;
+  /**
+   * BLS-only model total — sum of each line's `modelValue` (where the
+   * model overrode it) or shipped value (where it didn't). Used in
+   * the summary card to show the model-vs-shipped comparison
+   * inline, mirroring the line-level treatment in the detail panel.
+   */
+  modelTotal: number;
+  /** Distinct reasons across all overridden lines in this rollup. */
+  overrideReasons: string[];
   lines: { label: string; value: number }[];
   color: string;
 }
@@ -126,7 +135,24 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
   const allRows: RollupRow[] = ROLLUPS.map((def, i) => {
     const lines = def.lines.map((label) => ({ label, value: result.expenses[label] ?? 0 }));
     const total = lines.reduce((s, l) => s + l.value, 0);
-    return { def, total, lines, color: PIE_COLORS[i % PIE_COLORS.length]! };
+    const reasons = new Set<string>();
+    let modelTotal = 0;
+    for (const line of lines) {
+      const note = result.expenseModelNotes[line.label];
+      if (note) reasons.add(note.reason);
+      // When modelValue is null (no BLS counterpart, e.g. Childcare
+      // sourced from cityData), fall back to the shipped value — the
+      // pure-model total can't include numbers we don't have.
+      modelTotal += note?.modelValue ?? line.value;
+    }
+    return {
+      def,
+      total,
+      modelTotal,
+      overrideReasons: Array.from(reasons),
+      lines,
+      color: PIE_COLORS[i % PIE_COLORS.length]!,
+    };
   });
   const rows: RollupRow[] = allRows
     .map((r) => ({ ...r, lines: r.lines.filter((l) => l.value > 0) }))
@@ -242,6 +268,21 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                   >
                     {fmt(hovered ? hovered.total : result.totalExpenses)}
                   </div>
+                  {hovered && Math.abs(hovered.modelTotal - hovered.total) > 0.5 && (
+                    <div
+                      style={{
+                        fontSize: rem(10),
+                        color: T.inkMuted,
+                        marginTop: 2,
+                        fontFamily: fonts.mono,
+                      }}
+                    >
+                      <span style={{ textDecoration: 'line-through' }}>
+                        {fmt(hovered.modelTotal)}
+                      </span>{' '}
+                      pure model
+                    </div>
+                  )}
                   {hovered && (
                     <div
                       style={{
@@ -354,8 +395,25 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                             {KIND_LABEL[r.def.kind]}
                           </span>
                         </div>
-                        <span style={{ fontFamily: fonts.mono, fontSize: rem(14), color: T.ink }}>
-                          {fmt(r.total)}
+                        <span
+                          style={{
+                            fontFamily: fonts.mono,
+                            fontSize: rem(14),
+                            color: T.ink,
+                            display: 'inline-flex',
+                            alignItems: 'baseline',
+                            gap: 6,
+                          }}
+                        >
+                          {Math.abs(r.modelTotal - r.total) > 0.5 && (
+                            <>
+                              <span style={{ color: T.inkMuted, textDecoration: 'line-through' }}>
+                                {fmt(r.modelTotal)}
+                              </span>
+                              <span style={{ color: T.inkMuted }}>→</span>
+                            </>
+                          )}
+                          <span>{fmt(r.total)}</span>
                         </span>
                       </div>
                       <div style={{ height: 3, background: T.bgAlt, position: 'relative' }}>
@@ -370,6 +428,18 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                           }}
                         />
                       </div>
+                      {r.overrideReasons.length > 0 && (
+                        <div
+                          style={{
+                            fontSize: rem(11),
+                            color: T.inkMuted,
+                            fontStyle: 'italic',
+                            marginTop: 4,
+                          }}
+                        >
+                          {r.overrideReasons.join(' · ')}
+                        </div>
+                      )}
                       <div
                         style={{
                           fontSize: rem(11),
