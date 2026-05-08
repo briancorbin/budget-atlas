@@ -15,6 +15,10 @@ The point is calibration over time. After 50+ entries the patterns become visibl
 
 <!-- Newest entries at the top. -->
 
+### 2026-05-07 — Figma is where AI made the impossible possible `[skill] [tooling]`
+
+I am not a professional designer. I know basics, but I'm slow, I make mistakes, and I don't organize well because I don't live in Figma every day. Claude made the impossible possible here. The Figma file — Atlas Tokens, text styles, component variants, the swag explorations, the brand mark and lockups — would not exist in this shape without AI. The plugin API is gnarly (variable axes can't be set, skew decomposes to scale+rotation, text sizing has to be set on both axes), but Claude knows the patterns and the iteration loop is fast: screenshot → eval → tweak. This is the single biggest "would not have existed at all solo" line item in the project, bigger even than the audit pipeline.
+
 ### 2026-05-07 — Some tasks are small enough to not use AI `[scope] [process]`
 
 For small changes I could do in a few seconds of manual editing, I sometimes spent more time writing the prompt + waiting 2 minutes for processing than the change itself would have taken. The output was the exact single-line edit I'd already mentally drafted. AI has a fixed overhead per round-trip (prompt drafting + model latency + reading the response); below some change-size threshold, that overhead exceeds the change. Heuristic: if I can already see the diff in my head and it's <5 lines, just type it.
