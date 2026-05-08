@@ -292,6 +292,22 @@ export const ROADMAP: readonly RoadmapItem[] = [
       "Condense the 15-line monthly cost-of-living view back to a scannable few rolled-up categories by default; let users expand any line to drill into its BLS CEX sub-categories (food at home vs away, premiums vs OOP, gas vs vehicle purchase vs other vehicle), with the household's income quintile and threshold context surfaced and a per-cell indicator of which geographic granularity (MSA / division / region) sourced the value. Companion to the BLS CEX line-item schema (#131) — the schema gave us the depth; this is what keeps the surface clean while still letting curious readers go deep.",
   },
   {
+    id: 205,
+    title: 'Expand income thermometer',
+    category: 'Geography',
+    status: 'planned',
+    summary:
+      'Expand the income thermometer (#187) beyond a fixed national + regional view: scope toggles (national / region / state / MSA where available), comparison mode (Midwest vs. NYC, two cities side-by-side), richer per-scope anchors (median + mean + percentile floors).',
+  },
+  {
+    id: 204,
+    title: 'State-level median income marker',
+    category: 'Geography',
+    status: 'planned',
+    summary:
+      'The income-position thermometer (#187) currently overlays the BLS Census-region average ($94K South / $97K Midwest / $116K Northeast / $120K West). State-level is the more useful cut — Mississippi vs. Massachusetts vs. California are very different stories within their regions. Pull median household income by state from Census ACS 1-year (2024) and add a state-marker that supersedes the regional one when present. Adds the Census ACS source to the registry with a paired reviewed.tsv row.',
+  },
+  {
     id: 203,
     title: 'Essentials vs. lifestyle split',
     category: 'Cost of living',

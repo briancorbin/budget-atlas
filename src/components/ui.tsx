@@ -324,6 +324,75 @@ export function Cite({ source }: { source: Source | readonly Source[] }) {
 }
 
 /**
+ * Inline hover-gloss for terms that need a quick definition without
+ * cluttering the body text. Dotted underline + cursor:help signals
+ * hoverability; a small popover appears on mouse-enter / focus and
+ * disappears on leave / blur / Escape. Native `title=` was tried
+ * first but is too slow and browser-flaky for a visible-feedback
+ * UI affordance.
+ *
+ * Use sparingly — every glossed term costs reading flow. Reserve
+ * for genuinely-confusing distinctions (e.g. "household" actually
+ * meaning "BLS consumer unit"), not for every piece of jargon.
+ */
+export function HoverGloss({ children, gloss }: { children: ReactNode; gloss: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  return (
+    <span
+      ref={ref}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={() => setOpen(false)}
+      tabIndex={0}
+      style={{
+        position: 'relative',
+        borderBottom: `1px dotted ${T.inkSoft}`,
+        cursor: 'help',
+        outline: 'none',
+      }}
+    >
+      {children}
+      {open && (
+        <span
+          role="tooltip"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 6px)',
+            left: 0,
+            zIndex: 10,
+            width: 320,
+            maxWidth: '90vw',
+            padding: '10px 12px',
+            background: T.surface,
+            border: `1px solid ${T.border}`,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+            fontFamily: fonts.body,
+            fontSize: rem(12),
+            lineHeight: 1.5,
+            color: T.ink,
+            fontStyle: 'normal',
+            whiteSpace: 'normal',
+          }}
+        >
+          {gloss}
+        </span>
+      )}
+    </span>
+  );
+}
+
+/**
  * Type-to-filter combobox. Renders an input that opens a popover list of
  * options, filtered by case-insensitive substring match on the option's
  * label. Keyboard support: ↑↓ to move, Enter to select, Esc to close.

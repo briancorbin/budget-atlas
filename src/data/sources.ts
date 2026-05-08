@@ -122,6 +122,14 @@ const RAW_SOURCES = {
     addedBy: 'briancorbin',
     addedAt: '2026-05-08',
   },
+  'bls-cex-region-2024': {
+    label: 'BLS CEX 2024 — Region of residence, mean income before taxes (Table 1800)',
+    url: 'https://www.bls.gov/cex/tables/calendar-year/mean.htm',
+    date: '2024',
+    tier: 'primary',
+    addedBy: 'briancorbin',
+    addedAt: '2026-05-08',
+  },
   'care-com-childcare': {
     label: 'Care.com Cost of Care Report',
     url: 'https://www.care.com/c/cost-of-care-report/',

@@ -16,6 +16,14 @@ The point is calibration over time. After 50+ entries the patterns become visibl
 
 <!-- Newest entries at the top. -->
 
+### 2026-05-08 — Leaving Claude alone with a task is kind of awesome, actually `[autonomy] [scope-setting]`
+
+Works WAY better when seeded with as much explicit direction as possible. Much less so otherwise.
+
+### 2026-05-08 — AI wall-clock time ≠ time saved from doing it on my own `[time-log] [calibration]`
+
+How long it took the AI to do the task is not equivalent to how much time it saved me from doing it on my own. It might take 30 minutes to do the thing, but I may have only spent 5 minutes with it manually going through design and PR reviews. Something we might change in our time log.
+
 ### 2026-05-08 — Claude REALLY likes backwards compatibility — gently (aggressively) push back `[trust] [process]`
 
 Claude defaults to optional fields, fallback paths, and "preserve legacy behavior" shims — even when the codebase has no external consumers. Push back when you see one.

@@ -327,6 +327,22 @@ export const QUINTILE_MEANS_2024_BEFORE_TAX: Readonly<Record<IncomeQuintile, num
   q5: 264_510,
 };
 
+/**
+ * Mean household income before taxes within each Census Bureau region
+ * (annual). Source: BLS CEX 2024 single-year Table 1800 — same row as
+ * the quintile means, sliced by region instead of by income.
+ *
+ * Used by the IncomePosition component to draw a regional-comparison
+ * marker on the quintile thermometer ("the average household in your
+ * region earns $X").
+ */
+export const REGION_MEAN_HHI_2024_BEFORE_TAX: Readonly<Record<BLSRegion, number>> = {
+  Northeast: 115_770,
+  Midwest: 97_104,
+  South: 93_814,
+  West: 120_365,
+};
+
 // ─── Line items ──────────────────────────────────────────────────────────
 
 /**
