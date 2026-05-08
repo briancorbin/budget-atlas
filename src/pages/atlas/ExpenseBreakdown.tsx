@@ -14,10 +14,12 @@ import { SectionTitle } from '@/components/ui';
  * grouping.
  *
  * Keys in `lines` must match the keys produced by `computeBudget` in
- * `result.expenses`. Lines that come back as 0 (e.g. Childcare for a
- * household with no kids, Vehicle (purchase) for a transit-city
- * resident) are dropped at render time so they don't clutter either
- * the rollup totals or the detailed view.
+ * `result.expenses`. Zero-value lines (e.g. Childcare with no kids,
+ * Vehicle (purchase) for a transit-city resident) are dropped from
+ * the summary pie + top list (so the chart doesn't render empty
+ * slices) but kept in the detailed-breakdown panel — Brian's
+ * observation that "$0 is useful info" — to show what categories
+ * the model considered for this household.
  */
 type RollupKind = 'essential' | 'mixed' | 'lifestyle';
 interface RollupDef {
