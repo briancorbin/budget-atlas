@@ -16,6 +16,10 @@ The point is calibration over time. After 50+ entries the patterns become visibl
 
 <!-- Newest entries at the top. -->
 
+### 2026-05-08 — Claude REALLY likes backwards compatibility — gently (aggressively) push back `[trust] [process]`
+
+Claude defaults to optional fields, fallback paths, and "preserve legacy behavior" shims — even when the codebase has no external consumers. Push back when you see one.
+
 ### 2026-05-08 — Scripts beat AI memory for repeated workflows `[process] [tooling]`
 
 When you want to accomplish something repeatedly — say, spawning a new worktree and symlinking memory, node_modules, and builds — create scripts where possible instead of relying on AI to remember to do these things on its own. AI drifts over time, and simplifying a big complex query into "run X script when Y happens" is easier to manage and maintain.
