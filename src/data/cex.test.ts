@@ -281,7 +281,13 @@ describe('REGION_ALLCU_SPENDING (BLS CEX 2023-2024 Table 1800)', () => {
 });
 
 describe('DIVISION_ALLCU_SPENDING (BLS CEX 2023-2024 Table 2700)', () => {
-  it('is fully populated for every division × line item', () => {
+  // The value type is `Partial<LineItemSpending>` to accommodate future
+  // vintages where BLS may suppress a cell for sample-size reasons. The
+  // 2023-2024 vintage happens to publish every division × line item we
+  // consume — this test pins that completeness for the current data so a
+  // future vintage's suppressions become visible (and the
+  // `blendCexSpending` region fallback can be exercised intentionally).
+  it('is fully populated for every division × line item (2023-2024 vintage)', () => {
     const divisions = [
       'New England',
       'Middle Atlantic',
@@ -295,7 +301,9 @@ describe('DIVISION_ALLCU_SPENDING (BLS CEX 2023-2024 Table 2700)', () => {
     ] as const;
     for (const div of divisions) {
       for (const item of BLS_CEX_LINE_ITEMS) {
-        expect(DIVISION_ALLCU_SPENDING[div][item] ?? 0).toBeGreaterThan(0);
+        const v = DIVISION_ALLCU_SPENDING[div][item];
+        expect(v, `${div} / ${item}`).toBeDefined();
+        expect(v!).toBeGreaterThan(0);
       }
     }
   });

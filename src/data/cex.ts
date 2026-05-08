@@ -417,9 +417,13 @@ export const REGION_ALLCU_SPENDING: Readonly<Record<BLSRegion, LineItemSpending>
 };
 
 /**
- * Per-division all-CU annual spending. Falls back to region when a
- * division-level row isn't published or a line item is suppressed for
- * sample-size reasons.
+ * Per-division all-CU annual spending. The 2023-2024 vintage publishes
+ * every division × every line item we consume, so the current data is
+ * fully populated (verified by the unit test). The value type stays
+ * `Partial<LineItemSpending>` to accommodate future vintages where BLS
+ * may suppress a cell for sample-size reasons (RSE > 50, etc.) — when
+ * that happens a line item will be `undefined` and `blendCexSpending`
+ * falls back to the region row.
  *
  * Source: BLS CEX 2023-2024 two-year average, Table 2700 (Census division
  * of residence).
