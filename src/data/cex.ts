@@ -26,14 +26,14 @@
  *
  * Status:
  *   - Geographic data (national all-CU, region all-CU, division all-CU)
- *     is populated from BLS CEX 2023-2024 two-year-average tables.
- *   - Income-quintile data (NATIONAL_QUINTILE_SPENDING, QUINTILE_THRESHOLDS_2024)
- *     is still zero placeholders — populates from BLS CEX 2024 single-year
- *     quintile table (Table 1101 equivalent) in a follow-up PR.
- *   - Until the income axis is populated, `cexLineItemSpending` short-
- *     circuits to 0 because `nationalQuintile === 0`. Callers should treat
- *     0 as "fall back to the legacy rolled-up field" until the schema is
- *     wired into `lib/budget.ts` end-to-end.
+ *     populated from BLS CEX 2023-2024 two-year-average tables.
+ *   - Income-quintile data (NATIONAL_QUINTILE_SPENDING,
+ *     QUINTILE_THRESHOLDS_2024) populated from BLS CEX 2024 single-year
+ *     Table 1101.
+ *   - `cexLineItemSpending` returns real numbers for every (state ×
+ *     quintile × line item) cell. Not yet wired into `lib/budget.ts` —
+ *     the existing rolled-up fields still drive the model; integration
+ *     happens behind a flag in a follow-up PR.
  */
 
 import type { StateCode } from '@/types';
@@ -157,14 +157,12 @@ export type IncomeQuintile = 'q1' | 'q2' | 'q3' | 'q4' | 'q5';
 
 /**
  * Upper-bound household gross-income thresholds (annual) defining each
- * quintile boundary, from BLS CEX Table 1101.
+ * quintile boundary. Source: BLS CEX 2024 single-year Table 1101, "Lower
+ * limit" row. BLS publishes the quintile floors (e.g. q2 starts at
+ * $29,932); we store the inclusive upper bound of the bucket below
+ * (so q1Max = q2-floor − 1).
  *
- * TODO: Populate from BLS CEX 2024 single-year quintile table (xlsx). The
- * structure here is `{ q1Max, q2Max, q3Max, q4Max }` — anything above q4Max
- * is q5. While these are all-zero placeholders, `quintileFromIncome`
- * detects the placeholder state and returns `q3` (the median bucket), so
- * the model produces sensible mid-range values during the scaffolding
- * phase rather than treating every household as q1.
+ * Anything above q4Max is q5.
  */
 export const QUINTILE_THRESHOLDS_2024: Readonly<{
   q1Max: number;
@@ -172,25 +170,15 @@ export const QUINTILE_THRESHOLDS_2024: Readonly<{
   q3Max: number;
   q4Max: number;
 }> = {
-  q1Max: 0,
-  q2Max: 0,
-  q3Max: 0,
-  q4Max: 0,
+  q1Max: 29_931, // q2 floor: $29,932
+  q2Max: 57_451, // q3 floor: $57,452
+  q3Max: 94_510, // q4 floor: $94,511
+  q4Max: 155_924, // q5 floor: $155,925
 };
 
-/**
- * Pick a household's income quintile from gross income.
- *
- * Defensively returns `q3` (the median-ish bucket) when thresholds are
- * still all-zero placeholders, so the model produces sensible-looking
- * mid-range numbers during the scaffolding phase rather than treating
- * every household as q1.
- */
+/** Pick a household's income quintile from gross income. */
 export function quintileFromIncome(grossIncome: number): IncomeQuintile {
   const t = QUINTILE_THRESHOLDS_2024;
-  if (t.q1Max === 0 && t.q2Max === 0 && t.q3Max === 0 && t.q4Max === 0) {
-    return 'q3';
-  }
   if (grossIncome <= t.q1Max) return 'q1';
   if (grossIncome <= t.q2Max) return 'q2';
   if (grossIncome <= t.q3Max) return 'q3';
@@ -245,24 +233,6 @@ export const BLS_CEX_LINE_ITEMS: readonly BLSCEXLineItem[] = [
 
 /** A spending profile across all line items, in dollars per CU per year. */
 export type LineItemSpending = Readonly<Record<BLSCEXLineItem, number>>;
-
-const ZERO_PROFILE: LineItemSpending = {
-  foodAtHome: 0,
-  foodAway: 0,
-  utilitiesElectricGas: 0,
-  utilitiesWaterPublic: 0,
-  gasoline: 0,
-  vehiclePurchase: 0,
-  vehicleOther: 0,
-  healthcareOOP: 0,
-  apparel: 0,
-  entertainment: 0,
-  personalCare: 0,
-  education: 0,
-  householdOperations: 0,
-  housekeepingSupplies: 0,
-  furnishings: 0,
-};
 
 // ─── Source data ─────────────────────────────────────────────────────────
 //
@@ -320,21 +290,115 @@ export const NATIONAL_ALLCU_SPENDING: LineItemSpending = {
 };
 
 /**
- * National per-quintile spending shape. Carries the income elasticity
- * signal in the synthetic blend: a household at the 4th quintile spends
- * `Q4_PROFILE[item] / NATIONAL_ALLCU_SPENDING[item]` times the national
- * average on `item`, regardless of geography.
+ * National per-quintile spending shape. Source: BLS CEX 2024 single-year
+ * Table 1101.
  *
- * TODO: Populate from BLS CEX 2024 single-year quintile table (Table 1101
- * equivalent). Until populated, `cexLineItemSpending` short-circuits to 0
- * for every cell because the quintile shape is zero.
+ * Carries the income elasticity signal in the synthetic blend: a household
+ * at the 4th quintile spends `q4[item] / NATIONAL_ALLCU_SPENDING[item]`
+ * times the national average on `item`, regardless of geography.
+ *
+ * Vintage note: this table is 2024 single-year while the geographic
+ * tables (NATIONAL_ALLCU_SPENDING / REGION_ALLCU_SPENDING /
+ * DIVISION_ALLCU_SPENDING) are 2023-2024 two-year averages — BLS
+ * publishes geographic detail only as 2-year averages because single-
+ * year MSA samples are too thin. The geo factor `geoAllCU /
+ * nationalAllCU` is computed entirely against 2023-2024, so it stays
+ * internally consistent. The 2024 quintile shape is then multiplied
+ * against that geo factor; differences between the 2024 single-year
+ * and 2023-2024 two-year national-CU baselines are <2% on every line
+ * item we consume, so the cross-vintage product is defensible.
+ *
+ * Education shows q1 > q2 (q1 spends $828 vs q2 $407) — not a data
+ * error. q1 includes full-time students living off loans/family who
+ * spend on tuition; q2 is mostly working-poor households without
+ * college spend. BLS publishes this as-is.
  */
 export const NATIONAL_QUINTILE_SPENDING: Readonly<Record<IncomeQuintile, LineItemSpending>> = {
-  q1: ZERO_PROFILE,
-  q2: ZERO_PROFILE,
-  q3: ZERO_PROFILE,
-  q4: ZERO_PROFILE,
-  q5: ZERO_PROFILE,
+  q1: {
+    foodAtHome: 3843,
+    foodAway: 1655,
+    utilitiesElectricGas: 1626, // 287 + 1276 + 63
+    utilitiesWaterPublic: 474,
+    gasoline: 1177,
+    vehiclePurchase: 1718,
+    vehicleOther: 1653,
+    healthcareOOP: 1292, // 661 + 416 + 215
+    apparel: 1124,
+    entertainment: 1316,
+    personalCare: 427,
+    education: 828,
+    householdOperations: 851,
+    housekeepingSupplies: 513,
+    furnishings: 1086,
+  },
+  q2: {
+    foodAtHome: 4952,
+    foodAway: 2448,
+    utilitiesElectricGas: 2191, // 410 + 1674 + 107
+    utilitiesWaterPublic: 670,
+    gasoline: 1893,
+    vehiclePurchase: 2925,
+    vehicleOther: 3019,
+    healthcareOOP: 1632, // 848 + 644 + 140
+    apparel: 1328,
+    entertainment: 2156,
+    personalCare: 659,
+    education: 407,
+    householdOperations: 1128,
+    housekeepingSupplies: 681,
+    furnishings: 1399,
+  },
+  q3: {
+    foodAtHome: 5820,
+    foodAway: 3277,
+    utilitiesElectricGas: 2367, // 458 + 1813 + 96
+    utilitiesWaterPublic: 803,
+    gasoline: 2442,
+    vehiclePurchase: 4121,
+    vehicleOther: 4018,
+    healthcareOOP: 1835, // 1063 + 572 + 200
+    apparel: 1642,
+    entertainment: 2764,
+    personalCare: 852,
+    education: 749,
+    householdOperations: 1511,
+    housekeepingSupplies: 798,
+    furnishings: 1893,
+  },
+  q4: {
+    foodAtHome: 7162,
+    foodAway: 4682,
+    utilitiesElectricGas: 2717, // 555 + 2023 + 139
+    utilitiesWaterPublic: 945,
+    gasoline: 3058,
+    vehiclePurchase: 5945,
+    vehicleOther: 5407,
+    healthcareOOP: 2335, // 1384 + 700 + 251
+    apparel: 2034,
+    entertainment: 4133,
+    personalCare: 1145,
+    education: 1353,
+    householdOperations: 2009,
+    housekeepingSupplies: 1067,
+    furnishings: 3015,
+  },
+  q5: {
+    foodAtHome: 9336,
+    foodAway: 7652,
+    utilitiesElectricGas: 3347, // 751 + 2376 + 220
+    utilitiesWaterPublic: 1236,
+    gasoline: 3477,
+    vehiclePurchase: 11938,
+    vehicleOther: 6916,
+    healthcareOOP: 3613, // 2297 + 957 + 359
+    apparel: 3872,
+    entertainment: 7660,
+    personalCare: 1802,
+    education: 4492,
+    householdOperations: 4093,
+    housekeepingSupplies: 1327,
+    furnishings: 4668,
+  },
 };
 
 /**

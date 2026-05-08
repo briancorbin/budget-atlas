@@ -10,6 +10,7 @@ import {
   NATIONAL_ALLCU_SPENDING,
   REGION_ALLCU_SPENDING,
   DIVISION_ALLCU_SPENDING,
+  NATIONAL_QUINTILE_SPENDING,
 } from './cex';
 import type { StateCode } from '@/types';
 
@@ -124,43 +125,28 @@ describe('stateToRegion', () => {
   });
 });
 
-describe('quintileFromIncome', () => {
-  it('returns q3 (median) when thresholds are placeholder zeros', () => {
-    // Until BLS Table 1101 thresholds are populated, every income returns
-    // the median bucket — sensible-looking mid-range numbers during the
-    // scaffolding phase, instead of treating every household as q1.
-    expect(quintileFromIncome(0)).toBe('q3');
-    expect(quintileFromIncome(50_000)).toBe('q3');
-    expect(quintileFromIncome(500_000)).toBe('q3');
+describe('quintileFromIncome (BLS CEX 2024 Table 1101 thresholds)', () => {
+  it('places sample incomes in the right quintile', () => {
+    // Quintile floors per BLS Table 1101 2024:
+    //   q2 ≥ $29,932, q3 ≥ $57,452, q4 ≥ $94,511, q5 ≥ $155,925
+    expect(quintileFromIncome(0)).toBe('q1');
+    expect(quintileFromIncome(20_000)).toBe('q1');
+    expect(quintileFromIncome(40_000)).toBe('q2');
+    expect(quintileFromIncome(75_000)).toBe('q3');
+    expect(quintileFromIncome(120_000)).toBe('q4');
+    expect(quintileFromIncome(200_000)).toBe('q5');
+    expect(quintileFromIncome(1_000_000)).toBe('q5');
   });
 
-  // Once thresholds are populated this test exercises the boundary logic.
-  // We re-implement the function locally with synthetic thresholds rather
-  // than mutate the module-level constant.
-  describe('with synthetic thresholds', () => {
-    function pick(
-      grossIncome: number,
-      t: { q1Max: number; q2Max: number; q3Max: number; q4Max: number },
-    ) {
-      if (grossIncome <= t.q1Max) return 'q1';
-      if (grossIncome <= t.q2Max) return 'q2';
-      if (grossIncome <= t.q3Max) return 'q3';
-      if (grossIncome <= t.q4Max) return 'q4';
-      return 'q5';
-    }
-    const T = { q1Max: 30_000, q2Max: 60_000, q3Max: 100_000, q4Max: 180_000 };
-
-    it('places income at and around quintile boundaries', () => {
-      expect(pick(15_000, T)).toBe('q1');
-      expect(pick(30_000, T)).toBe('q1'); // boundary inclusive in q1
-      expect(pick(30_001, T)).toBe('q2');
-      expect(pick(60_000, T)).toBe('q2');
-      expect(pick(80_000, T)).toBe('q3');
-      expect(pick(150_000, T)).toBe('q4');
-      expect(pick(180_000, T)).toBe('q4');
-      expect(pick(180_001, T)).toBe('q5');
-      expect(pick(1_000_000, T)).toBe('q5');
-    });
+  it('places income at and around the published quintile floors', () => {
+    expect(quintileFromIncome(29_931)).toBe('q1'); // last dollar of q1
+    expect(quintileFromIncome(29_932)).toBe('q2'); // q2 floor
+    expect(quintileFromIncome(57_451)).toBe('q2');
+    expect(quintileFromIncome(57_452)).toBe('q3');
+    expect(quintileFromIncome(94_510)).toBe('q3');
+    expect(quintileFromIncome(94_511)).toBe('q4');
+    expect(quintileFromIncome(155_924)).toBe('q4');
+    expect(quintileFromIncome(155_925)).toBe('q5');
   });
 });
 
@@ -317,15 +303,85 @@ describe('DIVISION_ALLCU_SPENDING (BLS CEX 2023-2024 Table 2700)', () => {
   });
 });
 
-describe('cexLineItemSpending (geographic-only mode)', () => {
-  it('returns 0 for every line item until income-quintile data is populated', () => {
-    // National geographic data is populated, but quintile shapes are
-    // still zero placeholders. The function short-circuits to 0 because
-    // `nationalQuintile === 0`. Callers should fall back to the legacy
-    // rolled-up fields until the income axis is wired in.
-    for (const item of BLS_CEX_LINE_ITEMS) {
-      expect(cexLineItemSpending('NY', 'q3', item)).toBe(0);
-      expect(cexLineItemSpending('CA', 'q5', item)).toBe(0);
+describe('NATIONAL_QUINTILE_SPENDING (BLS CEX 2024 Table 1101)', () => {
+  const QUINTILES = ['q1', 'q2', 'q3', 'q4', 'q5'] as const;
+
+  it('is fully populated for every quintile × line item', () => {
+    for (const q of QUINTILES) {
+      for (const item of BLS_CEX_LINE_ITEMS) {
+        expect(NATIONAL_QUINTILE_SPENDING[q][item], `${q} / ${item}`).toBeGreaterThan(0);
+      }
     }
+  });
+
+  it('matches a few known cells from BLS Table 1101', () => {
+    expect(NATIONAL_QUINTILE_SPENDING.q1.foodAtHome).toBe(3843);
+    expect(NATIONAL_QUINTILE_SPENDING.q5.foodAway).toBe(7652);
+    expect(NATIONAL_QUINTILE_SPENDING.q3.gasoline).toBe(2442);
+    expect(NATIONAL_QUINTILE_SPENDING.q4.entertainment).toBe(4133);
+  });
+
+  it('shows monotonic increase with quintile for income-elastic categories', () => {
+    // Food away, apparel, entertainment, dining — all spend more as income rises.
+    for (const item of ['foodAway', 'apparel', 'entertainment', 'foodAtHome'] as const) {
+      const series = QUINTILES.map((q) => NATIONAL_QUINTILE_SPENDING[q][item]);
+      for (let i = 0; i < series.length - 1; i++) {
+        expect(series[i]).toBeLessThan(series[i + 1]);
+      }
+    }
+  });
+
+  it('education is non-monotonic (q1 > q2) — known BLS quirk', () => {
+    // q1 includes full-time students living off loans/family who spend on
+    // tuition; q2 is mostly working-poor without college spend. Pin this
+    // so a future vintage shift is visible rather than silent.
+    expect(NATIONAL_QUINTILE_SPENDING.q1.education).toBeGreaterThan(
+      NATIONAL_QUINTILE_SPENDING.q2.education,
+    );
+  });
+
+  it('q5 spends more than 2× q1 on most line items (income elasticity)', () => {
+    // Sanity check that the top quintile's lifestyle is meaningfully
+    // different from the bottom — guards against accidental copy-paste.
+    let count = 0;
+    for (const item of BLS_CEX_LINE_ITEMS) {
+      if (NATIONAL_QUINTILE_SPENDING.q5[item] > 2 * NATIONAL_QUINTILE_SPENDING.q1[item]) {
+        count++;
+      }
+    }
+    expect(count).toBeGreaterThanOrEqual(10); // most of 15 items
+  });
+});
+
+describe('cexLineItemSpending (end-to-end with real BLS data)', () => {
+  it('returns positive non-zero values for every state × quintile × line item', () => {
+    for (const item of BLS_CEX_LINE_ITEMS) {
+      expect(cexLineItemSpending('NY', 'q3', item), `NY q3 ${item}`).toBeGreaterThan(0);
+      expect(cexLineItemSpending('CA', 'q5', item), `CA q5 ${item}`).toBeGreaterThan(0);
+      expect(cexLineItemSpending('MS', 'q1', item), `MS q1 ${item}`).toBeGreaterThan(0);
+    }
+  });
+
+  it('produces income-elastic spending — q5 > q1 in NY for dining out', () => {
+    const q1 = cexLineItemSpending('NY', 'q1', 'foodAway');
+    const q5 = cexLineItemSpending('NY', 'q5', 'foodAway');
+    expect(q5).toBeGreaterThan(q1 * 2);
+  });
+
+  it('produces geo variation — same quintile spends more in West than South on dining out', () => {
+    // West's geo factor for foodAway is ~1.19; South's is ~0.88.
+    const ca = cexLineItemSpending('CA', 'q4', 'foodAway');
+    const ms = cexLineItemSpending('MS', 'q4', 'foodAway');
+    expect(ca).toBeGreaterThan(ms);
+  });
+
+  it('matches a hand-computed worked example for NY q4 foodAway', () => {
+    // q4 nationalQuintile.foodAway = 4682
+    // NE region geo factor: 4240 / 3939 = 1.07642...
+    // Middle Atlantic division geo factor: 4231 / 3939 = 1.07413...
+    // NY is in Middle Atlantic, so the division value applies.
+    // Expected: 4682 × (4231 / 3939) ≈ 5028.6
+    const got = cexLineItemSpending('NY', 'q4', 'foodAway');
+    expect(got).toBeCloseTo(4682 * (4231 / 3939), 1);
   });
 });
