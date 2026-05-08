@@ -1,3 +1,5 @@
+import type { BLSCEXLineItem, GeoGranularity } from '@/data/cex';
+
 export type FilingStatus = 'single' | 'married' | 'head';
 export type Lifestyle = 'modest' | 'moderate' | 'comfortable';
 
@@ -188,9 +190,10 @@ export interface BudgetResult {
   // BLS CEX provenance: which geographic granularity (msa / division /
   // region) sourced each CEX-derived expense line. Surfaced in the
   // drill-down UI so readers can see "this came from your MSA" vs
-  // "...your division." Unpopulated for transit-mode transportation
-  // (not CEX) and for line items where MSA data isn't broken out.
-  cexProvenance: Readonly<Partial<Record<string, 'msa' | 'division' | 'region'>>>;
+  // "...your division." When MSA data isn't broken out for an item, the
+  // blend falls through to division (or region) and records that level.
+  // Unpopulated only for non-CEX paths (e.g. transit-mode transportation).
+  cexProvenance: Readonly<Partial<Record<BLSCEXLineItem, GeoGranularity>>>;
   // Income quintile the household landed in, per BLS Table 1101 thresholds.
   incomeQuintile: 'q1' | 'q2' | 'q3' | 'q4' | 'q5';
 }

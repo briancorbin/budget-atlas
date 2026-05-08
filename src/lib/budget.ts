@@ -191,7 +191,9 @@ export function computeBudget(input: BudgetInput): BudgetResult {
       : cexMonthly('gasoline') + cexMonthly('vehiclePurchase') + cexMonthly('vehicleOther');
 
   // Healthcare = KFF employer-plan premium (still cityData) + CEX OOP.
-  // Both zero out under Medicaid; CHIP offsets the out-of-pocket portion.
+  // Medicaid covers both — zeros the entire line. CHIP value is the kids'
+  // marginal premium share specifically (see checkChip), so the panel-side
+  // offset under CHIP only ever matches what CHIP actually replaces.
   const hasFamilyPlan = adults === 2 || kids > 0;
   const healthcarePremium = hasFamilyPlan ? cityData.healthFamily : cityData.healthSingle;
   const healthcareOOP = cexMonthly('healthcareOOP');
@@ -246,7 +248,9 @@ export function computeBudget(input: BudgetInput): BudgetResult {
 
   // Medicaid takes priority over CHIP — if Medicaid covers the household,
   // CHIP isn't separately needed (Medicaid covers kids too in this case).
-  // Medicaid zeros BOTH the premium and the OOP — CHIP only the OOP.
+  // Medicaid zeros the full healthcare line (premium + OOP). CHIP is
+  // computed from monthlyHealthcarePremium (kids' marginal premium share)
+  // and applied as a partial offset against the same line.
   let medicaidApplied = false;
   if (claimedBenefits?.has('medicaid')) {
     const med = checkMedicaid(benefitInputs);
