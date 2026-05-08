@@ -110,13 +110,6 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
   //     granular sub-lines, percentile context, geo-granularity badges)
   //     without compressing the summary view.
   const [detailOpen, setDetailOpen] = useState(false);
-  // "Show model values" reveals the BLS-derived comparison for lines
-  // where the shipped value diverges from pure-model output (e.g.
-  // transit-only households are modeled as carless, so the shipped
-  // Gasoline/Vehicle values are $0 even though BLS would say
-  // non-zero). Default off — the comparison is mostly noise unless
-  // you're actively reasoning about the model assumptions.
-  const [showModelValues, setShowModelValues] = useState(false);
   // Hover state for the pie. Drives the dynamic center label so we
   // don't need a separate floating tooltip — the center is the
   // tooltip, no fly-in animation, no collision with the static
@@ -443,31 +436,9 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
               }}
             >
               Every line item that flows into the seven rollups above, sorted by value within each
-              rollup. Lines that come back as $0 because of a model assumption (e.g. transit-only
-              households are modeled as carless; no-kids households have no childcare) are flagged
-              with the reason. Toggle "Show model values" to see what the BLS-only model would have
-              produced before those overrides.
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  fontSize: rem(12),
-                  color: T.inkSoft,
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={showModelValues}
-                  onChange={(e) => setShowModelValues(e.target.checked)}
-                  style={{ cursor: 'pointer' }}
-                />
-                Show pure-model values (BLS before our overrides)
-              </label>
+              rollup. Where the model overrides the BLS value (e.g. transit-only households are
+              modeled as carless; no-kids households have no childcare), the BLS-only value appears
+              struck through alongside the shipped value with a short reason.
             </div>
             {SECTION_ORDER.map((kind) => {
               const sectionRows = allRows.filter((r) => r.def.kind === kind);
@@ -582,7 +553,7 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                                       gap: 6,
                                     }}
                                   >
-                                    {showModelValues && isOverridden && (
+                                    {isOverridden && (
                                       <>
                                         <span
                                           style={{
