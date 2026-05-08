@@ -16,6 +16,10 @@ The point is calibration over time. After 50+ entries the patterns become visibl
 
 <!-- Newest entries at the top. -->
 
+### 2026-05-08 — AI traced a thread down and back up super effectively, surfacing a model-honesty gap `[trust] [audit]`
+
+AI helped me trace a thread down and back up super effectively, leading to the surfacing of a model-honesty gap.
+
 ### 2026-05-08 — Leaving Claude alone with a task is kind of awesome, actually `[autonomy] [scope-setting]`
 
 Works WAY better when seeded with as much explicit direction as possible. Much less so otherwise.
