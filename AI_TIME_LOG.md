@@ -6,7 +6,7 @@ The point isn't precision — it's a calibrated record over time. Backfill rows 
 
 ## Conventions
 
-- **One row per PR.** Use the PR number from `gh` so the row is easy to cross-reference.
+- **One row per PR**, ideally. Use the PR number from `gh` so the row is easy to cross-reference. Two placeholder forms are allowed: `(TBD)` for work that hasn't been opened as a PR yet (update once it lands), and `—` for non-PR meta rows (this file itself, retros, etc.).
 - **Solo est.** in hours of focused work, including the research/learning curve you'd hit cold.
 - **With AI** in hours of actual elapsed time you spent driving the work (not wall-clock).
 - **Saved** is the difference. Negative is OK and worth recording when AI cost more than it gave.
@@ -17,7 +17,7 @@ The point isn't precision — it's a calibrated record over time. Backfill rows 
 
 | Date       | PR    | Scope                                                                                                       | Category | Solo est. | With AI | Saved | Notes                                                                                                                                                                                                    |
 | ---------- | ----- | ----------------------------------------------------------------------------------------------------------- | -------- | --------: | ------: | ----: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-05-07 | —     | This file — AI_TIME_LOG.md scaffolding                                                                      | meta     |     0.75h |    0.1h | 0.65h | Recursive. The act of tracking AI savings is itself an AI-saved task.                                                                                                                                    |
+| 2026-05-07 | #169  | This file — AI_TIME_LOG.md scaffolding                                                                      | meta     |     0.75h |    0.1h | 0.65h | Recursive. The act of tracking AI savings is itself an AI-saved task.                                                                                                                                    |
 | 2026-05-07 | (TBD) | Swag page rebuild — sticker variants, pin polish, copy options panel, alt-copy shirts, lockups → Brand page | design   |        8h |    1.5h |  6.5h | Figma plugin scripting is the heaviest leverage in this project. The plugin API is gnarly and the iteration loop (screenshot → eval → tweak) is fast with AI. Cost: ~30 min on resize/rescale debugging. |
 | 2026-05-07 | #164  | Page-based file layout refactor + soften /sources broken state                                              | refactor |        5h |   0.75h | 4.25h | Cross-file rename + import update is exactly the kind of mechanical work AI compresses to nothing.                                                                                                       |
 | 2026-05-06 | #163  | Audit backend C: kill in-repo TSV churn                                                                     | infra    |        4h |    0.5h |  3.5h |                                                                                                                                                                                                          |
