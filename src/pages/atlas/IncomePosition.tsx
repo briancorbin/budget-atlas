@@ -28,12 +28,10 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
   const m = QUINTILE_MEANS_2024_BEFORE_TAX;
 
   // Equal-width quintile bands: each band is exactly 20% of the bar
-  // because each quintile is exactly 20% of US households. The earlier
-  // log10 scale put the bar's $0 anchor at position 0 and skewed the
-  // bottom four quintiles wide while compressing q5 — visually
-  // misleading. Equal-width matches the conceptual grouping (each
-  // quintile contains the same number of households) and keeps band
-  // labels readable.
+  // because each quintile is exactly 20% of US households. Tick labels
+  // below mark the dollar boundaries between bands; the bar itself is
+  // the only visual divider — there are no separate vertical boundary
+  // lines (the band-to-band color shift suffices).
   //
   // For Q5 (which is unbounded above), the within-band placement caps
   // at $500K so a $10M income doesn't visually shoot off-band — it
@@ -276,8 +274,8 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
           dollars (e.g. a $20K income lands ⅔ of the way through Q1). The Q5 visual ceiling is $500K
           so an extreme high earner pins to the right edge instead of shooting off-scale. Quintile
           floors and means from <Cite source={SOURCES['bls-cex-income-quintiles-2024']!} />;
-          regional mean from BLS CEX Table 1800 (same source family). State-level median household
-          income (Census ACS) would be a finer comparison and is on the roadmap.
+          regional mean from <Cite source={SOURCES['bls-cex-region-2024']!} />. State-level median
+          household income (Census ACS) would be a finer comparison and is on the roadmap.
         </div>
       </div>
     </div>
