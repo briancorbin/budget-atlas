@@ -95,13 +95,7 @@ The community-submission form is for **reporting problems only** — broken URLs
 
 ### Updating branding
 
-The favicons and OG share card render from SVG masters at `public/favicon.svg` and `public/og-image.svg`. Edit those, then run:
-
-```bash
-yarn render-branding
-```
-
-This regenerates all 6 PNGs via `rsvg-convert` + system fontconfig. Prerequisites are documented in `scripts/render-branding.sh`.
+The brand lives in Figma — see [BRANDING.md](BRANDING.md) for the file link, the color spec, and the vendor handoff flow. Web assets in `public/` (favicons, OG card, profile image) are PNGs exported from that Figma file. To update them, re-export the relevant frames from Figma at the sizes listed in BRANDING.md and replace the PNGs in `public/`.
 
 ## What's deliberately out of scope (for now)
 

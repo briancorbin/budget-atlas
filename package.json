@@ -19,7 +19,6 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "verify": "yarn typecheck && yarn lint && yarn format:check && yarn test",
-    "render-branding": "./scripts/render-branding.sh",
     "check-links": "./audit/links/check.sh",
     "audit:seed-issues": "node audit/links/seed-issues.mjs",
     "audit:staleness": "node audit/staleness/seed-issue.mjs",
