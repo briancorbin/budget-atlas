@@ -1,6 +1,8 @@
 # BLS Consumer Expenditure Survey — local mirrors
 
-Local copies of BLS CEX xlsx tables consumed by [`src/data/cex.ts`](../../../src/data/cex.ts) to populate the line-item cost-of-living schema (issue [#131](https://github.com/TheBudgetAtlas/thebudgetatlas/issues/131)).
+Local copies of the BLS CEX xlsx tables that back the line-item cost-of-living schema in [`src/data/cex.ts`](../../../src/data/cex.ts) (issue [#131](https://github.com/TheBudgetAtlas/thebudgetatlas/issues/131)).
+
+These mirrors are read at _extraction time_, not runtime — each data-fill PR pulls Mean rows out of an xlsx via `openpyxl`, transcribes them into the constants in `cex.ts`, and adds a paired citation in `audit/links/reviewed.tsv`. The compiled site never reads from these files.
 
 ## Why mirror these in the repo?
 
