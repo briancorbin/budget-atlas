@@ -273,6 +273,14 @@ export const ROADMAP: readonly RoadmapItem[] = [
     summary:
       "Today the model conflates two different things into a single number (cityData.healthFamily, sourced from KFF's Employer Health Benefits Survey): (a) the dollar VALUE of Medicaid/CHIP coverage when a household qualifies, and (b) the household's healthcare EXPENSE when they don't. Setting these equal makes the cliff drop on the Discretionary line equal the cliff drop on the Take-home + benefits line — they're the same magnitude, just measured from different angles. In reality the two diverge: Medicaid is meaningfully better than typical employer coverage ($0 deductible, $0 copays, broader pediatric benefits) so its real actuarial value is HIGHER than a worker would pay for an equivalent plan; AND a household losing Medicaid often lands on an ACA marketplace plan that costs MORE than the modeled employer premium. Splitting these into separate values (medicaidValue, chipValue, postCliffCost) would make the Discretionary cliff legitimately differ in size from the Take-home + benefits cliff — capturing a real economic asymmetry. Likely sources: ACA marketplace median premium data (Healthcare.gov/state exchanges), MEPS for actuarial value of Medicaid, KFF for employer comparisons.",
   },
+  {
+    id: 131,
+    title: 'BLS CEX line-item COL schema',
+    category: 'Cost of living',
+    status: 'planned',
+    summary:
+      'Expand cost-of-living from 6 rolled-up fields to ~17 BLS Consumer Expenditure Survey line items with a city → state → division → region inheritance chain, so every dollar in the breakdown traces to a specific CEX row at the most-specific available granularity.',
+  },
 ];
 
 /**
