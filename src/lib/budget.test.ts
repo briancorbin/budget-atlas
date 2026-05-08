@@ -179,6 +179,21 @@ describe('computeBudget — pinned regressions', () => {
     expect(q5.expenses['Apparel']).toBeGreaterThan(q3.expenses['Apparel']);
   });
 
+  it('income-axis is smooth across the q4→q5 boundary (no artifact step)', () => {
+    // Regression for the artifact pit at $155,924 (q4Max). Pre-smoothing
+    // the spending shape snapped from q4 to q5 the moment income crossed
+    // the boundary, producing an unrealistic step jump in expenses (and
+    // a spurious "benefits cliff" warning at incomes well past every
+    // benefit cutoff). With smoothNationalQuintile, $155K and $158K
+    // sit at very similar interpolated points along the q4-mean →
+    // q5-mean segment — the totals should agree to within ~3%.
+    const below = computeBudget(input({ incomeA: 155_000 }));
+    const above = computeBudget(input({ incomeA: 158_000 }));
+    const ratio = above.totalExpenses / below.totalExpenses;
+    expect(ratio).toBeGreaterThan(0.97);
+    expect(ratio).toBeLessThan(1.03);
+  });
+
   it('dual-earner $200K+$200K married in NYC with 2 kids: per-person FICA + city tax', () => {
     const r = computeBudget(
       input({

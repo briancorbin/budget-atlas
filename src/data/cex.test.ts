@@ -16,6 +16,8 @@ import {
   CITY_TO_MSA,
   cexLineItemSpendingForCity,
   geoGranularityFor,
+  smoothNationalQuintile,
+  QUINTILE_MEANS_2024_BEFORE_TAX,
 } from './cex';
 import type { StateCode } from '@/types';
 
@@ -370,35 +372,82 @@ describe('NATIONAL_QUINTILE_SPENDING (BLS CEX 2024 Table 1101)', () => {
   });
 });
 
+describe('smoothNationalQuintile', () => {
+  const v = { q1: 100, q2: 200, q3: 400, q4: 800, q5: 1600 };
+  const m = QUINTILE_MEANS_2024_BEFORE_TAX;
+
+  it('returns the quintile value exactly at each anchor income', () => {
+    expect(smoothNationalQuintile(m.q1, v)).toBe(100);
+    expect(smoothNationalQuintile(m.q2, v)).toBe(200);
+    expect(smoothNationalQuintile(m.q3, v)).toBe(400);
+    expect(smoothNationalQuintile(m.q4, v)).toBe(800);
+    expect(smoothNationalQuintile(m.q5, v)).toBe(1600);
+  });
+
+  it('clamps below q1-mean and above q5-mean', () => {
+    expect(smoothNationalQuintile(0, v)).toBe(100);
+    expect(smoothNationalQuintile(1_000, v)).toBe(100);
+    expect(smoothNationalQuintile(1_000_000, v)).toBe(1600);
+  });
+
+  it('linearly interpolates between adjacent anchors', () => {
+    const mid = (m.q3 + m.q4) / 2;
+    expect(smoothNationalQuintile(mid, v)).toBeCloseTo((400 + 800) / 2, 6);
+  });
+
+  it('eliminates the q4→q5 step jump that produced the artifact pit', () => {
+    // The bug from #184: at $158K (just past q4Max=$155,924) the model
+    // snapped from q4 spending to q5 spending, creating an artifact step.
+    // Smoothed: $158K is only ~25% of the way from q4-mean ($121,548) to
+    // q5-mean ($264,510), so the value should be much closer to q4 than q5.
+    const at158k = smoothNationalQuintile(158_000, v);
+    const at155k = smoothNationalQuintile(155_000, v);
+    // The two values should be within a few percent of each other —
+    // pre-smoothing they differed by 2× (q5/q4 = 1600/800).
+    const ratio = at158k / at155k;
+    expect(ratio).toBeGreaterThan(0.95);
+    expect(ratio).toBeLessThan(1.05);
+  });
+});
+
 describe('cexLineItemSpending (end-to-end with real BLS data)', () => {
-  it('returns positive non-zero values for every state × quintile × line item', () => {
+  // Use the published quintile mean incomes as test inputs — at exactly
+  // the quintile mean, the smoothed value equals that quintile's
+  // published spending, so hand-computed expectations stay valid.
+  // Reference the registry directly so these stay in lockstep if the
+  // published means are ever updated.
+  const { q1: Q1_MEAN, q3: Q3_MEAN, q4: Q4_MEAN, q5: Q5_MEAN } = QUINTILE_MEANS_2024_BEFORE_TAX;
+
+  it('returns positive non-zero values for every state × quintile-mean × line item', () => {
     for (const item of BLS_CEX_LINE_ITEMS) {
-      expect(cexLineItemSpending('NY', 'q3', item), `NY q3 ${item}`).toBeGreaterThan(0);
-      expect(cexLineItemSpending('CA', 'q5', item), `CA q5 ${item}`).toBeGreaterThan(0);
-      expect(cexLineItemSpending('MS', 'q1', item), `MS q1 ${item}`).toBeGreaterThan(0);
+      expect(cexLineItemSpending('NY', Q3_MEAN, item), `NY q3 ${item}`).toBeGreaterThan(0);
+      expect(cexLineItemSpending('CA', Q5_MEAN, item), `CA q5 ${item}`).toBeGreaterThan(0);
+      expect(cexLineItemSpending('MS', Q1_MEAN, item), `MS q1 ${item}`).toBeGreaterThan(0);
     }
   });
 
-  it('produces income-elastic spending — q5 > q1 in NY for dining out', () => {
-    const q1 = cexLineItemSpending('NY', 'q1', 'foodAway');
-    const q5 = cexLineItemSpending('NY', 'q5', 'foodAway');
+  it('produces income-elastic spending — q5-mean > q1-mean in NY for dining out', () => {
+    const q1 = cexLineItemSpending('NY', Q1_MEAN, 'foodAway');
+    const q5 = cexLineItemSpending('NY', Q5_MEAN, 'foodAway');
     expect(q5).toBeGreaterThan(q1 * 2);
   });
 
-  it('produces geo variation — same quintile spends more in West than South on dining out', () => {
+  it('produces geo variation — same income spends more in West than South on dining out', () => {
     // West's geo factor for foodAway is ~1.19; South's is ~0.88.
-    const ca = cexLineItemSpending('CA', 'q4', 'foodAway');
-    const ms = cexLineItemSpending('MS', 'q4', 'foodAway');
+    const ca = cexLineItemSpending('CA', Q4_MEAN, 'foodAway');
+    const ms = cexLineItemSpending('MS', Q4_MEAN, 'foodAway');
     expect(ca).toBeGreaterThan(ms);
   });
 
-  it('matches a hand-computed worked example for NY q4 foodAway', () => {
+  it('matches a hand-computed worked example for NY at q4-mean foodAway', () => {
+    // At grossIncome = q4 mean ($121,548), smoothNationalQuintile returns
+    // the q4 nationalQuintile value exactly — so the worked example is
+    // identical to the pre-smoothing path.
     // q4 nationalQuintile.foodAway = 4682
-    // NE region geo factor: 4240 / 3939 = 1.07642...
     // Middle Atlantic division geo factor: 4231 / 3939 = 1.07413...
     // NY is in Middle Atlantic, so the division value applies.
     // Expected: 4682 × (4231 / 3939) ≈ 5028.6
-    const got = cexLineItemSpending('NY', 'q4', 'foodAway');
+    const got = cexLineItemSpending('NY', Q4_MEAN, 'foodAway');
     expect(got).toBeCloseTo(4682 * (4231 / 3939), 1);
   });
 });
@@ -505,9 +554,15 @@ describe('CITY_TO_MSA', () => {
 
 describe('cexLineItemSpendingForCity (city-aware city → MSA → division → region)', () => {
   it('uses MSA when the city has a mapping and the MSA cell is populated', () => {
-    // foodAway: q3 nationalQuintile = 3277, NYC MSA = 4679, national = 3939.
+    // At grossIncome = q3 mean ($74,474), smoothing returns the q3 value
+    // exactly. foodAway: q3 nationalQuintile = 3277, NYC MSA = 4679, national = 3939.
     // Expected: 3277 × (4679 / 3939) ≈ 3893.4
-    const { spending, granularity } = cexLineItemSpendingForCity('nyc', 'NY', 'q3', 'foodAway');
+    const { spending, granularity } = cexLineItemSpendingForCity(
+      'nyc',
+      'NY',
+      QUINTILE_MEANS_2024_BEFORE_TAX.q3,
+      'foodAway',
+    );
     expect(spending).toBeCloseTo(3277 * (4679 / 3939), 1);
     expect(granularity).toBe('msa');
   });
@@ -518,7 +573,7 @@ describe('cexLineItemSpendingForCity (city-aware city → MSA → division → r
     const { spending, granularity } = cexLineItemSpendingForCity(
       'nyc',
       'NY',
-      'q3',
+      QUINTILE_MEANS_2024_BEFORE_TAX.q3,
       'utilitiesElectricGas',
     );
     expect(spending).toBeGreaterThan(0);
@@ -528,7 +583,12 @@ describe('cexLineItemSpendingForCity (city-aware city → MSA → division → r
   it('falls through to division when the city has no MSA mapping', () => {
     // Austin (aus) is not in CITY_TO_MSA — should use Texas division
     // (West South Central).
-    const { spending, granularity } = cexLineItemSpendingForCity('aus', 'TX', 'q4', 'foodAway');
+    const { spending, granularity } = cexLineItemSpendingForCity(
+      'aus',
+      'TX',
+      QUINTILE_MEANS_2024_BEFORE_TAX.q4,
+      'foodAway',
+    );
     expect(spending).toBeGreaterThan(0);
     expect(granularity).toBe('division');
   });

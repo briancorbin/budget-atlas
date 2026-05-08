@@ -138,13 +138,18 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   //
   // Rent (HUD/Zillow), childcare (Care.com), phone/internet flat,
   // insurance flat — these stay non-CEX with their existing sources.
+  // Income axis is smoothed across BLS quintile means — see
+  // `smoothNationalQuintile` in src/data/cex.ts. The `quintile` value
+  // below is still useful for the UI badge ("you're in q4") but no
+  // longer drives spending lookups; passing `totalIncome` directly
+  // eliminates the artifact step functions at quintile boundaries.
   const quintile = quintileFromIncome(totalIncome);
   const cexGranularity: Partial<Record<BLSCEXLineItem, GeoGranularity>> = {};
   const cexMonthly = (item: BLSCEXLineItem): number => {
     const { spending, granularity } = cexLineItemSpendingForCity(
       city,
       cityData.state,
-      quintile,
+      totalIncome,
       item,
     );
     if (granularity) cexGranularity[item] = granularity;

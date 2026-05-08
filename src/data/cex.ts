@@ -304,6 +304,29 @@ export function quintileFromIncome(grossIncome: number): IncomeQuintile {
   return 'q5';
 }
 
+/**
+ * Mean household income before taxes within each quintile (annual).
+ * Source: BLS CEX 2024 single-year Table 1101, "Income before taxes / Mean"
+ * row. These are the X-axis anchor points used to smooth the per-item
+ * spending shape across income — without them, the model produces
+ * artifact step functions at the four `QUINTILE_THRESHOLDS_2024`
+ * boundaries because BLS publishes spending as a discrete five-bucket
+ * grouping, not a continuous function of income.
+ *
+ * Used by `smoothNationalQuintile` to linearly interpolate between
+ * adjacent quintile spending values, treating each quintile's value as
+ * representative of households at that quintile's mean income. Outside
+ * the [q1-mean, q5-mean] range we clamp flat — extrapolation past the
+ * sample anchor points is a worse approximation than the boundary value.
+ */
+export const QUINTILE_MEANS_2024_BEFORE_TAX: Readonly<Record<IncomeQuintile, number>> = {
+  q1: 16_658,
+  q2: 42_925,
+  q3: 74_474,
+  q4: 121_548,
+  q5: 264_510,
+};
+
 // ─── Line items ──────────────────────────────────────────────────────────
 
 /**
@@ -1101,6 +1124,48 @@ export const MSA_ALLCU_SPENDING: Readonly<Record<BLSMSA, Partial<LineItemSpendin
 export type GeoGranularity = 'msa' | 'division' | 'region';
 
 /**
+ * Smoothly interpolate a per-line-item national spending value across
+ * income, using the published BLS quintile means as anchor points (see
+ * `QUINTILE_MEANS_2024_BEFORE_TAX`). Returns the `nationalQuintile`-
+ * equivalent value to feed into `blendCexSpending`, but as a continuous
+ * function of income rather than a five-step ladder.
+ *
+ *   - `grossIncome <= q1-mean` → q1 value (clamp).
+ *   - `grossIncome >= q5-mean` → q5 value (clamp).
+ *   - between adjacent means → linear interpolation.
+ *
+ * BLS publishes spending as a discrete grouping into 5 income buckets;
+ * the steps in that data are a reporting artifact, not a real economic
+ * discontinuity. The underlying population is continuous, so a smoothed
+ * value at any given income is a better point estimate than snapping to
+ * the bucket mean.
+ *
+ * Returns 0 if every quintile value is 0 (line item has no signal yet).
+ */
+export function smoothNationalQuintile(
+  grossIncome: number,
+  perQuintile: Readonly<Record<IncomeQuintile, number>>,
+): number {
+  const means = QUINTILE_MEANS_2024_BEFORE_TAX;
+  const order: readonly IncomeQuintile[] = ['q1', 'q2', 'q3', 'q4', 'q5'];
+  const x = Math.max(0, grossIncome);
+  if (x <= means.q1) return perQuintile.q1;
+  if (x >= means.q5) return perQuintile.q5;
+  for (let i = 0; i < order.length - 1; i++) {
+    const lo = order[i]!;
+    const hi = order[i + 1]!;
+    const xLo = means[lo];
+    const xHi = means[hi];
+    if (x >= xLo && x <= xHi) {
+      const t = (x - xLo) / (xHi - xLo);
+      return perQuintile[lo] + t * (perQuintile[hi] - perQuintile[lo]);
+    }
+  }
+  // Unreachable given the clamps above, but keep TS happy.
+  return perQuintile.q5;
+}
+
+/**
  * Pure helper for the blend math. Takes the data inputs explicitly so it
  * can be tested without wiring through module-level constants. The public
  * `cexLineItemSpending` and `cexLineItemSpendingForCity` below are the
@@ -1156,9 +1221,35 @@ export function geoGranularityFor(inputs: {
 }
 
 /**
- * Compute a single line item's annual spending for a (state × income
- * quintile × line item) cell. Uses division → region fallback (no MSA
- * input — see `cexLineItemSpendingForCity` for the city-aware path).
+ * Per-line-item quintile vector, precomputed once at module init.
+ * `computeBudget` runs in tight sweeps (the cliff curve takes ~50 income
+ * samples × ~15 line items each), so allocating a fresh `{q1..q5}`
+ * object per lookup would create avoidable GC churn. Built once here
+ * and reused by every call into `smoothNationalQuintile`.
+ */
+const QUINTILE_VECTORS: Readonly<Record<BLSCEXLineItem, Readonly<Record<IncomeQuintile, number>>>> =
+  (() => {
+    const out = {} as Record<BLSCEXLineItem, Record<IncomeQuintile, number>>;
+    for (const item of BLS_CEX_LINE_ITEMS) {
+      out[item] = {
+        q1: NATIONAL_QUINTILE_SPENDING.q1[item],
+        q2: NATIONAL_QUINTILE_SPENDING.q2[item],
+        q3: NATIONAL_QUINTILE_SPENDING.q3[item],
+        q4: NATIONAL_QUINTILE_SPENDING.q4[item],
+        q5: NATIONAL_QUINTILE_SPENDING.q5[item],
+      };
+    }
+    return out;
+  })();
+
+/**
+ * Compute a single line item's annual spending for a (state × income ×
+ * line item) cell. Uses division → region fallback (no MSA input — see
+ * `cexLineItemSpendingForCity` for the city-aware path).
+ *
+ * The income axis is *smoothed*: the published BLS quintile values are
+ * treated as anchor points at each quintile's mean income, with linear
+ * interpolation between them. See `smoothNationalQuintile` for why.
  *
  * Returns 0 when source data is unpopulated. The caller should treat 0
  * as "no signal yet" and fall back to the rolled-up legacy field rather
@@ -1166,14 +1257,14 @@ export function geoGranularityFor(inputs: {
  */
 export function cexLineItemSpending(
   state: StateCode,
-  quintile: IncomeQuintile,
+  grossIncome: number,
   item: BLSCEXLineItem,
 ): number {
   const region = stateToRegion(state);
   const division = STATE_TO_DIVISION[state];
   return blendCexSpending({
     nationalAllCU: NATIONAL_ALLCU_SPENDING[item],
-    nationalQuintile: NATIONAL_QUINTILE_SPENDING[quintile][item],
+    nationalQuintile: smoothNationalQuintile(grossIncome, QUINTILE_VECTORS[item]),
     divisionAllCU: DIVISION_ALLCU_SPENDING[division][item],
     regionAllCU: REGION_ALLCU_SPENDING[region][item],
   });
@@ -1193,7 +1284,7 @@ export function cexLineItemSpending(
 export function cexLineItemSpendingForCity(
   citySlug: string,
   state: StateCode,
-  quintile: IncomeQuintile,
+  grossIncome: number,
   item: BLSCEXLineItem,
 ): { spending: number; granularity: GeoGranularity | null } {
   const region = stateToRegion(state);
@@ -1202,7 +1293,7 @@ export function cexLineItemSpendingForCity(
   const msaAllCU = msa ? MSA_ALLCU_SPENDING[msa][item] : undefined;
   const inputs = {
     nationalAllCU: NATIONAL_ALLCU_SPENDING[item],
-    nationalQuintile: NATIONAL_QUINTILE_SPENDING[quintile][item],
+    nationalQuintile: smoothNationalQuintile(grossIncome, QUINTILE_VECTORS[item]),
     msaAllCU,
     divisionAllCU: DIVISION_ALLCU_SPENDING[division][item],
     regionAllCU: REGION_ALLCU_SPENDING[region][item],
@@ -1213,10 +1304,10 @@ export function cexLineItemSpendingForCity(
 }
 
 /** Convenience: full per-line-item profile for a (state × income) cell. */
-export function cexProfile(state: StateCode, quintile: IncomeQuintile): LineItemSpending {
+export function cexProfile(state: StateCode, grossIncome: number): LineItemSpending {
   const out = {} as Record<BLSCEXLineItem, number>;
   for (const item of BLS_CEX_LINE_ITEMS) {
-    out[item] = cexLineItemSpending(state, quintile, item);
+    out[item] = cexLineItemSpending(state, grossIncome, item);
   }
   return out;
 }
