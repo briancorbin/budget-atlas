@@ -495,6 +495,9 @@ describe('CITY_TO_MSA', () => {
 
   it('every mapped MSA exists in MSA_ALLCU_SPENDING', () => {
     for (const msa of Object.values(CITY_TO_MSA)) {
+      // `Object.values(Partial<Record<...>>)` is `(BLSMSA | undefined)[]`
+      // even though the runtime values are all defined; narrow before use.
+      if (msa === undefined) continue;
       expect(MSA_ALLCU_SPENDING[msa]).toBeDefined();
     }
   });

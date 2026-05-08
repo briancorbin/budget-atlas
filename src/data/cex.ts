@@ -235,8 +235,12 @@ export const MSA_TO_REGION: Record<BLSMSA, BLSRegion> = {
  * Curated-city slug → BLS MSA mapping. Only includes cities with a direct
  * MSA match in the BLS 2023-2024 publication. Slugs not in this map fall
  * back to state → division → region during the geo lookup.
+ *
+ * Typed as `Partial<Record<...>>` so lookups correctly return
+ * `BLSMSA | undefined` — most slugs (rural placeholders, non-MSA cities,
+ * `xx_state` statewide-fallback ids) intentionally have no entry here.
  */
-export const CITY_TO_MSA: Readonly<Record<string, BLSMSA>> = {
+export const CITY_TO_MSA: Readonly<Partial<Record<string, BLSMSA>>> = {
   nyc: 'New York',
   bos: 'Boston',
   chi: 'Chicago',
@@ -1108,7 +1112,13 @@ export type GeoGranularity = 'msa' | 'division' | 'region';
  *
  * `geoAllCU` is the most-specific geographic average available — MSA if
  * provided and non-zero, else division if non-zero/non-undefined, else
- * region. Returns 0 when any input is zero or missing.
+ * region. `msaAllCU` and `divisionAllCU` being `undefined` is the
+ * expected fallback signal, not an error.
+ *
+ * Returns 0 when:
+ *   - `nationalAllCU` is 0 (no denominator), or
+ *   - `nationalQuintile` is 0 (income axis not populated for this cell), or
+ *   - every geographic level (MSA, division, region) is missing or 0.
  */
 export function blendCexSpending(inputs: {
   nationalAllCU: number;
