@@ -206,6 +206,7 @@ export function CliffCurve({
   }, [
     maxGross,
     stepSize,
+    incomeA,
     incomeB,
     hasPartner,
     filing,

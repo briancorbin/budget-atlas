@@ -87,6 +87,17 @@ export const SCENARIOS: Scenario[] = [
     takeaway: 'Q3 baseline — middle-class income meets BLS Q3 spending; little discretionary left',
   },
   {
+    id: 'flat_atl',
+    label: 'Median single · Atlanta',
+    income: 75000,
+    filing: 'single',
+    city: 'atl',
+    kids: 0,
+    lifestyle: 'moderate',
+    takeaway:
+      "Flat-tax illusion — GA's 5.39% owes more state tax than CA's graduated brackets at this income",
+  },
+  {
     id: 'nurse_den',
     label: 'Nurse · single · Denver',
     income: 88000,
