@@ -291,7 +291,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     startedAt: '2026-05-08',
     progress: 75,
     summary:
-      'Condense the 15-line monthly cost-of-living view back to a scannable 7 rolled-up categories sectioned by Essentials / Mixed / Lifestyle, with each rollup expandable to drill into its sub-lines (food at home vs away, transit vs gasoline vs vehicle insurance vs vehicle purchase). Pie now reads cleanly. Still ahead: per-cell geographic-granularity indicator (msa/division/region) using cexProvenance, and the income-quintile context surfaced inline.',
+      'Condense the 15-line monthly cost-of-living view to 7 rolled-up categories sectioned Essentials / Mixed / Lifestyle, each expandable to drill into its sub-lines. Still ahead: per-cell geographic-granularity badge (msa/division/region) using cexProvenance, and inline income-quintile context.',
   },
   {
     id: 205,

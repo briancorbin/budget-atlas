@@ -93,7 +93,7 @@ interface RollupRow {
 }
 
 export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   // Hover state for the pie. Drives the dynamic center label so we
   // don't need a separate floating tooltip — the center is the
   // tooltip, no fly-in animation, no collision with the static
@@ -294,9 +294,18 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                 </div>
                 {sectionRows.map((r, i) => {
                   const pct = r.total / result.totalExpenses;
-                  const pctIncome = r.total / result.monthlyNet;
+                  // monthlyNet can be 0 for unemployed scenarios — guard
+                  // against Infinity% / NaN%. Show an em dash when there's
+                  // no take-home to compare against.
+                  const pctIncome = result.monthlyNet > 0 ? r.total / result.monthlyNet : null;
                   const isExpandable = r.lines.length > 1;
                   const isExpanded = expanded.has(r.def.id);
+                  // Non-expandable rows render as a static <div>, not a
+                  // disabled <button> — assistive tech announces disabled
+                  // buttons as "unavailable" and skips them in keyboard
+                  // navigation, which is wrong for rows that simply
+                  // aren't collapsible.
+                  const RowTag = isExpandable ? 'button' : ('div' as const);
                   return (
                     <div
                       key={r.def.id}
@@ -304,11 +313,14 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                         borderBottom: i < sectionRows.length - 1 ? `1px solid ${T.border}` : 'none',
                       }}
                     >
-                      <button
-                        type="button"
-                        onClick={isExpandable ? () => toggle(r.def.id) : undefined}
-                        disabled={!isExpandable}
-                        aria-expanded={isExpandable ? isExpanded : undefined}
+                      <RowTag
+                        {...(isExpandable
+                          ? {
+                              type: 'button' as const,
+                              onClick: () => toggle(r.def.id),
+                              'aria-expanded': isExpanded,
+                            }
+                          : {})}
                         style={{
                           display: 'block',
                           width: '100%',
@@ -389,10 +401,12 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                             fontFamily: fonts.mono,
                           }}
                         >
-                          {(pct * 100).toFixed(1)}% of expenses · {(pctIncome * 100).toFixed(1)}% of
-                          take-home
+                          {(pct * 100).toFixed(1)}% of expenses ·{' '}
+                          {pctIncome !== null
+                            ? `${(pctIncome * 100).toFixed(1)}% of take-home`
+                            : '— of take-home'}
                         </div>
-                      </button>
+                      </RowTag>
                       {isExpandable && isExpanded && (
                         <div
                           style={{
@@ -401,7 +415,7 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                             borderTop: `1px solid ${T.border}`,
                           }}
                         >
-                          {r.lines
+                          {[...r.lines]
                             .sort((a, b) => b.value - a.value)
                             .map((line) => (
                               <div
