@@ -149,6 +149,7 @@ export function findIncomePit(
       current.expenses.Healthcare +
       (current.benefitsApplied['Medicaid'] ?? 0) +
       (current.benefitsApplied['CHIP'] ?? 0),
+    monthlyHealthcarePremium: current.healthcarePremium,
     monthlyHealthcareSingle: current.cityData.healthSingle,
   };
   const programsGained: BenefitId[] = [];

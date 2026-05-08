@@ -167,6 +167,11 @@ export interface BudgetResult {
   // Expenses
   expenses: Record<string, number>;
   totalExpenses: number;
+  // Premium-only portion of the healthcare expense (KFF employer-share,
+  // monthly). The rest of the Healthcare line is CEX out-of-pocket.
+  // Surfaced so benefit checks can isolate the premium — CHIP value is
+  // the kids' premium share specifically, not premium + OOP.
+  healthcarePremium: number;
   discretionary: number;
   annualDiscretionary: number;
   // Benefits applied (per-program monthly benefit actually used in this calc)

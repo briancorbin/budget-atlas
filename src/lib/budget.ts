@@ -311,6 +311,7 @@ export function computeBudget(input: BudgetInput): BudgetResult {
     taxableIncome,
     netIncome,
     monthlyNet,
+    healthcarePremium,
     expenses: {
       Housing: housing,
       Utilities: utilities,

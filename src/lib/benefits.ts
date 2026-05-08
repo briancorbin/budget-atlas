@@ -64,12 +64,10 @@ export interface BenefitInputs {
    *  out-of-pocket, so the total is what gets eliminated). */
   monthlyHealthcareCost: number;
   /** Premium-only portion of the family healthcare cost. CHIP covers the
-   *  kids' marginal premium share — using `monthlyHealthcareCost` for
-   *  that math would inflate CHIP's value by the OOP component, which
-   *  CHIP doesn't actually replace. Falls back to `monthlyHealthcareCost`
-   *  when not provided (preserves the pre-OOP-split behavior for legacy
-   *  callers and tests). */
-  monthlyHealthcarePremium?: number;
+   *  kids' marginal premium share — using `monthlyHealthcareCost` (which
+   *  also includes OOP) for that math would inflate CHIP's value, since
+   *  CHIP doesn't actually replace OOP. */
+  monthlyHealthcarePremium: number;
   /** Adult-only (single-coverage) baseline healthcare premium, monthly.
    *  Used to isolate the kids' share for CHIP estimates. */
   monthlyHealthcareSingle: number;
@@ -255,7 +253,6 @@ export function checkChip({
   state,
   adults,
   kids,
-  monthlyHealthcareCost,
   monthlyHealthcarePremium,
   monthlyHealthcareSingle,
 }: BenefitInputs): BenefitEligibility {
@@ -284,11 +281,8 @@ export function checkChip({
   }
 
   const adultBaseline = adults === 2 ? 2 * monthlyHealthcareSingle : monthlyHealthcareSingle;
-  // CHIP replaces the kids' marginal premium share, not their OOP. Use the
-  // premium-only field when callers provide it; fall back to monthlyHealthcareCost
-  // for legacy callers (the old healthFamily was approximately premium-only).
-  const familyPremium = monthlyHealthcarePremium ?? monthlyHealthcareCost;
-  const kidsShare = Math.max(0, familyPremium - adultBaseline);
+  // CHIP replaces the kids' marginal premium share, not their OOP.
+  const kidsShare = Math.max(0, monthlyHealthcarePremium - adultBaseline);
   return {
     eligible: true,
     monthlyBenefit: Math.round(kidsShare),

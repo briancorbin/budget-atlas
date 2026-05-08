@@ -102,6 +102,7 @@ export function Benefits({
     adults: result.adults,
     kids: result.householdSize - result.adults,
     monthlyHealthcareCost: preBenefitHealthcare,
+    monthlyHealthcarePremium: result.healthcarePremium,
     monthlyHealthcareSingle: result.cityData.healthSingle,
   };
 
