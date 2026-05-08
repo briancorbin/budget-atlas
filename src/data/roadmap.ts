@@ -287,9 +287,11 @@ export const ROADMAP: readonly RoadmapItem[] = [
     id: 178,
     title: 'Drill-down monthly cost view',
     category: 'Cost of living',
-    status: 'planned',
+    status: 'in-progress',
+    startedAt: '2026-05-08',
+    progress: 75,
     summary:
-      "Condense the 15-line monthly cost-of-living view back to a scannable few rolled-up categories by default; let users expand any line to drill into its BLS CEX sub-categories (food at home vs away, premiums vs OOP, gas vs vehicle purchase vs other vehicle), with the household's income quintile and threshold context surfaced and a per-cell indicator of which geographic granularity (MSA / division / region) sourced the value. Companion to the BLS CEX line-item schema (#131) — the schema gave us the depth; this is what keeps the surface clean while still letting curious readers go deep.",
+      'Condense the 15-line monthly cost-of-living view back to a scannable 7 rolled-up categories sectioned by Essentials / Mixed / Lifestyle, with each rollup expandable to drill into its sub-lines (food at home vs away, transit vs gasoline vs vehicle insurance vs vehicle purchase). Pie now reads cleanly. Still ahead: per-cell geographic-granularity indicator (msa/division/region) using cexProvenance, and the income-quintile context surfaced inline.',
   },
   {
     id: 204,

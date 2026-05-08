@@ -23,11 +23,15 @@ import {
  * it includes vehiclePurchase (lifestyle), so we file it under
  * 'mixed'. UI may treat 'mixed' as essential or break the line down.
  */
-export const EXPENSE_CATEGORY: Record<string, 'essential' | 'lifestyle' | 'mixed'> = {
+export const EXPENSE_CATEGORY: Record<string, 'essential' | 'lifestyle'> = {
   Housing: 'essential',
   Utilities: 'essential',
-  Groceries: 'essential',
-  Transportation: 'mixed',
+  'Food at home': 'essential',
+  'Food away': 'lifestyle',
+  Transit: 'essential',
+  Gasoline: 'essential',
+  'Vehicle (insurance & maint.)': 'essential',
+  'Vehicle (purchase)': 'lifestyle',
   Healthcare: 'essential',
   Childcare: 'essential',
   'Phone & Internet': 'essential',
@@ -233,7 +237,6 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   const gasoline = usesTransit ? 0 : cexMonthly('gasoline');
   const vehicleOther = usesTransit ? 0 : cexMonthly('vehicleOther');
   const vehiclePurchase = usesTransit ? 0 : cexMonthly('vehiclePurchase');
-  const transportation = transitCost + gasoline + vehicleOther + vehiclePurchase;
 
   // Healthcare = KFF employer-plan premium (still cityData) + CEX OOP.
   // Medicaid covers both — zeros the entire line. CHIP value is the kids'
@@ -340,7 +343,6 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   // when present (tuition, school fees). vehicleOther (insurance,
   // registration, maintenance) is essential. Per-line user override is
   // roadmap #5.
-  const groceriesAfterBenefits = foodAtHomeAfterBenefits + foodAway;
   const essentialExpenses =
     housing +
     utilities +
@@ -394,11 +396,23 @@ export function computeBudget(input: BudgetInput): BudgetResult {
     netIncome,
     monthlyNet,
     healthcarePremium,
+    // Granular line items — every key is non-overlapping, so summing
+    // values yields totalExpenses exactly. Food and Transportation are
+    // exposed as their constituent parts (foodAtHome + foodAway, and
+    // transit / gasoline / vehicleOther / vehiclePurchase) rather than
+    // pre-rolled, so the drill-down UI can show the essentials-vs-
+    // lifestyle split inside those parents. Conditional keys (Transit,
+    // Gasoline, Vehicle*) drop out when not applicable to the household
+    // — transit-city childless = transit only; everyone else = car only.
     expenses: {
       Housing: housing,
       Utilities: utilities,
-      Groceries: groceriesAfterBenefits,
-      Transportation: transportation,
+      'Food at home': foodAtHomeAfterBenefits,
+      'Food away': foodAway,
+      ...(transitCost > 0 ? { Transit: transitCost } : {}),
+      ...(gasoline > 0 ? { Gasoline: gasoline } : {}),
+      ...(vehicleOther > 0 ? { 'Vehicle (insurance & maint.)': vehicleOther } : {}),
+      ...(vehiclePurchase > 0 ? { 'Vehicle (purchase)': vehiclePurchase } : {}),
       Healthcare: healthcareAfterBenefits,
       Childcare: childcare,
       'Phone & Internet': phoneInternet,

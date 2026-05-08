@@ -90,7 +90,11 @@ describe('computeBudget — benefits integration', () => {
     const withSnap = computeBudget(
       input({ incomeA: 18_000, kids: 2, filing: 'head', claimedBenefits: new Set(['snap']) }),
     );
-    expect(withSnap.expenses.Groceries).toBeLessThan(baseline.expenses.Groceries);
+    // SNAP redeems against foodAtHome only (no restaurants), so the
+    // offset reduces the essential 'Food at home' line specifically;
+    // 'Food away' stays unchanged.
+    expect(withSnap.expenses['Food at home']).toBeLessThan(baseline.expenses['Food at home']!);
+    expect(withSnap.expenses['Food away']).toBe(baseline.expenses['Food away']);
     expect(withSnap.benefitsApplied['SNAP']).toBeGreaterThan(0);
     expect(withSnap.totalBenefits).toBeGreaterThan(0);
   });
@@ -193,6 +197,14 @@ describe('computeBudget — pinned regressions', () => {
     // A moderate-income household should have *some* lifestyle spending
     // baked in — if this drops to 0, something has miscategorized.
     expect(r.lifestyleExpenses).toBeGreaterThan(100);
+    // Granular line items are exposed (not pre-rolled) so the
+    // ExpenseBreakdown drill-down can show foodAtHome vs foodAway and
+    // the transportation sub-lines. Pin that the granular keys are
+    // present and don't contain a stale rolled-up parent.
+    expect(r.expenses['Food at home']).toBeGreaterThan(0);
+    expect(r.expenses['Food away']).toBeGreaterThan(0);
+    expect(r.expenses['Groceries']).toBeUndefined();
+    expect(r.expenses['Transportation']).toBeUndefined();
   });
 
   it('income-axis is smooth across the q4→q5 boundary (no artifact step)', () => {

@@ -35,12 +35,12 @@ export function StatRow({ result }: { result: BudgetResult }) {
       <Stat
         label="Essentials / mo"
         value={fmt(result.essentialExpenses)}
-        sub="Housing, food at home, utilities, healthcare, childcare, baseline transit"
+        sub="Housing, food at home, utilities, healthcare, childcare, baseline transport"
       />
       <Stat
         label="Lifestyle / mo"
         value={fmt(result.lifestyleExpenses)}
-        sub="Dining out, entertainment, vehicle upgrades, apparel"
+        sub="Dining out, vehicle upgrades, entertainment, apparel"
       />
       <Stat
         label="Surplus / mo"
