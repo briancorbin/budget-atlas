@@ -53,6 +53,8 @@ jobs:
             run: node scripts/check-reviewed-immutable.mjs
           - name: ai-time-log-row
             run: node scripts/check-ai-time-log-row.mjs
+          - name: ai-time-log-totals
+            run: node scripts/check-ai-time-log-totals.mjs
 
     steps:
       - uses: actions/checkout@v6

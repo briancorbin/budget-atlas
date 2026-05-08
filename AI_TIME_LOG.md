@@ -11,6 +11,7 @@ The point isn't precision — it's a calibrated record over time. Backfill rows 
 - **One row per PR**, ideally. Use the PR number from `gh` so the row is easy to cross-reference. Two placeholder forms are allowed: `(TBD)` for work that hasn't been opened as a PR yet (update once it lands), and `—` for non-PR meta rows (this file itself, retros, etc.).
 - **The PR's `## AI time log` section is a _running_ estimate** while the PR is open — bump the numbers when review feedback adds another round, when scope grows, when the original guess turns out off.
 - **Pre-merge ritual: append the row in the PR itself**, not stitched in post-merge. CI (`scripts/check-ai-time-log-row.mjs`, wired in `.github/workflows/ci.yml` as `ai-time-log-row`) fails any PR that doesn't modify this file. Escape hatch for trivial PRs (typo fix, Dependabot bump, non-author contribution): include `[skip-time-log]` in any commit message in the PR.
+- **Recompute the "Running totals" section** at the bottom of this file when you add or revise rows: bump the date stamp in the section header, sum the Solo / With AI / Saved columns, recalc multiplier ≈ Solo ÷ AI. CI (`scripts/check-ai-time-log-totals.mjs`, wired as `ai-time-log-totals`) fails when declared totals drift from the row sums; tolerance is 0.01h to absorb rounding.
 - **Solo est.** in hours of focused work, including the research/learning curve you'd hit cold.
 - **With AI** in hours of actual elapsed time you spent driving the work (not wall-clock).
 - **Saved** is the difference. Negative is OK and worth recording when AI cost more than it gave.
@@ -59,12 +60,12 @@ The point isn't precision — it's a calibrated record over time. Backfill rows 
 
 <!-- Add new rows at the top (above the (pre-PR) row). Recompute the totals row when you add entries. -->
 
-## Running totals (as of 2026-05-07)
+## Running totals (as of 2026-05-08)
 
 |                    | Solo est. | With AI |      Saved |
 | ------------------ | --------: | ------: | ---------: |
-| Tracked rows above |    224.8h |   56.7h |     168.1h |
-| **Multiplier**     |           |         | **~3.96×** |
+| Tracked rows above |    227.8h |   57.2h |     170.6h |
+| **Multiplier**     |           |         | **~3.98×** |
 
 The multiplier sits around ~4× across the full project. That's lower than the ~6× you'd see looking at PR-only rows in isolation, because (a) the May 1–2 bootstrap row carries wide error bars and (b) data-verify and citation-fix work has narrower AI leverage than infra catchup. The framing "saved hours undersells made possible" matters most for the `(pre-PR)` row — without AI, the project very likely wouldn't exist at all in this shape, on this timeline.
 
