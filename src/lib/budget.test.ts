@@ -85,7 +85,7 @@ describe('computeBudget — tax math wiring', () => {
 });
 
 describe('computeBudget — benefits integration', () => {
-  it('claiming SNAP reduces the Groceries line and records the offset', () => {
+  it("claiming SNAP reduces 'Food at home' specifically (not 'Food away')", () => {
     const baseline = computeBudget(input({ incomeA: 18_000, kids: 2, filing: 'head' }));
     const withSnap = computeBudget(
       input({ incomeA: 18_000, kids: 2, filing: 'head', claimedBenefits: new Set(['snap']) }),

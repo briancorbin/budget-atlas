@@ -12,39 +12,57 @@ import { SOURCES } from '@/data/sources';
 
 /**
  * Visual placement of the household's income in the national distribution.
- * Renders a banded thermometer where each band is one BLS income quintile,
- * the boundary thresholds are labeled, and the user's income sits as a
- * dot. Uses a log scale so q1–q4 don't crush together against the long
- * q5 tail (q5 starts at $156K and stretches indefinitely).
+ * Renders a banded thermometer where each band is one BLS income quintile.
+ * Bands are equal-width — every quintile contains the same number of US
+ * households, so 20% per band matches the conceptual grouping. Within-
+ * band position is linear by dollars; Q5 (unbounded above) caps visually
+ * at $500K so an extreme high earner pins to the right edge.
  *
- * Source: BLS CEX 2024 Table 1101 (lower limits + quintile means).
+ * Source: BLS CEX 2024 Table 1101 (lower limits + quintile means) and
+ * Table 1800 (region of residence — mean income before taxes).
  */
 export function IncomePosition({ result }: { result: BudgetResult }) {
   const income = result.grossIncome;
-  // Log scale: position(x) = (log(x+1) − log(min+1)) / (log(max+1) − log(min+1))
-  // Cap at $500K so the q5 tail doesn't dominate the bar visually — the
-  // marker still places correctly above $500K, just clamped to 100%.
-  const MIN = 0;
-  const MAX = 500_000;
-  const pos = (x: number): number => {
-    const v = Math.max(MIN, Math.min(MAX, x));
-    const num = Math.log10(v + 1) - Math.log10(MIN + 1);
-    const den = Math.log10(MAX + 1) - Math.log10(MIN + 1);
-    return (num / den) * 100;
-  };
 
   const t = QUINTILE_THRESHOLDS_2024;
   const m = QUINTILE_MEANS_2024_BEFORE_TAX;
-  // Quintile zones — start at $0 for q1, end at MAX for q5. We use the
-  // *floor* of the next quintile as the visual end of the band; the
-  // dotted lines mark the boundaries.
-  const zones = [
+
+  // Equal-width quintile bands: each band is exactly 20% of the bar
+  // because each quintile is exactly 20% of US households. The earlier
+  // log10 scale put the bar's $0 anchor at position 0 and skewed the
+  // bottom four quintiles wide while compressing q5 — visually
+  // misleading. Equal-width matches the conceptual grouping (each
+  // quintile contains the same number of households) and keeps band
+  // labels readable.
+  //
+  // For Q5 (which is unbounded above), the within-band placement caps
+  // at $500K so a $10M income doesn't visually shoot off-band — it
+  // pins to the right edge instead.
+  const Q5_VISUAL_CEILING = 500_000;
+  const bands = [
     { id: 'q1', start: 0, end: t.q1Max + 1, color: '#D9C9A3' },
     { id: 'q2', start: t.q1Max + 1, end: t.q2Max + 1, color: '#C7B57F' },
     { id: 'q3', start: t.q2Max + 1, end: t.q3Max + 1, color: '#A89968' },
     { id: 'q4', start: t.q3Max + 1, end: t.q4Max + 1, color: '#8A7B4F' },
-    { id: 'q5', start: t.q4Max + 1, end: MAX, color: '#6B5E3A' },
+    { id: 'q5', start: t.q4Max + 1, end: Q5_VISUAL_CEILING, color: '#6B5E3A' },
   ];
+
+  // Map any income (or threshold value) to its 0–100% position on the
+  // bar. Each band gets exactly 20%; within-band position is linear
+  // between band.start and band.end. Above Q5_VISUAL_CEILING clamps to
+  // 100%, below $0 clamps to 0%.
+  const pos = (x: number): number => {
+    if (x <= 0) return 0;
+    if (x >= Q5_VISUAL_CEILING) return 100;
+    for (let i = 0; i < bands.length; i++) {
+      const b = bands[i]!;
+      if (x < b.end) {
+        const within = (x - b.start) / (b.end - b.start);
+        return (i + within) * 20;
+      }
+    }
+    return 100;
+  };
 
   // Where the household lands: which quintile, and how far between the
   // two adjacent quintile means. Uses the same anchor logic as
@@ -96,7 +114,7 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
               display: 'flex',
             }}
           >
-            {zones.map((z) => {
+            {bands.map((z) => {
               const w = pos(z.end) - pos(z.start);
               return (
                 <div
@@ -106,7 +124,7 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
                     background: z.color,
                     position: 'relative',
                   }}
-                  title={`${z.id.toUpperCase()}: ${fmt(z.start)} – ${z.id === 'q5' ? `$${MAX / 1000}K+` : fmt(z.end - 1)}`}
+                  title={`${z.id.toUpperCase()}: ${fmt(z.start)} – ${z.id === 'q5' ? `$${Q5_VISUAL_CEILING / 1000}K+` : fmt(z.end - 1)}`}
                 >
                   <div
                     style={{
@@ -253,11 +271,13 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
             lineHeight: 1.5,
           }}
         >
-          Bands shown on a log scale so the bottom four quintiles don't crush against the long
-          top-quintile tail. Quintile floors and means from{' '}
-          <Cite source={SOURCES['bls-cex-income-quintiles-2024']!} />; regional mean from BLS CEX
-          Table 1800 (same source family). State-level median household income (Census ACS) would be
-          a finer comparison and is on the roadmap.
+          Each band is exactly 20% of the bar — every quintile contains the same number of US
+          households, so the bands are equal-width by design. Within-band position is linear by
+          dollars (e.g. a $20K income lands ⅔ of the way through Q1). The Q5 visual ceiling is $500K
+          so an extreme high earner pins to the right edge instead of shooting off-scale. Quintile
+          floors and means from <Cite source={SOURCES['bls-cex-income-quintiles-2024']!} />;
+          regional mean from BLS CEX Table 1800 (same source family). State-level median household
+          income (Census ACS) would be a finer comparison and is on the roadmap.
         </div>
       </div>
     </div>
