@@ -10,7 +10,6 @@ import {
   NATIONAL_ALLCU_SPENDING,
   REGION_ALLCU_SPENDING,
   DIVISION_ALLCU_SPENDING,
-  BLS_CEX_GEO_SOURCES,
 } from './cex';
 import type { StateCode } from '@/types';
 
@@ -307,14 +306,6 @@ describe('DIVISION_ALLCU_SPENDING (BLS CEX 2023-2024 Table 2700)', () => {
     expect(DIVISION_ALLCU_SPENDING['New England'].foodAtHome!).toBeGreaterThan(
       REGION_ALLCU_SPENDING.Northeast.foodAtHome,
     );
-  });
-});
-
-describe('BLS_CEX_GEO_SOURCES', () => {
-  it('exports the 2023-2024 geographic source for the bibliography', () => {
-    expect(BLS_CEX_GEO_SOURCES).toHaveLength(1);
-    expect(BLS_CEX_GEO_SOURCES[0].id).toBe('bls-cex-geo-2-year-2023-2024');
-    expect(BLS_CEX_GEO_SOURCES[0].tier).toBe('primary');
   });
 });
 

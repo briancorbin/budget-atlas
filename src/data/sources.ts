@@ -106,7 +106,10 @@ const RAW_SOURCES = {
   'bls-cex-geo-2-year-2023-2024': {
     label: 'BLS CEX 2023–2024 — Region & Division (2-year average)',
     url: 'https://www.bls.gov/cex/tables/geographic/mean.htm',
-    date: '2023-2024',
+    // ISO year — latest covered year of the 2-year average. The "2023-2024"
+    // range lives in the source id and label; staleness windows / sort
+    // order key off `date`, so it stays a valid ISO year.
+    date: '2024',
     tier: 'primary',
     addedBy: 'briancorbin',
     addedAt: '2026-05-08',

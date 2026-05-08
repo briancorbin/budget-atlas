@@ -36,8 +36,7 @@
  *     wired into `lib/budget.ts` end-to-end.
  */
 
-import type { Source, StateCode } from '@/types';
-import { SOURCES } from './sources';
+import type { StateCode } from '@/types';
 
 // ─── Geographic axis ─────────────────────────────────────────────────────
 
@@ -581,11 +580,10 @@ export const DIVISION_ALLCU_SPENDING: Readonly<Record<BLSDivision, Partial<LineI
   },
 };
 
-/**
- * Sources backing the BLS CEX geographic tables consumed by this module.
- * Surfaced on the /sources page; kept in lockstep with the data above.
- */
-export const BLS_CEX_GEO_SOURCES: readonly Source[] = [SOURCES['bls-cex-geo-2-year-2023-2024']];
+// Source for the geographic tables above is `bls-cex-geo-2-year-2023-2024`,
+// surfaced on /sources directly via `Sources.tsx`. Kept out of this module
+// to avoid pulling the full `SOURCES` registry into cex.ts's import graph
+// when this file gets wired into the budget compute path.
 
 // ─── The synthetic blend ─────────────────────────────────────────────────
 
