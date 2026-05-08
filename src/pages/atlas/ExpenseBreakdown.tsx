@@ -21,10 +21,12 @@ const TIER_NAME: Record<ExpenseSource['tier'], string> = {
 };
 
 /**
- * Hover-popover source badge. The badge itself (small uppercase pill,
- * tier-colored) is the trigger — no dotted underline like HoverGloss
- * because the badge has its own visual signal. On hover/focus the
- * popover shows the tier name + the full source description.
+ * Hover-popover source dot. A small tier-colored dot next to each
+ * line label — compact and consistent in width regardless of how
+ * long the source name is (a previous text-badge version wrapped
+ * under the label for long sources like KFF+BLS, breaking the row
+ * alignment). The dot is the trigger; the popover shows the tier
+ * name + full source description on hover/focus.
  */
 function SourceBadge({ src }: { src: ExpenseSource }) {
   const [open, setOpen] = useState(false);
@@ -35,28 +37,25 @@ function SourceBadge({ src }: { src: ExpenseSource }) {
       onFocus={() => setOpen(true)}
       onBlur={() => setOpen(false)}
       tabIndex={0}
+      aria-label={`Source: ${src.label}`}
       style={{
         position: 'relative',
-        display: 'inline-block',
+        display: 'inline-flex',
+        alignItems: 'center',
         outline: 'none',
         cursor: 'help',
       }}
     >
       <span
         style={{
-          fontSize: rem(9),
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: TIER_COLOR[src.tier],
-          border: `1px solid ${TIER_COLOR[src.tier]}`,
-          padding: '0 5px',
-          borderRadius: 2,
+          width: 8,
+          height: 8,
+          borderRadius: '50%',
+          background: TIER_COLOR[src.tier],
+          display: 'inline-block',
           opacity: 0.85,
-          whiteSpace: 'nowrap',
         }}
-      >
-        {src.label}
-      </span>
+      />
       {open && (
         <span
           role="tooltip"
@@ -615,6 +614,36 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                 issue #190
               </a>
               .
+            </div>
+            {/* Source-tier legend. Each line label below carries a small
+                colored dot indicating where its number came from; hover
+                a dot for the full source name + description. */}
+            <div
+              style={{
+                display: 'flex',
+                gap: 16,
+                flexWrap: 'wrap',
+                marginBottom: 16,
+                fontSize: rem(11),
+                color: T.inkSoft,
+                fontFamily: fonts.body,
+              }}
+            >
+              <span style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}>Source:</span>
+              {(['primary', 'reference', 'commercial', 'none'] as const).map((tier) => (
+                <span key={tier} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: TIER_COLOR[tier],
+                      display: 'inline-block',
+                    }}
+                  />
+                  {TIER_NAME[tier]}
+                </span>
+              ))}
             </div>
             {SECTION_ORDER.map((kind) => {
               const sectionRows = allRows.filter((r) => r.def.kind === kind);
