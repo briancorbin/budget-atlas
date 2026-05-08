@@ -144,21 +144,6 @@ export interface BudgetInput {
    * is applied to the budget. Unknown / ineligible IDs are ignored.
    */
   claimedBenefits?: ReadonlySet<string>;
-  /**
-   * Per-line monthly spending overrides. When set, the corresponding
-   * expense line uses the user-supplied value instead of the
-   * BLS-CEX-derived modeled value. Keys must match `result.expenses`
-   * labels (e.g. `'Food away'`, `'Apparel'`); unknown keys are
-   * ignored. Set a value to `null` or omit the key to fall back to
-   * the modeled value.
-   *
-   * Use case: "I actually spend $X on dining out, not $400" — the
-   * user's lived data trumps the BLS average for that category, while
-   * everything else stays modeled. The modeled value is preserved
-   * separately as `result.modeledExpenses[key]` so the UI can show
-   * the comparison ("you: $200/mo · modeled: $400/mo").
-   */
-  expenseOverrides?: Readonly<Record<string, number>>;
 }
 
 export interface BudgetResult {
