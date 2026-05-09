@@ -293,11 +293,14 @@ describe('per-leaf lifestyle elasticities', () => {
     expect(modest.expenses.Education).toBeCloseTo(comfortable.expenses.Education!, 2);
   });
 
-  it('LIFESTYLE_ELASTICITY values stay within tier bands', () => {
-    // High elasticity ≤ 0.30 (sanity bound), Medium ≤ 0.20, Low ≤ 0.10.
-    // Just makes sure no value crept above 0.30 by accident — the tier
-    // discipline is editorial, not a hard rule, but anything above 30%
-    // implies the dial substitutes for a config decision.
+  it('LIFESTYLE_ELASTICITY values stay within the global sanity cap', () => {
+    // Single global ceiling: every elasticity in [0, 0.30]. The tier
+    // discipline (Low ±5%, Medium ±15%, High ±25%) is editorial — a
+    // future-author-readable convention in the docstring rather than
+    // a per-item enforced contract — and the per-tier bands move
+    // periodically as we recalibrate against CEX q5/q1 spreads. The
+    // single hard cap catches "did someone slip a 50% elasticity
+    // through review" without freezing the editorial calibration.
     for (const [item, elasticity] of Object.entries(LIFESTYLE_ELASTICITY)) {
       expect(elasticity).toBeGreaterThanOrEqual(0);
       expect(elasticity).toBeLessThanOrEqual(0.3);

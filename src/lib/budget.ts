@@ -322,9 +322,10 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   //
   // Each value is the ± fraction at the modest/comfortable extremes;
   // moderate (`lifestyleSign === 0`) collapses the formula to 1.0× by
-  // construction (`1 + elasticity * 0`) — pinned by the
-  // `applies per-leaf elasticities` test in budget.test.ts which
-  // asserts modest/moderate/comfortable ratios on a known line.
+  // construction (`1 + elasticity * 0`) — pinned by the "moderate dial
+  // leaves CEX-line spending at 1.0×" test in `per-leaf lifestyle
+  // elasticities` (budget.test.ts) which asserts the symmetric-midpoint
+  // property `moderate === (modest + comfortable) / 2` on known lines.
   const lifestyleSign = lifestyle === 'modest' ? -1 : lifestyle === 'comfortable' ? 1 : 0;
   const elasticityFor = (item: BLSCEXLineItem): number => LIFESTYLE_ELASTICITY[item];
   const lifestyleMultFor = (item: BLSCEXLineItem): number =>
