@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import { theme, fonts, rem } from '../theme';
-import type { Post } from '../types';
-import { PostToggle, type PostView } from '../components/PostToggle';
+import type { Post, PolishLevel } from '../types';
+import { PolishSlider } from '../components/PolishSlider';
 import { Prose } from '../components/Prose';
 import { Link } from '../components/Link';
 import { TimeLogStrip } from '../components/TimeLogStrip';
 
+// Default landing position. Medium gives readers a friendly read while
+// signaling that other levels exist on either side.
+const DEFAULT_LEVEL: PolishLevel = 'medium';
+
 export function PostPage({ post }: { post: Post }) {
-  const [view, setView] = useState<PostView>('edited');
+  const [level, setLevel] = useState<PolishLevel>(DEFAULT_LEVEL);
+  const Body = post.levels[level];
 
   return (
     <article style={{ padding: '32px 24px 60px' }}>
@@ -66,48 +71,18 @@ export function PostPage({ post }: { post: Post }) {
 
         <div
           style={{
-            display: 'flex',
-            justifyContent: 'flex-start',
             marginBottom: 28,
             paddingTop: 12,
             paddingBottom: 16,
             borderTop: `1px solid ${theme.border}`,
             borderBottom: `1px solid ${theme.border}`,
-            gap: 14,
-            alignItems: 'center',
-            flexWrap: 'wrap',
           }}
         >
-          <PostToggle view={view} onChange={setView} />
-          <span
-            style={{
-              fontFamily: fonts.mono,
-              fontSize: rem(11),
-              color: theme.inkMuted,
-              maxWidth: 420,
-            }}
-          >
-            {view === 'edited'
-              ? 'Editorial draft, copy-edited collaboratively with AI.'
-              : 'Immutable transcript — Brian’s words plus any Claude prompts that preceded them.'}
-          </span>
+          <PolishSlider value={level} onChange={setLevel} />
         </div>
 
         <Prose>
-          {view === 'edited' ? (
-            <>
-              {post.editorial()}
-              {post.fieldNotes && (
-                <>
-                  <hr />
-                  <h2 style={{ marginTop: 0 }}>Field Notes</h2>
-                  {post.fieldNotes()}
-                </>
-              )}
-            </>
-          ) : (
-            post.raw()
-          )}
+          <Body />
         </Prose>
 
         {post.coversFrom && (
