@@ -15,9 +15,14 @@ import type { BLSCEXLineItem } from '@/data/cex';
  * leave a malformed fragment in the tooltip.
  */
 function firstSentence(text: string): string {
-  const idx = text.search(/\.\s/);
-  if (idx < 0) return text;
-  return text.slice(0, idx + 1);
+  // Split at the first period that ends a real sentence — capital
+  // letter (or end of string) follows. Keeps file paths intact and
+  // abbreviations like `vs.`, `e.g.`, `i.e.` (which are followed by
+  // a space + lowercase letter) inside the first sentence. Falls
+  // back to the full text if no terminator matches.
+  const match = text.match(/\.(?=\s+[A-Z])|\.$/);
+  if (!match || match.index === undefined) return text;
+  return text.slice(0, match.index + 1);
 }
 
 /**
@@ -122,9 +127,10 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
   }
 
   // CEX-anchored leaf with a baseline available — the textbook three-step
-  // explanation. When shipped equals baseline exactly (moderate dial +
-  // zero elasticity, e.g. education) collapse the tooltip to a single
-  // line; the multi-step explanation is just noise in that case.
+  // explanation. When the lifestyle multiplier is exactly 1.0× (any
+  // moderate-dial line, OR a zero-elasticity line like Education on any
+  // dial) collapse the tooltip to a single line; the multi-step
+  // explanation is just noise in that case.
   if (baseline !== undefined && elasticity !== undefined) {
     const factor = 1 + elasticity * dialSign;
     const flat = factor === 1; // no lifestyle modulation in effect
