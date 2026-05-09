@@ -625,6 +625,16 @@ describe('cuSizeBucket', () => {
     expect(cuSizeBucket(2.7)).toBe('p2'); // floor to 2
     expect(cuSizeBucket(4.99)).toBe('p4');
   });
+
+  it('treats non-finite inputs as 1-person rather than slipping to p5plus', () => {
+    // `Math.floor(NaN) === NaN`, which falls through every numeric
+    // comparison and lands at the final return. Without an explicit
+    // guard, an upstream bug producing NaN would silently anchor the
+    // household at the largest size bucket — exactly the wrong direction.
+    expect(cuSizeBucket(NaN)).toBe('p1');
+    expect(cuSizeBucket(Infinity)).toBe('p1');
+    expect(cuSizeBucket(-Infinity)).toBe('p1');
+  });
 });
 
 describe('SIZE_ALLCU_SPENDING', () => {

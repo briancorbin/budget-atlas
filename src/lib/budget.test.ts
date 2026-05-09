@@ -243,10 +243,27 @@ describe('computeBudget — pinned regressions', () => {
 });
 
 describe('per-leaf lifestyle elasticities', () => {
-  it('moderate dial leaves CEX-line spending at 1.0× (the baseline)', () => {
+  it('moderate dial leaves CEX-line spending at 1.0× (the symmetric midpoint of modest/comfortable)', () => {
+    // The elasticity formula is `1 + elasticity * lifestyleSign` with
+    // lifestyleSign ∈ {-1, 0, +1}. So modest = baseline × (1 - e),
+    // moderate = baseline × 1, comfortable = baseline × (1 + e).
+    // That makes moderate the exact midpoint of modest and comfortable,
+    // which is the property worth pinning (deterministic execution
+    // alone passes even if the moderate multiplier were wrong).
+    const modest = computeBudget(input({ lifestyle: 'modest' }));
     const moderate = computeBudget(input({ lifestyle: 'moderate' }));
-    const moderate2 = computeBudget(input({ lifestyle: 'moderate' }));
-    expect(moderate.expenses).toEqual(moderate2.expenses);
+    const comfortable = computeBudget(input({ lifestyle: 'comfortable' }));
+    // Pick a high-elasticity line so the assertion has real signal —
+    // food-away has 0.25 elasticity so modest/comfortable straddle
+    // moderate by ±25%. If the moderate multiplier silently regressed,
+    // this would fail loudly.
+    const foodAwayMid = (modest.expenses['Food away']! + comfortable.expenses['Food away']!) / 2;
+    expect(moderate.expenses['Food away']).toBeCloseTo(foodAwayMid, 1);
+    // And on a low-elasticity line, the same midpoint relationship
+    // holds — this guards against a per-elasticity-tier regression.
+    const foodHomeMid =
+      (modest.expenses['Food at home']! + comfortable.expenses['Food at home']!) / 2;
+    expect(moderate.expenses['Food at home']).toBeCloseTo(foodHomeMid, 1);
   });
 
   it('high-elasticity lines (food away, entertainment) shift more between dial positions than low-elasticity lines (food at home, utilities)', () => {
@@ -276,11 +293,14 @@ describe('per-leaf lifestyle elasticities', () => {
     expect(modest.expenses.Education).toBeCloseTo(comfortable.expenses.Education!, 2);
   });
 
-  it('LIFESTYLE_ELASTICITY values stay within tier bands', () => {
-    // High elasticity ≤ 0.30 (sanity bound), Medium ≤ 0.20, Low ≤ 0.10.
-    // Just makes sure no value crept above 0.30 by accident — the tier
-    // discipline is editorial, not a hard rule, but anything above 30%
-    // implies the dial substitutes for a config decision.
+  it('LIFESTYLE_ELASTICITY values stay within the global sanity cap', () => {
+    // Single global ceiling: every elasticity in [0, 0.30]. The tier
+    // discipline (Low ±5%, Medium ±15%, High ±25%) is editorial — a
+    // future-author-readable convention in the docstring rather than
+    // a per-item enforced contract — and the per-tier bands move
+    // periodically as we recalibrate against CEX q5/q1 spreads. The
+    // single hard cap catches "did someone slip a 50% elasticity
+    // through review" without freezing the editorial calibration.
     for (const [item, elasticity] of Object.entries(LIFESTYLE_ELASTICITY)) {
       expect(elasticity).toBeGreaterThanOrEqual(0);
       expect(elasticity).toBeLessThanOrEqual(0.3);

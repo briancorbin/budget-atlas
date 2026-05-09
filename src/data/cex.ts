@@ -286,6 +286,11 @@ export type CUSize = 'p1' | 'p2' | 'p3' | 'p4' | 'p5plus';
  * than up.
  */
 export function cuSizeBucket(householdSize: number): CUSize {
+  // Treat NaN / Infinity as 1-person rather than letting them flow through
+  // `Math.floor(NaN) → NaN` and slip past the bucket comparisons to
+  // `p5plus` (the largest bucket). The "extrapolate down" docstring above
+  // is the principle: invalid → smallest, never largest.
+  if (!Number.isFinite(householdSize)) return 'p1';
   const n = Math.max(1, Math.floor(householdSize));
   if (n <= 1) return 'p1';
   if (n === 2) return 'p2';
@@ -1177,7 +1182,8 @@ export const MSA_ALLCU_SPENDING: Readonly<Record<BLSMSA, Partial<LineItemSpendin
  * denominator both 2024 single-year), so the size factor stays internally
  * consistent. Combining with the 2y geo factor and the 1y quintile value
  * is the same cross-vintage product the geo blend already accepts; the
- * documented <2% national-CU drift between vintages applies.
+ * documented <4% national-CU drift between vintages applies (bound
+ * tested in cex.test.ts; widened from <2% as more lines were measured).
  *
  * The Pets / Reading / Tobacco / Cash-contributions lines BLS publishes
  * in Table 1400 are intentionally not consumed (same scope as the rest
@@ -1375,9 +1381,13 @@ export function smoothNationalQuintile(
  * The size factor is opt-in: callers omit `sizeAllCU`/`sizeBaselineAllCU`
  * when they want the legacy "average CU" behavior. A 1-person household
  * gets ~0.55× scaling on diffuse lines; a 4-person household gets ~1.40×.
- * Honesty caveat: the size axis is treated as independent of income and
- * geography (synthetic-blend independence assumption). Documented per-
- * leaf in `EXPENSE_SOURCE` descriptions.
+ * Honesty caveat: the size axis is treated as independent of income
+ * and geography (the synthetic-blend independence assumption). The
+ * caveat is true in degree, not in kind — small households skew older
+ * and lower-income, larger households skew toward middle quintiles
+ * and peak earning years. Surfacing this honestly to users is a
+ * separate work-stream (MethodologyNote callout, per-leaf source
+ * descriptions); see roadmap entries on transparency.
  *
  * Returns 0 when:
  *   - `nationalAllCU` is 0 (no denominator), or
