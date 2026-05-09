@@ -347,9 +347,10 @@ export const ROADMAP: readonly RoadmapItem[] = [
     id: 207,
     title: 'BLS composition cross-tab',
     category: 'Cost of living',
-    status: 'planned',
+    status: 'shipped',
+    shippedAt: '2026-05-08',
     summary:
-      "Pull BLS CEX Table 1502 so per-line spending varies by family type — married+kids-under-6, single parent, no kids, etc. — instead of averaging across CU types. Won't break out exact kid count (BLS tops at 'any kids') but distinguishes no-kids from kids-present scenarios. Companion to #131.",
+      "Pulled BLS CEX Table 1502 as the fourth axis on the synthetic blend: family-composition (single, married no kids, married + oldest <6 / 6–17 / adult, single parent, other). Captures structural spending differences pure CU size misses — a single parent of 3 and a married couple of 4 are both 4-person CUs but spend very differently. BLS tops at 'any kids' (no exact kid count). Companion to #131; foundation for #208 / #5 / #3.",
   },
   {
     id: 201,
@@ -420,15 +421,6 @@ export const ROADMAP: readonly RoadmapItem[] = [
     shippedAt: '2026-05-08',
     summary:
       'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
-  },
-  {
-    id: 215,
-    title: 'Family-composition axis (Table 1502, #207)',
-    category: 'Cost of living',
-    status: 'shipped',
-    shippedAt: '2026-05-08',
-    summary:
-      'Added the fourth axis to the synthetic blend: family-composition (single, married no kids, married w/ kids by oldest-age band, single parent, other). Table 1502 captures structural spending differences pure CU size misses — a single parent of 3 and a married couple of 4 are both 4-person CUs by size, but spend very differently. Foundation for honest baseline comparisons (#208 / #5 drilldown) and per-child-age detail (#3) when those land. Per-child-age maps to the composition column at baseline level.',
   },
 ];
 

@@ -1725,36 +1725,6 @@ export const COMPOSITION_ALLCU_SPENDING: Readonly<Record<CompositionType, LineIt
   },
 };
 
-/**
- * Table 1502's "All consumer units" column — the denominator for the
- * composition factor. Self-normalizes within Table 1502 (same vintage
- * as `COMPOSITION_ALLCU_SPENDING`).
- */
-export const COMPOSITION_BASELINE_ALLCU: LineItemSpending = {
-  foodAtHome: 6224,
-  foodAway: 3945,
-  alcohol: 643,
-  utilitiesElectricGas: 2451,
-  utilitiesWaterPublic: 826,
-  cellularService: 1359,
-  gasoline: 2411,
-  vehiclePurchase: 5337,
-  vehicleOther: 4206,
-  vehicleInsurance: 1993,
-  vehicleMaintRepair: 984,
-  healthcareOOP: 2143,
-  apparel: 2001,
-  entertainment: 3609,
-  pets: 880,
-  personalCare: 978,
-  education: 1569,
-  householdOperations: 1921,
-  housekeepingSupplies: 877,
-  furnishings: 2414,
-  otherLodging: 1347,
-  lifeInsurance: 575,
-};
-
 export const SIZE_BASELINE_ALLCU: LineItemSpending = {
   foodAtHome: 6224,
   foodAway: 3945,
@@ -1779,6 +1749,17 @@ export const SIZE_BASELINE_ALLCU: LineItemSpending = {
   otherLodging: 1347,
   lifeInsurance: 575,
 };
+
+/**
+ * Table 1502's "All consumer units" column — the denominator for the
+ * composition factor. By construction this is the *same* population
+ * aggregate as Table 1400's All-CU column (both are 2024 single-year,
+ * both report the same national CEX universe before partitioning).
+ * Aliased to `SIZE_BASELINE_ALLCU` to make that identity explicit and
+ * to avoid the maintenance hazard of two value-for-value duplicates
+ * drifting on a future BLS vintage refresh.
+ */
+export const COMPOSITION_BASELINE_ALLCU = SIZE_BASELINE_ALLCU;
 
 // ─── The synthetic blend ─────────────────────────────────────────────────
 

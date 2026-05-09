@@ -784,13 +784,11 @@ describe('COMPOSITION_ALLCU_SPENDING', () => {
     );
   });
 
-  it('COMPOSITION_BASELINE_ALLCU values match Table 1502 All-CU column', () => {
-    // Cross-check: the baseline should match SIZE_BASELINE_ALLCU on every
-    // line item (both Tables 1502 and 1400 are 2024 single-year and the
-    // "All consumer units" column should be identical between them).
-    for (const item of BLS_CEX_LINE_ITEMS) {
-      expect(COMPOSITION_BASELINE_ALLCU[item]).toBe(SIZE_BASELINE_ALLCU[item]);
-    }
+  it('COMPOSITION_BASELINE_ALLCU is aliased to SIZE_BASELINE_ALLCU', () => {
+    // Both denominators describe the same population aggregate (CEX
+    // 2024 All-CU baseline). Aliased to one canonical object so a
+    // future BLS vintage refresh can't update one and miss the other.
+    expect(COMPOSITION_BASELINE_ALLCU).toBe(SIZE_BASELINE_ALLCU);
   });
 });
 
@@ -823,9 +821,22 @@ describe('blendCexSpending composition factor', () => {
     expect(out).toBe(2100);
   });
 
-  it('cexLineItemSpending: married-with-kids spends more on foodAtHome than single', () => {
-    const married = cexLineItemSpending('CA', 80_000, 'foodAtHome', 'p4', 'marriedKids617');
-    const single = cexLineItemSpending('CA', 80_000, 'foodAtHome', 'p1', 'singleOrOther');
-    expect(married).toBeGreaterThan(single);
+  it('cexLineItemSpending: composition argument actually moves the result (size held constant)', () => {
+    // Earlier draft compared p4 vs p1 sizes — that test would still
+    // pass even if the composition factor were ignored, because the
+    // size factor alone produces the asymmetry. Hold size constant
+    // (both 4-person CUs) and vary only composition: a married couple
+    // with kids 6–17 spends differently on foodAtHome than a single
+    // parent of 3, by a margin that's strictly attributable to the
+    // composition factor.
+    const marriedKids = cexLineItemSpending('CA', 80_000, 'foodAtHome', 'p4', 'marriedKids617');
+    const singleParent = cexLineItemSpending('CA', 80_000, 'foodAtHome', 'p4', 'singleParent');
+    // Direction we expect (married couples with kids tend to spend
+    // more at-home on food than single-parent households at the same
+    // income & size, per Table 1502). The point of the test isn't the
+    // direction per se — it's that the composition argument moves the
+    // number at all when size is fixed.
+    expect(marriedKids).not.toBeCloseTo(singleParent, 0);
+    expect(marriedKids).toBeGreaterThan(singleParent);
   });
 });
