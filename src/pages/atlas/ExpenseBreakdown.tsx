@@ -121,7 +121,12 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
   if (label === 'Healthcare') {
     const oopBaseline = result.cexBaseline['Healthcare'] ?? 0;
     const premium = result.healthcarePremium;
-    const factor = 1 + 0.05 * dialSign; // healthcareOOP elasticity is ±5%
+    // Read healthcareOOP elasticity from the central LIFESTYLE_ELASTICITY
+    // map rather than hard-coding 0.05 here — keeps the tooltip in sync
+    // if the calibration moves (e.g. PR #203's recalibration changed
+    // several lines).
+    const oopElasticity = LIFESTYLE_ELASTICITY.healthcareOOP ?? 0;
+    const factor = 1 + oopElasticity * dialSign;
     const adjustedOop = oopBaseline * factor;
     const preBenefitsTotal = adjustedOop + premium;
     const benefitsOffset = Math.max(0, preBenefitsTotal - shipped);
@@ -136,7 +141,8 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
           {dialSign !== 0 && (
             <>
               {' '}
-              × {factor.toFixed(2)} ({dialName} dial, ±5%) = <strong>{fmt(adjustedOop)}</strong>
+              × {factor.toFixed(2)} ({dialName} dial, ±{(oopElasticity * 100).toFixed(0)}%) ={' '}
+              <strong>{fmt(adjustedOop)}</strong>
             </>
           )}
           . Plus KFF Employer Health Benefits worker-share premium (family vs single by

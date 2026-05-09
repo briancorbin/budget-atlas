@@ -355,7 +355,7 @@ export function CustomizePanel(s: InputsState) {
             The full wiring (tenure axis on `BudgetInput`, gating on owner-
             only leaves, three-way mode in `expenseModelNotes`, share-link
             round-trip) is in place and tested — but the owner-only leaves
-            (Mortgage P&I, Property tax, Homeowners insurance, Maintenance)
+            (Mortgage P&I, Property tax, Homeowners insurance, Maintenance & repairs)
             are still $0 placeholders pending the actual mortgage math
             (roadmap #13). Exposing the picker today would let users flip
             into a mode where their housing line drops to $0 with nothing
