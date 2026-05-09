@@ -470,14 +470,14 @@ describe('per-leaf lifestyle elasticities', () => {
   it('high-elasticity lines (food away, entertainment) shift more between dial positions than low-elasticity lines (food at home, utilities)', () => {
     const modest = computeBudget(input({ lifestyle: 'modest' }));
     const comfortable = computeBudget(input({ lifestyle: 'comfortable' }));
-    // Food away has 0.25 elasticity, food at home has 0.05.
+    // Food away has 0.25 elasticity, food at home has 0.08 (calibrated 2026-05-08).
     // Comfortable / modest ratio for food away = 1.25/0.75 ≈ 1.667
-    // Comfortable / modest ratio for food at home = 1.05/0.95 ≈ 1.105
+    // Comfortable / modest ratio for food at home = 1.08/0.92 ≈ 1.174
     const ratioFoodAway = comfortable.expenses['Food away']! / modest.expenses['Food away']!;
     const ratioFoodHome = comfortable.expenses['Food at home']! / modest.expenses['Food at home']!;
     expect(ratioFoodAway).toBeGreaterThan(ratioFoodHome);
     expect(ratioFoodAway).toBeCloseTo(1.25 / 0.75, 2);
-    expect(ratioFoodHome).toBeCloseTo(1.05 / 0.95, 2);
+    expect(ratioFoodHome).toBeCloseTo(1.08 / 0.92, 2);
   });
 
   it('rent does not modulate with the lifestyle dial (locked at 1.0×)', () => {

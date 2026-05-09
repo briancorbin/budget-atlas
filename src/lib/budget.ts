@@ -204,62 +204,74 @@ export const EXPENSE_CATEGORY: Record<string, 'essential' | 'lifestyle'> = {
  * applied multiplier is `1 + elasticity * lifestyleSign` where
  * lifestyleSign is -1 / 0 / +1 for modest / moderate / comfortable.
  *
- * Replaces the previous global ±15-20% multiplier with per-line
- * elasticities. Justification per tier:
+ * Calibration discipline (refined 2026-05-08): elasticity should
+ * capture only the LIFESTYLE-driven spending variance — not the
+ * volume / needs variance that comes from owning more stuff at higher
+ * incomes. The CEX q5/q1 ratio per line conflates both:
  *
- *   Low (±5%) — demand-driven by household size and needs; some
- *     compression possible (cheaper grocery store, cooler thermostat,
- *     less driving) but bounded. Backed by CEX q4/q3 spreads on these
- *     lines (~10–15% across adjacent quintiles).
+ *   - Vehicle insurance q5/q1 = 3.2× looks "high elasticity" on its
+ *     face, but most of that spread is "q5 owns 2.5 cars, q1 owns
+ *     0.7 cars" — volume, not lifestyle. The household-size and
+ *     family-comp axes already capture that volume signal. The
+ *     elasticity should only modulate the within-config choice
+ *     (liability-only vs full coverage on the same car).
+ *   - Pets q5/q1 = 5× — partly volume (more pets) and partly lifestyle
+ *     (premium kibble vs generic). Mid-range elasticity captures the
+ *     lifestyle slice.
+ *   - Travel/lodging q5/q1 = 8× — both volume AND lifestyle stack
+ *     here, but the choice "staycation vs Hawaii" is a real dial knob.
  *
- *   Medium (±15%) — real lifestyle modulation but bounded by the
- *     household's actual needs. CEX spreads ~30–40% across quintiles.
+ * Tiers (calibrated against CEX q5/q1 with volume/needs share
+ * subtracted out — eyeballed, not formulaic):
  *
- *   High (±25%) — heavily discretionary; CEX q5/q1 ratios are 4–8× on
- *     these. Modest can genuinely cut deep, comfortable can balloon.
+ *   Fixed (0%) — config-driven; dial doesn't move them. `education`
+ *     is gated by school-choice (private vs public — different config).
  *
- *   Zero — driven by config (filter at the BudgetInput level), not the
- *     dial. Education is the only such CEX line today (private K–12
- *     vs public is a school-choice decision; college tuition is
- *     life-stage; the dial doesn't move it).
+ *   Low (±5–8%) — bounded compression. Cheaper grocery store, cooler
+ *     thermostat, less driving, generic brands. Real but small.
+ *
+ *   Medium (±10–20%) — real lifestyle modulation but bounded by the
+ *     household's actual needs / config. Liability-only vs full
+ *     coverage; basic vs premium plans; Walmart vs Target.
+ *
+ *   High (±25%) — heavily discretionary; choice itself can cut deep
+ *     or balloon (eat out twice a month vs four times a week;
+ *     staycation vs Hawaii).
  *
  * Non-CEX leaves (rent, healthcare premium, childcare, transit pass,
- * insurance, phone & internet) don't pass through this map — they
- * stay at 1.0× implicitly. The previous ±10% on baseRent is removed:
- * within a given city × bedroom config, "modest" means choosing fewer
- * bedrooms (a different config), not paying less for the same unit.
- * Bedroom-driven housing-footprint preferences are roadmap #16.
+ * renters insurance, home internet) don't pass through this map — they
+ * stay at 1.0× implicitly.
  */
 export const LIFESTYLE_ELASTICITY: Record<BLSCEXLineItem, number> = {
-  // Low elasticity (±5%) — demand-driven, modest compression possible
-  foodAtHome: 0.05,
-  utilitiesElectricGas: 0.05,
-  utilitiesWaterPublic: 0.05,
-  cellularService: 0.05, // bounded compression (cheaper plan)
-  gasoline: 0.05,
-  vehicleOther: 0.05, // catch-all rollup; sublines below carry the real per-line elasticities
-  vehicleMaintRepair: 0.05, // wear-driven
-  healthcareOOP: 0.05,
-  personalCare: 0.05,
-  housekeepingSupplies: 0.05,
-
-  // Medium elasticity (±15%) — real lifestyle modulation
-  apparel: 0.15,
-  furnishings: 0.15,
-  householdOperations: 0.15,
-  pets: 0.15,
-
-  // High elasticity (±25%) — heavily discretionary; CEX q5/q1 ratios 4–8×
-  foodAway: 0.25,
-  alcohol: 0.25,
-  entertainment: 0.25,
-  vehiclePurchase: 0.25,
-  otherLodging: 0.25, // travel + vacation lodging
-
-  // Fixed (0%) — contractually-fixed or config-driven; dial doesn't move them
-  vehicleInsurance: 0, // premium is contractual within renewal cycle
-  lifeInsurance: 0, // premium is contractual
+  // Fixed (0%) — config-driven
   education: 0, // private vs public is a school-choice config decision
+
+  // Low (±5–8%) — bounded compression
+  utilitiesElectricGas: 0.05, // q5/q1 2.1× — mostly home size; thermostat ~5%
+  utilitiesWaterPublic: 0.05, // q5/q1 2.6× — mostly volume
+  cellularService: 0.05, // q5/q1 2.7× — mostly plan tier (lifestyle); but fixed-monthly so bounded
+  healthcareOOP: 0.05, // need-driven; bounded compression
+  housekeepingSupplies: 0.05,
+  vehicleOther: 0.05, // catch-all residual; the splits below carry per-line elasticity
+  foodAtHome: 0.08, // q5/q1 2.4× — generic-brand vs name-brand is real
+  gasoline: 0.07, // q5/q1 3.0× — but mostly volume; lifestyle slice ~7%
+  vehicleMaintRepair: 0.07, // q5/q1 4.3× — mostly volume + vehicle age; lifestyle slice ~7%
+  vehicleInsurance: 0.05, // q5/q1 3.2× — mostly volume (more cars); lifestyle = coverage tier ~5%
+  lifeInsurance: 0.05, // q5/q1 7.7× — but mostly volume (more coverage); lifestyle = term vs whole ~5%
+
+  // Medium (±10–20%) — real lifestyle modulation
+  personalCare: 0.1, // q5/q1 4.2× — haircuts / spa range meaningfully
+  apparel: 0.15, // q5/q1 3.4× — solid lifestyle tier
+  householdOperations: 0.2, // q5/q1 4.8× — cleaners / lawn services lifestyle-elastic
+  furnishings: 0.2, // q5/q1 4.3× — IKEA vs design-store
+  pets: 0.2, // q5/q1 5.1× — premium food / grooming
+
+  // High (±25%) — heavily discretionary
+  foodAway: 0.25, // q5/q1 4.6× — frequency × restaurant tier
+  alcohol: 0.25, // q5/q1 5.7× — cheap beer vs cocktails
+  entertainment: 0.25, // q5/q1 5.8×
+  vehiclePurchase: 0.25, // q5/q1 7.0× — used Civic vs new SUV
+  otherLodging: 0.25, // q5/q1 8.1× — staycation vs Hawaii
 };
 
 /**
