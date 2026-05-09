@@ -412,6 +412,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
     summary:
       "Added a `tenure` field to BudgetInput, defaulting to 'renter' (existing behavior). Owner-with-mortgage and owner-without-mortgage are real third paths the model now recognizes. Owner-only leaves (Mortgage P&I, Property tax, Homeowners insurance, Maintenance & repairs) are exposed as $0 placeholders — actual mortgage math + per-leaf reasons land with roadmap #13. Stops the model from silently assuming everyone rents.",
   },
+  {
+    id: 214,
+    title: 'State-external sources registry (III, FCC, EIA, NCES, College Board, ACS, DOL NDCP)',
+    category: 'Cost of living',
+    status: 'shipped',
+    shippedAt: '2026-05-08',
+    summary:
+      'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
+  },
 ];
 
 /**
