@@ -113,26 +113,58 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
 
   // Healthcare special-case — mixed source. The cexBaseline only
   // exposes the CEX out-of-pocket portion; the Atlas-shipped value
-  // also includes the KFF employer-sponsored premium worker-share.
+  // also includes the KFF employer-sponsored premium worker-share,
+  // and Medicaid / CHIP can zero or partially offset the line.
   // Without this branch the generic CEX path below would say
   // "BLS baseline $81 × ±5% lifestyle = $1,331" which is wildly
   // wrong arithmetic — the gap is the premium, not the elasticity.
-  if (label === 'Healthcare' && shipped > 0) {
+  if (label === 'Healthcare') {
     const oopBaseline = result.cexBaseline['Healthcare'] ?? 0;
     const premium = result.healthcarePremium;
+    const factor = 1 + 0.05 * dialSign; // healthcareOOP elasticity is ±5%
+    const adjustedOop = oopBaseline * factor;
+    const preBenefitsTotal = adjustedOop + premium;
+    const benefitsOffset = Math.max(0, preBenefitsTotal - shipped);
+    const medicaidApplied = shipped === 0 && (result.benefitsApplied['Medicaid'] ?? 0) > 0;
+    const chipApplied = (result.benefitsApplied['CHIP'] ?? 0) > 0;
     return (
       <>
         <Header>How this is calculated</Header>
         <div style={{ color: T.inkSoft }}>
-          Healthcare combines two sources. The BLS-baseline column shows out-of-pocket only (CEX
-          medical services + drugs + supplies, no insurance premium):{' '}
-          <strong>{fmt(oopBaseline)}</strong>. The Atlas-shipped value adds the worker share of the
-          employer-sponsored health insurance premium from KFF{' '}
-          <em>
-            (Employer Health Benefits Survey, family vs single tier based on household composition)
-          </em>
-          : <strong>{fmt(premium)}</strong>. Total: <strong>{fmt(shipped)}</strong>. Medicaid
-          eligibility zeros the entire line; CHIP offsets the kids' premium share specifically.
+          Healthcare combines two sources. CEX out-of-pocket (medical services + drugs + supplies,
+          no premium): <strong>{fmt(oopBaseline)}</strong>
+          {dialSign !== 0 && (
+            <>
+              {' '}
+              × {factor.toFixed(2)} ({dialName} dial, ±5%) = <strong>{fmt(adjustedOop)}</strong>
+            </>
+          )}
+          . Plus KFF Employer Health Benefits worker-share premium (family vs single by
+          composition): <strong>{fmt(premium)}</strong>. Pre-benefits total:{' '}
+          <strong>{fmt(preBenefitsTotal)}</strong>.
+          {medicaidApplied && (
+            <> Medicaid is claimed and the household is eligible — the entire line zeros out.</>
+          )}
+          {chipApplied && !medicaidApplied && (
+            <>
+              {' '}
+              CHIP is claimed and offsets the kids' premium share —{' '}
+              <strong>{fmt(benefitsOffset)}/mo</strong> off the line. Adults' premium and the
+              household's OOP stay.
+            </>
+          )}
+          {!medicaidApplied && !chipApplied && (
+            <>
+              {' '}
+              Final shipped: <strong>{fmt(shipped)}</strong>.
+            </>
+          )}
+          {(medicaidApplied || chipApplied) && (
+            <>
+              {' '}
+              Final shipped: <strong>{fmt(shipped)}</strong>.
+            </>
+          )}
         </div>
       </>
     );
