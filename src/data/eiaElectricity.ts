@@ -23,6 +23,15 @@
  */
 
 import type { StateCode } from '@/types';
+import { SOURCES } from '@/data/sources';
+
+/**
+ * Citation handle for the EIA electricity dataset, re-exported so
+ * downstream UI / methodology callouts can reference the source via
+ * the central registry (and so `scripts/source-inventory.mjs --check`
+ * sees a real consumer reference for the entry).
+ */
+export const EIA_ELECTRICITY_STATE_SOURCE = SOURCES['eia-electricity-state'];
 
 export const RESIDENTIAL_ELECTRICITY_PRICE_2026_FEB: Readonly<Record<StateCode, number>> = {
   AL: 16.18,

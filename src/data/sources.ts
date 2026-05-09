@@ -254,7 +254,7 @@ const RAW_SOURCES = {
   'eia-electricity-state': {
     label: 'EIA — Average Price of Electricity to Ultimate Customers by State (residential)',
     url: 'https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_6_a',
-    date: '2025',
+    date: '2026-02',
     tier: 'primary',
     addedBy: 'briancorbin',
     addedAt: '2026-05-08',
