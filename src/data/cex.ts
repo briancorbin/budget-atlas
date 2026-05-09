@@ -2099,14 +2099,22 @@ export function blendCexSpendingTrace(
   const means = QUINTILE_MEANS_2024_BEFORE_TAX;
   const order: readonly IncomeQuintile[] = ['q1', 'q2', 'q3', 'q4', 'q5'];
   const x = Math.max(0, grossIncome);
+  // Pick the highest quintile mean that's ≤ income. Equivalent to
+  // saying "anchor at the upper-bound quintile" when income is
+  // exactly at a published mean, which mirrors `smoothNationalQuintile`'s
+  // behavior (interpolation factor between mean[i] and mean[i+1]
+  // collapses to 1.0 at exact endpoints; anchoring at the higher mean
+  // also gives factor=1.0 there). The previous `x <= means[i+1]`
+  // upper bound was inclusive on both sides, which made x === means.q3
+  // anchor at q2 with a non-1 interpolation factor — visually wrong.
   let anchorQ: IncomeQuintile = 'q1';
   if (x >= means.q5) {
     anchorQ = 'q5';
   } else if (x <= means.q1) {
     anchorQ = 'q1';
   } else {
-    for (let i = 0; i < order.length - 1; i++) {
-      if (x >= means[order[i]!] && x <= means[order[i + 1]!]) {
+    for (let i = order.length - 1; i >= 0; i--) {
+      if (x >= means[order[i]!]) {
         anchorQ = order[i]!;
         break;
       }

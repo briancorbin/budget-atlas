@@ -902,6 +902,29 @@ describe('blendCexSpendingTrace', () => {
     expect(trace.quintileInterpolationFactor).toBeCloseTo(1.0, 6);
   });
 
+  it('anchors exactly at a quintile mean to that quintile (factor=1)', () => {
+    // Income exactly at q3's mean must anchor at q3 with factor=1.0.
+    // The earlier loop used inclusive `x <= means[i+1]` and would
+    // anchor x === means.q3 at q2 with a non-1 factor.
+    const q3Mean = QUINTILE_MEANS_2024_BEFORE_TAX.q3;
+    const trace = blendCexSpendingTrace('cmh', 'OH', q3Mean, 'foodAtHome', 'p3', 'marriedNoKids');
+    expect(trace).not.toBeNull();
+    if (!trace) return;
+    expect(trace.quintileAnchor.quintile).toBe('q3');
+    expect(trace.quintileInterpolationFactor).toBeCloseTo(1.0, 6);
+    // q2's mean too — same property must hold for every interior boundary.
+    const q2Trace = blendCexSpendingTrace(
+      'cmh',
+      'OH',
+      QUINTILE_MEANS_2024_BEFORE_TAX.q2,
+      'foodAtHome',
+      'p3',
+      'marriedNoKids',
+    );
+    expect(q2Trace?.quintileAnchor.quintile).toBe('q2');
+    expect(q2Trace?.quintileInterpolationFactor).toBeCloseTo(1.0, 6);
+  });
+
   it('records geo cut as MSA / division / region depending on data availability', () => {
     // NYC publishes foodAtHome at MSA level
     const nyc = blendCexSpendingTrace('nyc', 'NY', 80_000, 'foodAtHome', 'p2', 'marriedNoKids');
