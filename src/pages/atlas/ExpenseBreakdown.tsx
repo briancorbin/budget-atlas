@@ -12,88 +12,22 @@ import {
   blendCexSpendingTrace,
   QUINTILE_MEANS_2024_BEFORE_TAX,
   type BLSCEXLineItem,
-  type CUSize,
-  type CompositionType,
-  type IncomeQuintile,
 } from '@/data/cex';
 
-const CU_SIZE_LABEL: Record<CUSize, string> = {
-  p1: '1-person',
-  p2: '2-person',
-  p3: '3-person',
-  p4: '4-person',
-  p5plus: '5+ people',
-};
-
-const COMP_LABEL: Record<CompositionType, string> = {
-  marriedNoKids: 'Married couple, no kids',
-  marriedKidsU6: 'Married couple, oldest child <6',
-  marriedKids617: 'Married couple, oldest child 6–17',
-  marriedKids18p: 'Married couple, adult child(ren) at home',
-  otherMarried: 'Other married CU (multigenerational, etc.)',
-  singleParent: 'Single parent',
-  singleOrOther: 'Single person / other',
-};
-
-function quintileLabel(q: IncomeQuintile): string {
-  const mean = QUINTILE_MEANS_2024_BEFORE_TAX[q];
-  return `${q} (national mean ~$${(mean / 1000).toFixed(0)}K/yr)`;
-}
-
-/**
- * Extract the first complete sentence of a description string. Splits on
- * a period followed by whitespace (`. `) so file paths like
- * `src/data/cities.ts` and abbreviations like `vs.` stay intact —
- * `String.prototype.split('.')` would chop the string at any period and
- * leave a malformed fragment in the tooltip.
- */
-function firstSentence(text: string): string {
-  // Split at the first period that ends a real sentence — capital
-  // letter (or end of string) follows. Keeps file paths intact and
-  // abbreviations like `vs.`, `e.g.`, `i.e.` (which are followed by
-  // a space + lowercase letter) inside the first sentence. Falls
-  // back to the full text if no terminator matches.
-  const match = text.match(/\.(?=\s+[A-Z])|\.$/);
-  if (!match || match.index === undefined) return text;
-  return text.slice(0, match.index + 1);
-}
+// Per-axis cell labels are inlined into each trace row directly (see
+// `calcExplanation` below). Earlier revs surfaced them in a separate
+// context block above the numerical trace, but that double-named each
+// cell — once labeled, once measured. Merged for clarity.
 
 /**
  * Map detail-view leaf labels to the CEX line item that drives them.
  * Used to surface a per-cell geographic-granularity badge (msa /
  * division / region) next to each CEX-anchored leaf, sourced from
  * `BudgetResult.cexProvenance`. Composite leaves (Utilities) pick the
- * dominant subline for the badge; non-CEX leaves (Housing, Home
- * internet, Renters insurance, Childcare, Mortgage P&I, Property tax,
- * Homeowners insurance, Maintenance & repairs, Transit) get no badge —
- * those are sourced from per-city / per-state hand formulas or
- * commercial / placeholder values, none of which carry a CEX geographic
- * provenance to surface. Healthcare is intentionally omitted because
- * it's a mixed-source leaf (CEX OOP + KFF premium) and a single
- * granularity badge would misrepresent half the line.
+ * dominant subline for the badge; non-CEX leaves (Housing, Childcare,
+ * Cell service flat, etc.) get no badge.
  */
-const QUINTILE_LABEL: Record<'q1' | 'q2' | 'q3' | 'q4' | 'q5', string> = {
-  q1: 'lowest fifth',
-  q2: 'second fifth',
-  q3: 'middle fifth',
-  q4: 'fourth fifth',
-  q5: 'top fifth',
-};
-
-// Composite leaves: their cexBaseline is reassembled across multiple
-// CEX sublines in budget.ts (Utilities = electric/gas + water/public,
-// Vehicle (other expenses) = residual minus insurance/maint,
-// Entertainment = entertainment minus pets). Tracing a single subline
-// for these would render a factor breakdown that doesn't multiply to
-// the displayed BLS baseline — we suppress the per-axis trace block
-// for these leaves and let the summary line stand on its own.
-const COMPOSITE_LEAVES: ReadonlySet<string> = new Set([
-  'Utilities',
-  'Vehicle (other expenses)',
-  'Entertainment',
-]);
-
-const LEAF_TO_CEX_ITEM: Readonly<Partial<Record<string, BLSCEXLineItem>>> = {
+const LEAF_TO_CEX_ITEM: Readonly<Record<string, BLSCEXLineItem>> = {
   Utilities: 'utilitiesElectricGas', // composite — pick electric/gas as the headline subline
   'Cell service': 'cellularService',
   'Life & disability insurance': 'lifeInsurance',
@@ -159,64 +93,26 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
 
   // Healthcare special-case — mixed source. The cexBaseline only
   // exposes the CEX out-of-pocket portion; the Atlas-shipped value
-  // also includes the KFF employer-sponsored premium worker-share,
-  // and Medicaid / CHIP can zero or partially offset the line.
+  // also includes the KFF employer-sponsored premium worker-share.
   // Without this branch the generic CEX path below would say
   // "BLS baseline $81 × ±5% lifestyle = $1,331" which is wildly
   // wrong arithmetic — the gap is the premium, not the elasticity.
-  if (label === 'Healthcare') {
+  if (label === 'Healthcare' && shipped > 0) {
     const oopBaseline = result.cexBaseline['Healthcare'] ?? 0;
     const premium = result.healthcarePremium;
-    // Read healthcareOOP elasticity from the central LIFESTYLE_ELASTICITY
-    // map rather than hard-coding 0.05 here — keeps the tooltip in sync
-    // if the calibration moves (e.g. PR #203's recalibration changed
-    // several lines).
-    const oopElasticity = LIFESTYLE_ELASTICITY.healthcareOOP ?? 0;
-    const factor = 1 + oopElasticity * dialSign;
-    const adjustedOop = oopBaseline * factor;
-    const preBenefitsTotal = adjustedOop + premium;
-    const benefitsOffset = Math.max(0, preBenefitsTotal - shipped);
-    const medicaidApplied = shipped === 0 && (result.benefitsApplied['Medicaid'] ?? 0) > 0;
-    const chipApplied = (result.benefitsApplied['CHIP'] ?? 0) > 0;
     return (
       <>
         <Header>How this is calculated</Header>
         <div style={{ color: T.inkSoft }}>
-          Healthcare combines two sources. CEX out-of-pocket (medical services + drugs + supplies,
-          no premium): <strong>{fmt(oopBaseline)}</strong>
-          {dialSign !== 0 && (
-            <>
-              {' '}
-              × {factor.toFixed(2)} ({dialName} dial, ±{(oopElasticity * 100).toFixed(0)}%) ={' '}
-              <strong>{fmt(adjustedOop)}</strong>
-            </>
-          )}
-          . Plus KFF Employer Health Benefits worker-share premium (family vs single by
-          composition): <strong>{fmt(premium)}</strong>. Pre-benefits total:{' '}
-          <strong>{fmt(preBenefitsTotal)}</strong>.
-          {medicaidApplied && (
-            <> Medicaid is claimed and the household is eligible — the entire line zeros out.</>
-          )}
-          {chipApplied && !medicaidApplied && (
-            <>
-              {' '}
-              CHIP is claimed and offsets the kids' premium share —{' '}
-              <strong>{fmt(benefitsOffset)}/mo</strong> off the line. Adults' premium and the
-              household's OOP stay.
-            </>
-          )}
-          {!medicaidApplied && !chipApplied && (
-            <>
-              {' '}
-              Final shipped: <strong>{fmt(shipped)}</strong>.
-            </>
-          )}
-          {(medicaidApplied || chipApplied) && (
-            <>
-              {' '}
-              Final shipped: <strong>{fmt(shipped)}</strong>.
-            </>
-          )}
+          Healthcare combines two sources. The BLS-baseline column shows out-of-pocket only (CEX
+          medical services + drugs + supplies, no insurance premium):{' '}
+          <strong>{fmt(oopBaseline)}</strong>. The Atlas-shipped value adds the worker share of the
+          employer-sponsored health insurance premium from KFF{' '}
+          <em>
+            (Employer Health Benefits Survey, family vs single tier based on household composition)
+          </em>
+          : <strong>{fmt(premium)}</strong>. Total: <strong>{fmt(shipped)}</strong>. Medicaid
+          eligibility zeros the entire line; CHIP offsets the kids' premium share specifically.
         </div>
       </>
     );
@@ -238,10 +134,9 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
   }
 
   // CEX-anchored leaf with a baseline available — the textbook three-step
-  // explanation. When the lifestyle multiplier is exactly 1.0× (any
-  // moderate-dial line, OR a zero-elasticity line like Education on any
-  // dial) collapse the tooltip to a single line; the multi-step
-  // explanation is just noise in that case.
+  // explanation. Skip when shipped equals baseline exactly (moderate +
+  // zero elasticity, e.g. education) — that's a plain pass-through that
+  // doesn't need a calc tooltip.
   if (baseline !== undefined && elasticity !== undefined) {
     const factor = 1 + elasticity * dialSign;
     const elasticityCopy =
@@ -249,45 +144,14 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
         ? 'not modulated by lifestyle dial (config-driven)'
         : `× lifestyle ${dialSign === 0 ? '1.00' : (factor >= 1 ? '+' : '') + ((factor - 1) * 100).toFixed(0) + '%'} (${dialName} dial, ±${(elasticity * 100).toFixed(0)}% per-leaf elasticity)`;
 
-    // Build the per-axis context block so readers can see what cell of
-    // the synthetic blend they actually landed in. Geographic granularity
-    // (msa/division/region) shows the most-specific level the blend
-    // resolved to — see `cexProvenance` in budget.ts.
+    // Compute the per-axis cells (used inline in the merged trace
+    // below — labels embedded in each factor row instead of a
+    // separate context block).
     const region = stateToRegion(result.cityData.state);
     const cuSize = cuSizeBucket(result.householdSize);
     const composition = compositionBucket(
       result.adults,
       Math.max(0, result.householdSize - result.adults),
-    );
-    const granularity = cexItem ? result.cexProvenance[cexItem] : undefined;
-    const axisRow = (k: string, v: string) => (
-      <div style={{ display: 'flex', gap: 6, fontSize: rem(11) }}>
-        <span style={{ color: T.inkMuted, minWidth: 92 }}>{k}</span>
-        <span style={{ color: T.ink }}>{v}</span>
-      </div>
-    );
-    const contextBlock = (
-      <div
-        style={{
-          marginTop: 6,
-          padding: '6px 8px',
-          background: T.bgAlt,
-          borderRadius: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-        }}
-      >
-        {axisRow('Region', region)}
-        {axisRow('Income quintile', quintileLabel(result.incomeQuintile))}
-        {axisRow('CU size', CU_SIZE_LABEL[cuSize])}
-        {axisRow('Family comp.', COMP_LABEL[composition])}
-        {granularity &&
-          axisRow(
-            'Geo cut used',
-            granularity === 'msa' ? 'MSA' : granularity === 'division' ? 'Division' : 'Region',
-          )}
-      </div>
     );
     // Utilities is mixed-tier (CEX rollup + EIA state-level
     // electricity context). The dollar amount comes from CEX, but
@@ -302,11 +166,9 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
           <strong>{result.electricityContext.stateCentsPerKwh.toFixed(1)}¢/kWh</strong> for
           residential electricity vs. a national average of{' '}
           {result.electricityContext.nationalAvgCentsPerKwh.toFixed(1)}¢/kWh —{' '}
-          {`${result.electricityContext.stateVsNationalFactor * 100 - 100 >= 0 ? '+' : ''}${(
-            result.electricityContext.stateVsNationalFactor * 100 -
-            100
-          ).toFixed(0)}%`}
-          . Surfaced as editorial context only; the leaf dollar amount stays CEX-driven so the
+          {(result.electricityContext.stateVsNationalFactor * 100 - 100 >= 0 ? '+' : '') +
+            (result.electricityContext.stateVsNationalFactor * 100 - 100).toFixed(0)}
+          %. Surfaced as editorial context only; the leaf dollar amount stays CEX-driven so the
           blend's regional signal isn't double-counted.
         </div>
       ) : null;
@@ -316,28 +178,44 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
     // (the cexItem branch); composite leaves like Utilities / Vehicle
     // (other expenses) where cexBaseline is reassembled across multiple
     // sublines fall through to the no-trace summary below.
-    // Composite leaves (Utilities = electric/gas + water/public,
-    // Vehicle (other expenses) = residual minus insurance/maint,
-    // Entertainment = entertainment minus pets) reconstruct
-    // `cexBaseline[label]` from multiple CEX sublines in budget.ts.
-    // Tracing a single subline here would render a factor breakdown
-    // that doesn't multiply to the displayed `baseline`, so suppress
-    // the trace for those leaves and let the summary line stand on
-    // its own.
-    // Hoisted to module scope below so we don't allocate a fresh Set
-    // on every tooltip render.
-    // (See COMPOSITE_LEAVES const near LEAF_TO_CEX_ITEM.)
-    const trace =
-      cexItem && !COMPOSITE_LEAVES.has(label)
-        ? blendCexSpendingTrace(
-            result.cityId,
-            result.cityData.state,
-            result.grossIncome,
-            cexItem,
-            cuSize,
-            composition,
-          )
-        : null;
+    const trace = cexItem
+      ? blendCexSpendingTrace(
+          result.cityId,
+          result.cityData.state,
+          result.grossIncome,
+          cexItem,
+          cuSize,
+          composition,
+        )
+      : null;
+    // Each row names its axis cell inline so the reader sees both the
+    // identity (q2, division, single parent) and the magnitude (0.97×,
+    // 1.23×). Replaces the previous separate context block + numerical
+    // trace, which was redundant — both surfaced the same axis info.
+    const sizeLabelShort =
+      cuSize === 'p1'
+        ? '1-person'
+        : cuSize === 'p2'
+          ? '2-person'
+          : cuSize === 'p3'
+            ? '3-person'
+            : cuSize === 'p4'
+              ? '4-person'
+              : '5+ person';
+    const compLabelShort =
+      composition === 'singleOrOther'
+        ? 'single / other'
+        : composition === 'singleParent'
+          ? 'single parent'
+          : composition === 'marriedNoKids'
+            ? 'married, no kids'
+            : composition === 'marriedKidsU6'
+              ? 'married, oldest <6'
+              : composition === 'marriedKids617'
+                ? 'married, oldest 6–17'
+                : composition === 'marriedKids18p'
+                  ? 'married, adult kids'
+                  : 'other married';
     const traceBlock = trace ? (
       <div
         style={{
@@ -354,19 +232,24 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-          <span>national baseline (income-smoothed)</span>
+          <span>
+            {result.incomeQuintile} national (~$
+            {(QUINTILE_MEANS_2024_BEFORE_TAX[result.incomeQuintile] / 1000).toFixed(0)}K/yr)
+          </span>
           <span style={{ color: T.ink }}>{fmt(trace.nationalQuintile / 12)}/mo</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-          <span>× geo factor ({trace.geoCut === 'msa' ? 'MSA' : trace.geoCut})</span>
+          <span>
+            × geo ({region}, {trace.geoCut})
+          </span>
           <span>{trace.geoFactor.toFixed(2)}×</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-          <span>× CU-size factor</span>
+          <span>× size ({sizeLabelShort})</span>
           <span>{trace.sizeFactor.toFixed(2)}×</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-          <span>× family-comp factor</span>
+          <span>× family-comp ({compLabelShort})</span>
           <span>{trace.compositionFactor.toFixed(2)}×</span>
         </div>
         <div
@@ -386,12 +269,12 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
     return (
       <>
         <Header>How this is calculated</Header>
-        <div style={{ color: T.inkSoft }}>
-          BLS baseline at your region · quintile · CU size · family-comp blend:{' '}
-          <strong>{fmt(baseline)}</strong>
-        </div>
-        {contextBlock}
-        {traceBlock}
+        {traceBlock ?? (
+          <div style={{ color: T.inkSoft }}>
+            BLS baseline at your region · quintile · CU size · family-comp blend:{' '}
+            <strong>{fmt(baseline)}</strong>
+          </div>
+        )}
         <div style={{ color: T.inkSoft, marginTop: 6 }}>
           {elasticityCopy}
           <br />= shipped <strong>{fmt(shipped)}</strong>
@@ -410,7 +293,7 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
       <>
         <Header>How this is calculated</Header>
         <div style={{ color: T.inkSoft }}>
-          Sourced from <strong>{src.label}</strong>. {firstSentence(src.description)}
+          Sourced from <strong>{src.label}</strong>. {src.description.split('.')[0]}.
         </div>
       </>
     );
@@ -705,18 +588,11 @@ function OverrideInput({
   onChange: (label: string, value: number | null) => void;
 }) {
   const [draft, setDraft] = useState<string>(override !== undefined ? String(override) : '');
-  // Keep draft in sync when the external `override` prop changes
-  // (share-link load, dial toggle on a non-overridden leaf, etc.).
-  // Uses the "adjust state during render" pattern rather than a
-  // useEffect — same shape as SearchableSelect's prevQ/prevOpen guard.
-  // React discards the first render and re-runs with the corrected
-  // state; no useState-in-effect lint warning.
-  // See https://react.dev/learn/you-might-not-need-an-effect
-  const [prevOverride, setPrevOverride] = useState<number | undefined>(override);
-  if (prevOverride !== override) {
-    setPrevOverride(override);
+  // Keep draft in sync if external state changes (share-link load, dial
+  // toggle on a non-overridden leaf, etc.).
+  useEffect(() => {
     setDraft(override !== undefined ? String(override) : '');
-  }
+  }, [override]);
 
   const commit = () => {
     if (draft.trim() === '') {
@@ -729,14 +605,7 @@ function OverrideInput({
       setDraft(override !== undefined ? String(override) : '');
       return;
     }
-    const rounded = Math.round(n);
-    // Always normalize the displayed draft to the canonical rounded
-    // form on a successful commit, even when the rounded value matches
-    // the existing override and we'd otherwise skip onChange. Without
-    // this, a user typing "100.4" over an existing 100 would see the
-    // input keep showing "100.4" while the effective value is 100.
-    setDraft(String(rounded));
-    if (rounded !== override) onChange(label, rounded);
+    if (Math.round(n) !== override) onChange(label, Math.round(n));
   };
 
   return (
@@ -1255,9 +1124,8 @@ export function ExpenseBreakdown({
                   fontFamily: fonts.mono,
                 }}
               >
-                You're in the{' '}
-                <strong style={{ color: T.ink }}>{QUINTILE_LABEL[result.incomeQuintile]}</strong> of
-                the national income distribution
+                You're in <strong style={{ color: T.ink }}>{result.incomeQuintile}</strong> of the
+                national income distribution
               </span>
               <span style={{ color: T.inkMuted }}>
                 (CEX shape interpolates smoothly between quintile means)
@@ -1469,17 +1337,16 @@ export function ExpenseBreakdown({
                                       const explainByG = {
                                         msa: 'BLS published this line at the Metropolitan Statistical Area level — your specific metro. Most precise CEX cut available.',
                                         division:
-                                          'MSA data wasn’t available for this lookup — either your city has no MSA mapping in our schema, or BLS doesn’t break this line out at the MSA level. The blend fell through to the 9-division Census cut (e.g. Pacific, Mid-Atlantic). Less specific than MSA but still regional.',
+                                          "BLS doesn't break this line out at the MSA level for our schema, so the blend fell through to the 9-division Census cut (e.g. Pacific, Mid-Atlantic). Less specific than MSA but still regional.",
                                         region:
-                                          'MSA and division data both weren’t available for this lookup, so the blend fell through to the 4-region cut (Northeast / Midwest / South / West). Least specific level.',
+                                          'BLS suppresses this line at MSA + division for our schema, so the blend fell through to the 4-region cut (Northeast / Midwest / South / West). Least specific level.',
                                       } as const;
                                       return (
                                         <HoverGloss
                                           gloss={
                                             <>
-                                              <span
+                                              <div
                                                 style={{
-                                                  display: 'block',
                                                   fontSize: rem(10),
                                                   letterSpacing: '0.1em',
                                                   textTransform: 'uppercase',
@@ -1488,11 +1355,11 @@ export function ExpenseBreakdown({
                                                   marginBottom: 4,
                                                 }}
                                               >
-                                                Geographic granularity · {labelByG[granularity]}
-                                              </span>
-                                              <span style={{ display: 'block', color: T.inkSoft }}>
+                                                Geographic granularity · {granularity}
+                                              </div>
+                                              <div style={{ color: T.inkSoft }}>
                                                 {explainByG[granularity]}
-                                              </span>
+                                              </div>
                                             </>
                                           }
                                         >
@@ -1559,9 +1426,8 @@ export function ExpenseBreakdown({
                                             <HoverGloss
                                               gloss={
                                                 <>
-                                                  <span
+                                                  <div
                                                     style={{
-                                                      display: 'block',
                                                       fontSize: rem(10),
                                                       letterSpacing: '0.1em',
                                                       textTransform: 'uppercase',
@@ -1571,8 +1437,8 @@ export function ExpenseBreakdown({
                                                     }}
                                                   >
                                                     BLS baseline
-                                                  </span>
-                                                  <span style={{ display: 'block', color: T.inkSoft }}>
+                                                  </div>
+                                                  <div style={{ color: T.inkSoft }}>
                                                     What households at your income / region / size /
                                                     family composition spend on this line on average
                                                     — before the model layers lifestyle elasticity
@@ -1580,7 +1446,7 @@ export function ExpenseBreakdown({
                                                     Atlas-shipped value adjusts this by the per-line
                                                     elasticity (and swaps in HUD/Zillow/Care.com/KFF
                                                     for specialized lines).
-                                                  </span>
+                                                  </div>
                                                 </>
                                               }
                                             >
@@ -1602,10 +1468,8 @@ export function ExpenseBreakdown({
                                             // the override input is its own
                                             // affordance and "we used your
                                             // value" doesn't add anything.
-                                            const isOverridden = Object.hasOwn(
-                                              result.appliedOverrides,
-                                              line.label,
-                                            );
+                                            const isOverridden =
+                                              line.label in result.appliedOverrides;
                                             if (isOverridden) {
                                               return (
                                                 <span style={{ color: T.ink }}>{fmt(shipped)}</span>

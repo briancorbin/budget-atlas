@@ -424,6 +424,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
   },
   {
+    id: 227,
+    title: 'Consolidate calc tooltip',
+    category: 'UX & navigation',
+    status: 'shipped',
+    shippedAt: '2026-05-09',
+    summary:
+      'The calc tooltip had three redundant chunks: a top "BLS baseline at your region · quintile · CU size · family-comp blend" line, a separate cell-context block (Region: Midwest, etc.), and a numerical trace. Merged into a single trace where each row names its axis cell inline (e.g. "× geo (Midwest, division) 0.97×") — same info, half the height.',
+  },
+  {
     id: 226,
     title: 'Calc tooltip: blend trace',
     category: 'UX & navigation',
