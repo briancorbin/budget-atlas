@@ -2005,6 +2005,114 @@ export function cexLineItemSpendingForCity(
 }
 
 /**
+ * Per-step trace of the synthetic-blend computation for a single CEX
+ * line item. Used by the detail-view tooltip so the user can see how
+ * each axis multiplies into the final baseline value.
+ *
+ * Mirrors `blendCexSpending`'s formula step-by-step:
+ *   nationalQuintile
+ *   × geoFactor    (geoAllCU / nationalAllCU)
+ *   × sizeFactor   (sizeAllCU / sizeBaselineAllCU)
+ *   × compFactor   (compAllCU / compBaselineAllCU)
+ *   = finalAnnual
+ *
+ * `geoAllCU` resolves through MSA → division → region in the same way
+ * the production blend does; `geoCut` records which level fired.
+ */
+export interface BlendTrace {
+  /** National per-quintile spending, smoothed at the user's income. */
+  nationalQuintile: number;
+  /** All-CU national value (denominator for geoFactor). */
+  nationalAllCU: number;
+  /** All-CU value at the most-specific geo level available. */
+  geoAllCU: number;
+  /** Which geo level the blend resolved to. */
+  geoCut: GeoGranularity | null;
+  geoFactor: number;
+  sizeAllCU: number;
+  sizeBaselineAllCU: number;
+  sizeFactor: number;
+  compositionAllCU: number;
+  compositionBaselineAllCU: number;
+  compositionFactor: number;
+  /** Final annual spending — the product of nationalQuintile × every factor. */
+  finalAnnual: number;
+}
+
+/**
+ * Step-by-step trace of the blend computation for a single CEX line
+ * item. Surfaces every intermediate value so the UI can render a
+ * "BLS baseline = $X × Y × Z = $W" breakdown without re-implementing
+ * the math in the view layer.
+ *
+ * Returns `null` when any required denominator is 0 — same condition
+ * `blendCexSpending` uses to return 0.
+ */
+export function blendCexSpendingTrace(
+  citySlug: string,
+  state: StateCode,
+  grossIncome: number,
+  item: BLSCEXLineItem,
+  cuSize: CUSize,
+  composition: CompositionType,
+): BlendTrace | null {
+  const region = stateToRegion(state);
+  const division = STATE_TO_DIVISION[state];
+  const msa = CITY_TO_MSA[citySlug];
+  const msaAllCU = msa ? MSA_ALLCU_SPENDING[msa][item] : undefined;
+  const divisionAllCU = DIVISION_ALLCU_SPENDING[division][item];
+  const regionAllCU = REGION_ALLCU_SPENDING[region][item];
+
+  const nationalAllCU = NATIONAL_ALLCU_SPENDING[item];
+  const nationalQuintile = smoothNationalQuintile(grossIncome, QUINTILE_VECTORS[item]);
+  if (nationalAllCU === 0) return null;
+  if (nationalQuintile === 0) return null;
+
+  let geoAllCU: number;
+  let geoCut: GeoGranularity | null;
+  if (msaAllCU !== undefined && msaAllCU > 0) {
+    geoAllCU = msaAllCU;
+    geoCut = 'msa';
+  } else if (divisionAllCU !== undefined && divisionAllCU > 0) {
+    geoAllCU = divisionAllCU;
+    geoCut = 'division';
+  } else if (regionAllCU > 0) {
+    geoAllCU = regionAllCU;
+    geoCut = 'region';
+  } else {
+    return null;
+  }
+  const geoFactor = geoAllCU / nationalAllCU;
+
+  const sizeAllCU = SIZE_ALLCU_SPENDING[cuSize][item];
+  const sizeBaselineAllCU = SIZE_BASELINE_ALLCU[item];
+  if (sizeBaselineAllCU === 0) return null;
+  const sizeFactor = sizeAllCU / sizeBaselineAllCU;
+
+  const compositionAllCU = COMPOSITION_ALLCU_SPENDING[composition][item];
+  const compositionBaselineAllCU = COMPOSITION_BASELINE_ALLCU[item];
+  if (compositionBaselineAllCU === 0) return null;
+  const compositionFactor = compositionAllCU / compositionBaselineAllCU;
+
+  const finalAnnual = nationalQuintile * geoFactor * sizeFactor * compositionFactor;
+
+  return {
+    nationalQuintile,
+    nationalAllCU,
+    geoAllCU,
+    geoCut,
+    geoFactor,
+    sizeAllCU,
+    sizeBaselineAllCU,
+    sizeFactor,
+    compositionAllCU,
+    compositionBaselineAllCU,
+    compositionFactor,
+    finalAnnual,
+  };
+}
+
+/**
  * Convenience: full per-line-item profile for a (state × income × size)
  * cell. `cuSize` is optional — omit for "average CU" behavior, supply
  * for size-scaled output.

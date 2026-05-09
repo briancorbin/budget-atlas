@@ -24,6 +24,7 @@ import {
   COMPOSITION_ALLCU_SPENDING,
   COMPOSITION_BASELINE_ALLCU,
   compositionBucket,
+  blendCexSpendingTrace,
 } from './cex';
 import type { CUSize, CompositionType } from './cex';
 import type { StateCode } from '@/types';
@@ -838,5 +839,52 @@ describe('blendCexSpending composition factor', () => {
     // number at all when size is fixed.
     expect(marriedKids).not.toBeCloseTo(singleParent, 0);
     expect(marriedKids).toBeGreaterThan(singleParent);
+  });
+});
+
+describe('blendCexSpendingTrace', () => {
+  it('returns step-by-step trace whose product equals the production blend', () => {
+    const trace = blendCexSpendingTrace('sf', 'CA', 80_000, 'foodAtHome', 'p3', 'singleParent');
+    expect(trace).not.toBeNull();
+    if (!trace) return;
+    // The product of all factors × the quintile baseline should equal
+    // finalAnnual (within float-rounding).
+    const product =
+      trace.nationalQuintile * trace.geoFactor * trace.sizeFactor * trace.compositionFactor;
+    expect(product).toBeCloseTo(trace.finalAnnual, 6);
+  });
+
+  it('finalAnnual matches what cexLineItemSpendingForCity returns (annualized)', () => {
+    const trace = blendCexSpendingTrace('cmh', 'OH', 75_000, 'apparel', 'p4', 'marriedKids617');
+    expect(trace).not.toBeNull();
+    if (!trace) return;
+    const { spending } = cexLineItemSpendingForCity(
+      'cmh',
+      'OH',
+      75_000,
+      'apparel',
+      'p4',
+      'marriedKids617',
+    );
+    expect(trace.finalAnnual).toBeCloseTo(spending, 6);
+  });
+
+  it('records geo cut as MSA / division / region depending on data availability', () => {
+    // NYC publishes foodAtHome at MSA level
+    const nyc = blendCexSpendingTrace('nyc', 'NY', 80_000, 'foodAtHome', 'p2', 'marriedNoKids');
+    expect(nyc?.geoCut).toBe('msa');
+    // Columbus has no MSA mapping → division (East North Central)
+    const cmh = blendCexSpendingTrace('cmh', 'OH', 80_000, 'foodAtHome', 'p2', 'marriedNoKids');
+    expect(cmh?.geoCut).toBe('division');
+    // Sublines (cellularService) aren't published at MSA level → division
+    const sublineNyc = blendCexSpendingTrace(
+      'nyc',
+      'NY',
+      80_000,
+      'cellularService',
+      'p2',
+      'marriedNoKids',
+    );
+    expect(sublineNyc?.geoCut).toBe('division');
   });
 });

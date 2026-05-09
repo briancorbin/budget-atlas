@@ -424,6 +424,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
   },
   {
+    id: 226,
+    title: 'Calc tooltip: blend trace',
+    category: 'UX & navigation',
+    status: 'shipped',
+    shippedAt: '2026-05-09',
+    summary:
+      "The previous tooltip showed which axis cell the household landed in but didn't show the actual numbers each axis contributed. Added a per-step numerical trace inside the tooltip — q-quintile baseline (monthly), × geo factor, × CU-size factor, × family-comp factor, = BLS baseline. Backed by a new `blendCexSpendingTrace` helper in cex.ts that exposes every intermediate value of the synthetic blend. 3 new tests assert the trace product matches the production blend, that finalAnnual matches `cexLineItemSpendingForCity`, and that the geo cut records correctly across MSA/division/region cases.",
+  },
+  {
     id: 225,
     title: 'Calc tooltip: blend axis values',
     category: 'UX & navigation',

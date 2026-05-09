@@ -963,6 +963,7 @@ export function computeBudget(input: BudgetInput): BudgetResult {
     suggestedVacation,
     suggestedSplurge,
     suggestedEmergency,
+    cityId: city,
     cityData,
     stateData,
     cexProvenance: cexGranularity,

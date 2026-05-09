@@ -275,6 +275,10 @@ export interface BudgetResult {
   suggestedSplurge: number;
   suggestedEmergency: number;
   // References
+  /** City slug (the lookup key into CITIES / the BudgetInput.city
+   *  value). Useful for downstream consumers that need to look up
+   *  per-city data (e.g. MSA mapping in `blendCexSpendingTrace`). */
+  cityId: string;
   cityData: CityInfo;
   stateData: StateInfo;
   // BLS CEX provenance: which geographic granularity (msa / division /

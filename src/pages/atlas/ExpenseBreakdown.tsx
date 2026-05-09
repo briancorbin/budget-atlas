@@ -9,6 +9,7 @@ import {
   stateToRegion,
   cuSizeBucket,
   compositionBucket,
+  blendCexSpendingTrace,
   QUINTILE_MEANS_2024_BEFORE_TAX,
   type BLSCEXLineItem,
   type CUSize,
@@ -78,6 +79,19 @@ const QUINTILE_LABEL: Record<'q1' | 'q2' | 'q3' | 'q4' | 'q5', string> = {
   q4: 'fourth fifth',
   q5: 'top fifth',
 };
+
+// Composite leaves: their cexBaseline is reassembled across multiple
+// CEX sublines in budget.ts (Utilities = electric/gas + water/public,
+// Vehicle (other expenses) = residual minus insurance/maint,
+// Entertainment = entertainment minus pets). Tracing a single subline
+// for these would render a factor breakdown that doesn't multiply to
+// the displayed BLS baseline — we suppress the per-axis trace block
+// for these leaves and let the summary line stand on its own.
+const COMPOSITE_LEAVES: ReadonlySet<string> = new Set([
+  'Utilities',
+  'Vehicle (other expenses)',
+  'Entertainment',
+]);
 
 const LEAF_TO_CEX_ITEM: Readonly<Partial<Record<string, BLSCEXLineItem>>> = {
   Utilities: 'utilitiesElectricGas', // composite — pick electric/gas as the headline subline
@@ -296,6 +310,79 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
           blend's regional signal isn't double-counted.
         </div>
       ) : null;
+    // Per-axis numerical trace — surfaces the quintile baseline + each
+    // factor multiplier so the reader can see how the blend cell value
+    // was actually built. Only available for true CEX-anchored leaves
+    // (the cexItem branch); composite leaves like Utilities / Vehicle
+    // (other expenses) where cexBaseline is reassembled across multiple
+    // sublines fall through to the no-trace summary below.
+    // Composite leaves (Utilities = electric/gas + water/public,
+    // Vehicle (other expenses) = residual minus insurance/maint,
+    // Entertainment = entertainment minus pets) reconstruct
+    // `cexBaseline[label]` from multiple CEX sublines in budget.ts.
+    // Tracing a single subline here would render a factor breakdown
+    // that doesn't multiply to the displayed `baseline`, so suppress
+    // the trace for those leaves and let the summary line stand on
+    // its own.
+    // Hoisted to module scope below so we don't allocate a fresh Set
+    // on every tooltip render.
+    // (See COMPOSITE_LEAVES const near LEAF_TO_CEX_ITEM.)
+    const trace =
+      cexItem && !COMPOSITE_LEAVES.has(label)
+        ? blendCexSpendingTrace(
+            result.cityId,
+            result.cityData.state,
+            result.grossIncome,
+            cexItem,
+            cuSize,
+            composition,
+          )
+        : null;
+    const traceBlock = trace ? (
+      <div
+        style={{
+          marginTop: 6,
+          padding: '6px 8px',
+          background: T.bgAlt,
+          borderRadius: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          fontSize: rem(11),
+          fontFamily: fonts.mono,
+          color: T.inkSoft,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+          <span>national baseline (income-smoothed)</span>
+          <span style={{ color: T.ink }}>{fmt(trace.nationalQuintile / 12)}/mo</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+          <span>× geo factor ({trace.geoCut === 'msa' ? 'MSA' : trace.geoCut})</span>
+          <span>{trace.geoFactor.toFixed(2)}×</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+          <span>× CU-size factor</span>
+          <span>{trace.sizeFactor.toFixed(2)}×</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+          <span>× family-comp factor</span>
+          <span>{trace.compositionFactor.toFixed(2)}×</span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: 8,
+            paddingTop: 2,
+            borderTop: `1px solid ${T.border}`,
+          }}
+        >
+          <span>= BLS baseline</span>
+          <span style={{ color: T.ink }}>{fmt(trace.finalAnnual / 12)}/mo</span>
+        </div>
+      </div>
+    ) : null;
     return (
       <>
         <Header>How this is calculated</Header>
@@ -304,6 +391,7 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
           <strong>{fmt(baseline)}</strong>
         </div>
         {contextBlock}
+        {traceBlock}
         <div style={{ color: T.inkSoft, marginTop: 6 }}>
           {elasticityCopy}
           <br />= shipped <strong>{fmt(shipped)}</strong>
