@@ -243,10 +243,27 @@ describe('computeBudget — pinned regressions', () => {
 });
 
 describe('per-leaf lifestyle elasticities', () => {
-  it('moderate dial leaves CEX-line spending at 1.0× (the baseline)', () => {
+  it('moderate dial leaves CEX-line spending at 1.0× (the symmetric midpoint of modest/comfortable)', () => {
+    // The elasticity formula is `1 + elasticity * lifestyleSign` with
+    // lifestyleSign ∈ {-1, 0, +1}. So modest = baseline × (1 - e),
+    // moderate = baseline × 1, comfortable = baseline × (1 + e).
+    // That makes moderate the exact midpoint of modest and comfortable,
+    // which is the property worth pinning (deterministic execution
+    // alone passes even if the moderate multiplier were wrong).
+    const modest = computeBudget(input({ lifestyle: 'modest' }));
     const moderate = computeBudget(input({ lifestyle: 'moderate' }));
-    const moderate2 = computeBudget(input({ lifestyle: 'moderate' }));
-    expect(moderate.expenses).toEqual(moderate2.expenses);
+    const comfortable = computeBudget(input({ lifestyle: 'comfortable' }));
+    // Pick a high-elasticity line so the assertion has real signal —
+    // food-away has 0.25 elasticity so modest/comfortable straddle
+    // moderate by ±25%. If the moderate multiplier silently regressed,
+    // this would fail loudly.
+    const foodAwayMid = (modest.expenses['Food away']! + comfortable.expenses['Food away']!) / 2;
+    expect(moderate.expenses['Food away']).toBeCloseTo(foodAwayMid, 1);
+    // And on a low-elasticity line, the same midpoint relationship
+    // holds — this guards against a per-elasticity-tier regression.
+    const foodHomeMid =
+      (modest.expenses['Food at home']! + comfortable.expenses['Food at home']!) / 2;
+    expect(moderate.expenses['Food at home']).toBeCloseTo(foodHomeMid, 1);
   });
 
   it('high-elasticity lines (food away, entertainment) shift more between dial positions than low-elasticity lines (food at home, utilities)', () => {

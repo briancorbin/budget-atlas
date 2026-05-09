@@ -298,13 +298,18 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   // ── Expenses ──
   // Per-leaf lifestyle elasticities. Replaces the previous global ±15-20%
   // multiplier with per-line elasticities calibrated against CEX q5/q1
-  // spreads. Some lines should NOT modulate with the dial: rent in a given
-  // city × bedroom config is rent (you'd change config, not pay 80% of
-  // rent for being modest); insurance premiums are contractually fixed;
-  // childcare is per-kid not per-lifestyle. Those leaves don't pass
-  // through this map (they get applied as 1.0× implicitly). Education
-  // is keyed here at 0% because it's driven by the school-choice config
-  // (private vs public), not the dial.
+  // spreads. Some lines should NOT modulate with the dial: rent in a
+  // given city × bedroom config is rent (you'd change config, not pay
+  // 80% of rent for being modest); the Insurance leaf (a separate
+  // non-CEX line driven by III/state premium data) is contractually
+  // fixed; childcare is per-kid not per-lifestyle. Those leaves don't
+  // pass through this map (they get applied as 1.0× implicitly). Note
+  // `vehicleOther` (auto insurance + maintenance) IS modulated through
+  // this map at ±5% because the maintenance side has real lifestyle
+  // give; the auto-insurance share is lifestyle-rigid but rolls in here
+  // as part of the BLS bundle. Education is keyed here at 0% because
+  // it's driven by the school-choice config (private vs public), not
+  // the dial.
   //
   // Tier discipline:
   //   Low (±5%) — demand-driven, bounded compression: utilities, food at
@@ -316,7 +321,10 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   //     away, entertainment, vehicle purchase.
   //
   // Each value is the ± fraction at the modest/comfortable extremes;
-  // moderate is always 1.0× and is asserted by the test.
+  // moderate (`lifestyleSign === 0`) collapses the formula to 1.0× by
+  // construction (`1 + elasticity * 0`) — pinned by the
+  // `applies per-leaf elasticities` test in budget.test.ts which
+  // asserts modest/moderate/comfortable ratios on a known line.
   const lifestyleSign = lifestyle === 'modest' ? -1 : lifestyle === 'comfortable' ? 1 : 0;
   const elasticityFor = (item: BLSCEXLineItem): number => LIFESTYLE_ELASTICITY[item];
   const lifestyleMultFor = (item: BLSCEXLineItem): number =>
@@ -326,9 +334,13 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   // ── BLS CEX wire-up ─────────────────────────────────────────────────
   // For every line item BLS CEX publishes, derive the household's monthly
   // spend from the (city/MSA × division × region × income-quintile ×
-  // CU-size) blend. The lifestyle lever stays as a ±15% / ±20% modulator
-  // on top — gives users a knob inside their quintile without throwing
-  // out the BLS shape. CEX values are per consumer-unit per year; we /12
+  // CU-size) blend. The lifestyle lever (see LIFESTYLE_ELASTICITY above)
+  // applies a per-line ± elasticity on top — symmetric `1 ± elasticity`
+  // at the modest/comfortable extremes, 1.0× at moderate. Replaces the
+  // previous global ±15-20% modulator with calibrated per-leaf tiers
+  // (Low ±5%, Medium ±15%, High ±25%). Gives users a knob inside their
+  // quintile without throwing out the BLS shape. CEX values are per
+  // consumer-unit per year; we /12
   // for monthly. The CU-size factor (Table 1400) scales each line by the
   // 1p/2p/3p/4p/5+p column relative to the All-CU baseline — a 1-person
   // household lands ~0.55× a 4-person household lands ~1.40× on most
