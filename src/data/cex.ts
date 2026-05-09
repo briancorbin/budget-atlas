@@ -2023,12 +2023,18 @@ export interface BlendTrace {
   /** National per-quintile spending, smoothed at the user's income. */
   nationalQuintile: number;
   /**
-   * The lower-anchor quintile the smoothing started from (or the only
-   * anchor when the user's income clamps to q1 / q5). The reader can
-   * see the published BLS Table 1101 value at this anchor as the
-   * "honest" pre-interpolation baseline; `quintileInterpolationFactor`
-   * below is the smoothing adjustment that takes you to the user's
-   * actual income.
+   * The anchor quintile used for the interpolation factor: the highest
+   * quintile mean ≤ income (clamped at q1 below the q1 mean and at q5
+   * at or above the q5 mean). At an exact published mean the anchor IS
+   * that quintile (factor = 1.0); between two adjacent means the anchor
+   * is the lower one (factor > 1.0 toward the upper). Mirrors
+   * `smoothNationalQuintile`'s arithmetic so the trace and the
+   * production blend agree at every income.
+   *
+   * The reader can see the published BLS Table 1101 value at this
+   * anchor as the "honest" pre-interpolation baseline;
+   * `quintileInterpolationFactor` below is the smoothing adjustment
+   * that takes you to the user's actual income.
    */
   quintileAnchor: {
     quintile: IncomeQuintile;

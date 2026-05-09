@@ -240,7 +240,11 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
         {/* Smoothing row — only show when interpolation actually moved
             the value (income sits between two quintile means; clamping
             to q1 / q5 yields factor = 1.00 and adds nothing useful). */}
-        {Math.abs(trace.quintileInterpolationFactor - 1) > 0.001 && (
+        {/* Threshold matches the rendered precision (toFixed(2) → 0.005)
+            so the row only appears when the displayed value would NOT
+            be 1.00× — avoids a "× 1.00× → $X" row that contradicts the
+            "smoothing didn't apply" intuition. */}
+        {Math.abs(trace.quintileInterpolationFactor - 1) > 0.005 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
             <span>× quintile-curve smoothing (your income)</span>
             <span>{trace.quintileInterpolationFactor.toFixed(2)}×</span>
