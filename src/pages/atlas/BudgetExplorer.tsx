@@ -59,6 +59,7 @@ const INITIAL: SharedConfig = {
   lifestyle: 'moderate',
   compareCity: 'sf',
   claimedBenefits: new Set(),
+  overrides: {},
 };
 
 function readBootConfig(): SharedConfig {
@@ -89,6 +90,9 @@ export function BudgetExplorer() {
   const [claimedBenefits, setClaimedBenefits] = useState<ReadonlySet<string>>(
     () => new Set(boot.claimedBenefits),
   );
+  const [overrides, setOverrides] = useState<Readonly<Record<string, number>>>(() => ({
+    ...boot.overrides,
+  }));
 
   const effectiveIncomeB = twoIncome ? incomeB : 0;
 
@@ -103,8 +107,19 @@ export function BudgetExplorer() {
         kids,
         lifestyle,
         claimedBenefits,
+        overrides,
       }),
-    [incomeA, effectiveIncomeB, twoIncome, filing, city, kids, lifestyle, claimedBenefits],
+    [
+      incomeA,
+      effectiveIncomeB,
+      twoIncome,
+      filing,
+      city,
+      kids,
+      lifestyle,
+      claimedBenefits,
+      overrides,
+    ],
   );
 
   const toggleBenefit = useCallback((id: string) => {
@@ -177,8 +192,20 @@ export function BudgetExplorer() {
       lifestyle,
       compareCity,
       claimedBenefits,
+      overrides,
     }),
-    [incomeA, incomeB, twoIncome, filing, city, kids, lifestyle, compareCity, claimedBenefits],
+    [
+      incomeA,
+      incomeB,
+      twoIncome,
+      filing,
+      city,
+      kids,
+      lifestyle,
+      compareCity,
+      claimedBenefits,
+      overrides,
+    ],
   );
 
   // Sync hash + localStorage whenever any config field changes. replaceState
@@ -262,7 +289,18 @@ export function BudgetExplorer() {
           />
         </section>
         <section id="expenses" style={{ scrollMarginTop: 24 }}>
-          <ExpenseBreakdown result={result} />
+          <ExpenseBreakdown
+            result={result}
+            overrides={overrides}
+            onOverrideChange={(label, value) => {
+              setOverrides((prev) => {
+                const next = { ...prev };
+                if (value === null) delete next[label];
+                else next[label] = value;
+                return next;
+              });
+            }}
+          />
         </section>
         <section id="plan" style={{ scrollMarginTop: 24 }}>
           <DiscretionaryPlan result={result} />

@@ -300,7 +300,121 @@ interface RollupRow {
   color: string;
 }
 
-export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
+export interface ExpenseBreakdownProps {
+  result: BudgetResult;
+  /** Current per-leaf user overrides (display-label → monthly $). */
+  overrides?: Readonly<Record<string, number>>;
+  /**
+   * Called when the user edits or clears an override. `value: null` means
+   * "clear the override and revert to the model's value." Non-null values
+   * replace the override.
+   */
+  onOverrideChange?: (label: string, value: number | null) => void;
+}
+
+/**
+ * Per-leaf override input. Renders inline under each detail-view leaf
+ * when the parent supplies `onOverrideChange`. Empty input = no
+ * override (uses model's value). Type a number to override; the value
+ * persists in BudgetInput and re-renders the budget.
+ *
+ * Override sticks across lifestyle-dial toggles — the dial only
+ * modulates non-overridden leaves. To clear an override, blank the
+ * input and blur, or click the small × button when overridden.
+ */
+function OverrideInput({
+  label,
+  shipped,
+  override,
+  onChange,
+}: {
+  label: string;
+  shipped: number;
+  override: number | undefined;
+  onChange: (label: string, value: number | null) => void;
+}) {
+  const [draft, setDraft] = useState<string>(override !== undefined ? String(override) : '');
+  // Keep draft in sync if external state changes (share-link load, dial
+  // toggle on a non-overridden leaf, etc.).
+  useEffect(() => {
+    setDraft(override !== undefined ? String(override) : '');
+  }, [override]);
+
+  const commit = () => {
+    if (draft.trim() === '') {
+      if (override !== undefined) onChange(label, null);
+      return;
+    }
+    const n = Number(draft);
+    if (!Number.isFinite(n) || n < 0) {
+      // Reset to last known good (override or empty).
+      setDraft(override !== undefined ? String(override) : '');
+      return;
+    }
+    if (Math.round(n) !== override) onChange(label, Math.round(n));
+  };
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: 6,
+        alignItems: 'baseline',
+        paddingTop: 4,
+        fontSize: rem(11),
+        color: T.inkMuted,
+      }}
+    >
+      <label style={{ display: 'inline-flex', alignItems: 'baseline', gap: 4 }}>
+        <span>Your value:</span>
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          step={1}
+          placeholder={String(Math.round(shipped))}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          }}
+          style={{
+            width: 80,
+            fontFamily: fonts.mono,
+            fontSize: rem(11),
+            padding: '2px 6px',
+            border: `1px solid ${T.border}`,
+            background: override !== undefined ? T.bgAlt : T.surface,
+            color: T.ink,
+            borderRadius: 2,
+          }}
+          aria-label={`Override ${label}`}
+        />
+      </label>
+      {override !== undefined && (
+        <button
+          type="button"
+          onClick={() => onChange(label, null)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: T.inkMuted,
+            cursor: 'pointer',
+            padding: '0 4px',
+            fontSize: rem(11),
+          }}
+          aria-label={`Clear override for ${label}`}
+          title="Clear override (revert to model value)"
+        >
+          ×
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function ExpenseBreakdown({ result, overrides, onOverrideChange }: ExpenseBreakdownProps) {
   // Detailed breakdown is a separate disclosure below the pie + summary,
   // not an inline expand on each rollup row. Reasons:
   //   - Inline expand made the right column grow, which forced the left
@@ -1023,6 +1137,14 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                                   >
                                     {note.reason}
                                   </div>
+                                )}
+                                {onOverrideChange && (
+                                  <OverrideInput
+                                    label={line.label}
+                                    shipped={line.value}
+                                    override={overrides?.[line.label]}
+                                    onChange={onOverrideChange}
+                                  />
                                 )}
                               </div>
                             );

@@ -85,9 +85,10 @@ export const ROADMAP: readonly RoadmapItem[] = [
     id: 5,
     title: 'Lifestyle granularity',
     category: 'Cost of living',
-    status: 'planned',
+    status: 'shipped',
+    shippedAt: '2026-05-08',
     summary:
-      'Layer optional per-line inputs — gym, dining out, groceries, hobbies — on top of the Modest/Moderate/Comfortable lever. Simple lever stays as the default; expand for users modeling their actual spending.',
+      'Per-leaf user overrides land in the detail view: type any leaf to your actual value, share-link round-trips it. Dial keeps the simple Modest/Moderate/Comfortable global lever; overridden leaves stick across dial toggles. Per-leaf elasticities (#210), three-column comparison (#208), and the drill-down (#178) all shipped together — the full lifestyle granularity stack.',
   },
   {
     id: 6,

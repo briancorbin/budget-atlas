@@ -15,6 +15,13 @@ export interface SharedConfig {
   lifestyle: Lifestyle;
   compareCity: string;
   claimedBenefits: ReadonlySet<string>;
+  /**
+   * Per-leaf user overrides — display-label → monthly $. Round-tripped
+   * through the share-link as a compact `o=` param: `label1:val1,label2:val2`
+   * with labels base64-url-encoded so commas / colons in labels don't
+   * collide with delimiters. Empty / undefined when no overrides set.
+   */
+  overrides: Readonly<Record<string, number>>;
 }
 
 /**
@@ -47,6 +54,9 @@ export const DEFAULTS_V1: SharedConfig = Object.freeze({
   // immutability of DEFAULTS_V1 is enforced by convention plus the fact
   // that decodeConfig always clones into a fresh Set before writing.
   claimedBenefits: new Set<string>() as ReadonlySet<string>,
+  // Empty overrides — the default "model values, no per-leaf user input"
+  // state. Suppressed from the wire when empty (the most common case).
+  overrides: Object.freeze({}) as Readonly<Record<string, number>>,
 });
 
 const FILING_TO_CODE: Record<FilingStatus, string> = { single: 's', married: 'm', head: 'h' };
@@ -86,7 +96,39 @@ export function encodeConfig(cfg: SharedConfig): string {
     const sorted = [...cfg.claimedBenefits].sort();
     p.set('cb', sorted.join(','));
   }
+  // Overrides — sorted for deterministic encoding. Each entry is
+  // `<base64url(label)>:<value>`. Base64-url avoids collisions with `,`
+  // and `:` separators inside leaf labels (e.g. "Food at home" with
+  // spaces, "Mortgage P&I" with `&`).
+  const overrideEntries = Object.entries(cfg.overrides).filter(
+    ([, v]) => Number.isFinite(v) && v >= 0,
+  );
+  if (overrideEntries.length > 0) {
+    overrideEntries.sort(([a], [b]) => a.localeCompare(b));
+    const encoded = overrideEntries
+      .map(([k, v]) => `${b64UrlEncode(k)}:${Math.round(v)}`)
+      .join(',');
+    p.set('o', encoded);
+  }
   return p.toString();
+}
+
+function b64UrlEncode(s: string): string {
+  // btoa is browser-only but the build target is browser. Convert to
+  // a UTF-8-safe string first to handle any non-ASCII labels (none
+  // today, but defensive). Strip `=` padding and swap `+/` for `-_`.
+  const utf8 = unescape(encodeURIComponent(s));
+  return btoa(utf8).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function b64UrlDecode(s: string): string | null {
+  try {
+    const padded = s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4);
+    const utf8 = atob(padded);
+    return decodeURIComponent(escape(utf8));
+  } catch {
+    return null;
+  }
 }
 
 function parseInt10(s: string): number | null {
@@ -157,6 +199,27 @@ export function decodeConfig(payload: string): SharedConfig {
     out.claimedBenefits = new Set(ids);
   }
 
+  // Overrides — `o=<b64url(label)>:<value>,<b64url(label)>:<value>`.
+  // Bad entries (malformed b64, non-numeric value, negative value) are
+  // dropped silently — partial decode is OK; share-link versioning is
+  // tolerant.
+  const o = p.get('o');
+  if (o != null && o.length > 0) {
+    const entries: Record<string, number> = {};
+    for (const pair of o.split(',')) {
+      const idx = pair.indexOf(':');
+      if (idx <= 0) continue;
+      const labelEncoded = pair.slice(0, idx);
+      const valueStr = pair.slice(idx + 1);
+      const label = b64UrlDecode(labelEncoded);
+      if (!label) continue;
+      const value = parseInt10(valueStr);
+      if (value == null || value < 0) continue;
+      entries[label] = value;
+    }
+    out.overrides = entries;
+  }
+
   return out;
 }
 
@@ -165,7 +228,7 @@ export function looksLikeConfigHash(payload: string): boolean {
   const stripped = payload.startsWith('#') ? payload.slice(1) : payload;
   if (stripped.length === 0) return false;
   const p = new URLSearchParams(stripped);
-  return ['v', 'a', 'b', 't', 'f', 'c', 'k', 'l', 'cc', 'cb'].some((k) => p.has(k));
+  return ['v', 'a', 'b', 't', 'f', 'c', 'k', 'l', 'cc', 'cb', 'o'].some((k) => p.has(k));
 }
 
 export function loadFromStorage(): SharedConfig | null {

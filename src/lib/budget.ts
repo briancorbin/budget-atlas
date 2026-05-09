@@ -282,6 +282,7 @@ export function computeBudget(input: BudgetInput): BudgetResult {
     lifestyle,
     tenure = 'renter',
     claimedBenefits,
+    overrides,
   } = input;
   const cityData = getCityData(city);
   const stateData = STATES[cityData.state];
@@ -670,38 +671,76 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   // when present (tuition, school fees). vehicleOther (insurance,
   // registration, maintenance) is essential. Per-line user override is
   // roadmap #5.
-  const essentialExpenses =
-    housing +
-    mortgagePI +
-    propertyTax +
-    homeownersInsurance +
-    homeMaintenance +
-    utilities +
-    foodAtHomeAfterBenefits +
-    transitCost +
-    gasoline +
-    vehicleInsurance +
-    vehicleMaintRepair +
-    vehicleOtherResidual +
-    healthcareAfterBenefits +
-    childcare +
-    cellService +
-    homeInternet +
-    rentersInsurance +
-    lifeInsurance +
-    education +
-    housekeepingSupplies;
-  const lifestyleExpenses =
-    foodAway +
-    alcohol +
-    vehiclePurchase +
-    apparel +
-    entertainment +
-    pets +
-    personalCare +
-    householdOperations +
-    furnishings +
-    travelLodging;
+  // Build the per-leaf expenses map up-front so user overrides (PR10)
+  // and category-driven sums share a single source of truth. If any
+  // override matches a leaf, clamp negative values to 0 and replace
+  // the computed value; non-overridden leaves keep the model's value.
+  const computedExpenses: Record<string, number> = {
+    Housing: housing,
+    'Mortgage P&I': mortgagePI,
+    'Property tax': propertyTax,
+    'Homeowners insurance': homeownersInsurance,
+    'Maintenance & repairs': homeMaintenance,
+    Utilities: utilities,
+    'Cell service': cellService,
+    'Home internet': homeInternet,
+    'Renters insurance': rentersInsurance,
+    'Life & disability insurance': lifeInsurance,
+    'Housekeeping Supplies': housekeepingSupplies,
+    Healthcare: healthcareAfterBenefits,
+    Childcare: childcare,
+    Education: education,
+    'Food at home': foodAtHomeAfterBenefits,
+    'Food away': foodAway,
+    Alcohol: alcohol,
+    Transit: transitCost,
+    Gasoline: gasoline,
+    'Vehicle insurance': vehicleInsurance,
+    'Vehicle maintenance & repair': vehicleMaintRepair,
+    'Vehicle (other expenses)': vehicleOtherResidual,
+    'Vehicle (purchase)': vehiclePurchase,
+    Apparel: apparel,
+    Entertainment: entertainment,
+    Pets: pets,
+    'Personal Care': personalCare,
+    'Household Operations': householdOperations,
+    Furnishings: furnishings,
+    'Travel & lodging': travelLodging,
+  };
+
+  // Apply user overrides — layer 4 of the precedence stack (after BLS
+  // baseline / lifestyle elasticity / source override). Toggling the
+  // dial re-runs computeBudget which re-computes the layers below; the
+  // override layer just replaces the final value, so non-overridden
+  // leaves naturally re-modulate and overridden leaves stick.
+  const expensesAfterOverrides: Record<string, number> = { ...computedExpenses };
+  const appliedOverrides: Record<string, number> = {};
+  if (overrides) {
+    for (const [label, value] of Object.entries(overrides)) {
+      if (label in expensesAfterOverrides) {
+        const clamped = Math.max(0, value);
+        expensesAfterOverrides[label] = clamped;
+        appliedOverrides[label] = clamped;
+      }
+    }
+  }
+
+  // Re-derive sums from the (possibly overridden) expenses map using
+  // EXPENSE_CATEGORY as the essential/lifestyle key.
+  let essentialExpenses = 0;
+  let lifestyleExpenses = 0;
+  for (const [label, value] of Object.entries(expensesAfterOverrides)) {
+    if (EXPENSE_CATEGORY[label] === 'lifestyle') {
+      lifestyleExpenses += value;
+    } else {
+      // Default to essential when category isn't explicitly set (e.g.
+      // newly added leaves before EXPENSE_CATEGORY is updated). Keeps
+      // the model strict-essential-by-default and makes "did I forget
+      // to categorize this?" debuggable via a per-line $0 in lifestyle
+      // section.
+      essentialExpenses += value;
+    }
+  }
 
   const totalExpenses = essentialExpenses + lifestyleExpenses;
 
@@ -747,38 +786,8 @@ export function computeBudget(input: BudgetInput): BudgetResult {
     // Vehicle (purchase) for a transit-only household). expenseModelNotes
     // below records why a $0 line is $0 so the UI can distinguish
     // "model assumed N/A" from "BLS itself returned 0."
-    expenses: {
-      Housing: housing,
-      'Mortgage P&I': mortgagePI,
-      'Property tax': propertyTax,
-      'Homeowners insurance': homeownersInsurance,
-      'Maintenance & repairs': homeMaintenance,
-      Utilities: utilities,
-      'Cell service': cellService,
-      'Home internet': homeInternet,
-      'Renters insurance': rentersInsurance,
-      'Life & disability insurance': lifeInsurance,
-      'Housekeeping Supplies': housekeepingSupplies,
-      Healthcare: healthcareAfterBenefits,
-      Childcare: childcare,
-      Education: education,
-      'Food at home': foodAtHomeAfterBenefits,
-      'Food away': foodAway,
-      Alcohol: alcohol,
-      Transit: transitCost,
-      Gasoline: gasoline,
-      'Vehicle insurance': vehicleInsurance,
-      'Vehicle maintenance & repair': vehicleMaintRepair,
-      'Vehicle (other expenses)': vehicleOtherResidual,
-      'Vehicle (purchase)': vehiclePurchase,
-      Apparel: apparel,
-      Entertainment: entertainment,
-      Pets: pets,
-      'Personal Care': personalCare,
-      'Household Operations': householdOperations,
-      Furnishings: furnishings,
-      'Travel & lodging': travelLodging,
-    },
+    expenses: expensesAfterOverrides,
+    appliedOverrides,
     expenseModelNotes: {
       // Vehicle/gasoline lines are forced to $0 for transit-only
       // households. BLS-derived values (`*Bls`) are preserved so the

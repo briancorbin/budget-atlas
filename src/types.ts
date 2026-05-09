@@ -168,6 +168,18 @@ export interface BudgetInput {
    * is applied to the budget. Unknown / ineligible IDs are ignored.
    */
   claimedBenefits?: ReadonlySet<string>;
+  /**
+   * Per-leaf user overrides — display-label → monthly $. When a key
+   * matches a leaf in result.expenses, the override REPLACES the
+   * computed value entirely (layer 4 of the precedence stack: BLS
+   * baseline → lifestyle elasticity → source override → user override).
+   * Toggling the lifestyle dial re-runs computation but doesn't reset
+   * overrides; non-overridden leaves re-modulate, overridden leaves
+   * stay at the override value.
+   *
+   * Ignored when undefined or empty. Negative values clamp to 0.
+   */
+  overrides?: Readonly<Record<string, number>>;
 }
 
 export interface BudgetResult {
@@ -288,6 +300,15 @@ export interface BudgetResult {
    * shipped value; collapse when numerically identical.
    */
   cexBaseline: Readonly<Partial<Record<string, number>>>;
+  /**
+   * Echo of the user overrides actually applied to `expenses`. Same
+   * shape as `BudgetInput.overrides` but reflects only the keys that
+   * matched a real leaf (unknown leaf labels are silently dropped).
+   * Lets the UI distinguish "this leaf has a user override" (render the
+   * override input as filled) vs "no override" (render the baseline
+   * placeholder).
+   */
+  appliedOverrides: Readonly<Record<string, number>>;
 }
 
 export type TaxBracket = readonly [number, number]; // [cap, rate]

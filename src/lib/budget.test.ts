@@ -337,6 +337,56 @@ describe('leaf restructure', () => {
   });
 });
 
+describe('per-leaf user overrides', () => {
+  it('override replaces the computed value for that leaf only', () => {
+    const baseline = computeBudget(input({ incomeA: 80_000 }));
+    const overridden = computeBudget(input({ incomeA: 80_000, overrides: { 'Food away': 100 } }));
+    expect(overridden.expenses['Food away']).toBe(100);
+    // Other leaves unchanged
+    expect(overridden.expenses['Food at home']).toBe(baseline.expenses['Food at home']);
+    expect(overridden.expenses.Apparel).toBe(baseline.expenses.Apparel);
+  });
+
+  it('override sticks across lifestyle dial toggles', () => {
+    const modest = computeBudget(
+      input({ incomeA: 80_000, lifestyle: 'modest', overrides: { 'Food away': 100 } }),
+    );
+    const comfortable = computeBudget(
+      input({ incomeA: 80_000, lifestyle: 'comfortable', overrides: { 'Food away': 100 } }),
+    );
+    expect(modest.expenses['Food away']).toBe(100);
+    expect(comfortable.expenses['Food away']).toBe(100);
+    // Non-overridden leaves DO change with the dial
+    expect(modest.expenses.Apparel).not.toBe(comfortable.expenses.Apparel);
+  });
+
+  it('override propagates into totals (essentialExpenses, totalExpenses, discretionary)', () => {
+    const baseline = computeBudget(input({ incomeA: 80_000 }));
+    const overridden = computeBudget(input({ incomeA: 80_000, overrides: { 'Food away': 100 } }));
+    const expectedDelta = baseline.expenses['Food away']! - 100;
+    expect(overridden.totalExpenses).toBeCloseTo(baseline.totalExpenses - expectedDelta, 1);
+    expect(overridden.discretionary).toBeCloseTo(baseline.discretionary + expectedDelta, 1);
+  });
+
+  it('negative override values clamp to 0', () => {
+    const r = computeBudget(input({ incomeA: 80_000, overrides: { Apparel: -50 } }));
+    expect(r.expenses.Apparel).toBe(0);
+  });
+
+  it('appliedOverrides echoes only matched leaf labels', () => {
+    const r = computeBudget(
+      input({
+        incomeA: 80_000,
+        overrides: {
+          Apparel: 50,
+          'Made-up label': 999, // doesn't match a real leaf — silently dropped
+        },
+      }),
+    );
+    expect(r.appliedOverrides).toEqual({ Apparel: 50 });
+  });
+});
+
 describe('cexBaseline (three-column comparison)', () => {
   it('exposes BLS baseline values for CEX-anchored leaves', () => {
     const r = computeBudget(input({ incomeA: 80_000 }));

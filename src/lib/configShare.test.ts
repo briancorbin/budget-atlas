@@ -45,9 +45,48 @@ describe('decodeConfig', () => {
       lifestyle: 'comfortable',
       compareCity: 'cmh',
       claimedBenefits: new Set(['chip']),
+      overrides: {},
     };
     const decoded = decodeConfig(encodeConfig(original));
     expect(decoded).toEqual(original);
+  });
+
+  it('round-trips per-leaf overrides through the share-link', () => {
+    const original: SharedConfig = {
+      incomeA: 80_000,
+      incomeB: 0,
+      twoIncome: false,
+      filing: 'single',
+      city: 'cmh',
+      kids: 0,
+      lifestyle: 'moderate',
+      compareCity: 'sf',
+      claimedBenefits: new Set(),
+      overrides: {
+        Apparel: 50,
+        'Food away': 100,
+        'Mortgage P&I': 0,
+      },
+    };
+    const decoded = decodeConfig(encodeConfig(original));
+    expect(decoded.overrides).toEqual(original.overrides);
+  });
+
+  it('omits overrides param when empty', () => {
+    const cfg: SharedConfig = {
+      incomeA: 50_000,
+      incomeB: 0,
+      twoIncome: false,
+      filing: 'single',
+      city: 'cmh',
+      kids: 0,
+      lifestyle: 'moderate',
+      compareCity: 'sf',
+      claimedBenefits: new Set(),
+      overrides: {},
+    };
+    const params = new URLSearchParams(encodeConfig(cfg));
+    expect(params.has('o')).toBe(false);
   });
 
   it('falls back to defaults for missing keys', () => {
