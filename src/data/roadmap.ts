@@ -424,6 +424,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
   },
   {
+    id: 225,
+    title: 'Calc tooltip: blend axis values',
+    category: 'UX & navigation',
+    status: 'shipped',
+    shippedAt: '2026-05-09',
+    summary:
+      "The calc tooltip used to say 'BLS baseline at your region · quintile · CU size · family-comp blend' but never told the reader WHICH region, WHICH quintile, etc. Added a context block listing each axis cell explicitly: Region (Northeast/Midwest/South/West), Income quintile + national mean, CU size (1- to 5+ person), Family composition (single/married/single-parent/etc.), and the geo cut the blend resolved to (MSA/division/region). Makes the synthetic blend's per-cell context legible at a glance.",
+  },
+  {
     id: 224,
     title: 'Utilities tooltip: EIA context',
     category: 'UX & navigation',
