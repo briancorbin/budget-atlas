@@ -334,11 +334,18 @@ function OverrideInput({
   onChange: (label: string, value: number | null) => void;
 }) {
   const [draft, setDraft] = useState<string>(override !== undefined ? String(override) : '');
-  // Keep draft in sync if external state changes (share-link load, dial
-  // toggle on a non-overridden leaf, etc.).
-  useEffect(() => {
+  // Keep draft in sync when the external `override` prop changes
+  // (share-link load, dial toggle on a non-overridden leaf, etc.).
+  // Uses the "adjust state during render" pattern rather than a
+  // useEffect — same shape as SearchableSelect's prevQ/prevOpen guard.
+  // React discards the first render and re-runs with the corrected
+  // state; no useState-in-effect lint warning.
+  // See https://react.dev/learn/you-might-not-need-an-effect
+  const [prevOverride, setPrevOverride] = useState<number | undefined>(override);
+  if (prevOverride !== override) {
+    setPrevOverride(override);
     setDraft(override !== undefined ? String(override) : '');
-  }, [override]);
+  }
 
   const commit = () => {
     if (draft.trim() === '') {
