@@ -428,6 +428,19 @@ describe('cexBaseline (three-column comparison)', () => {
     expect(youngKids.cexBaseline['Childcare']).toBe(118);
   });
 
+  it('Childcare shipped value === BLS baseline (post Care.com → BLS swap)', () => {
+    // After swapping the Childcare source from Care.com to BLS Table
+    // 1502, the shipped value uses the same per-composition BLS-derived
+    // numbers as the baseline. Three-column comparison collapses to
+    // one value (no gap to display).
+    const married = computeBudget(input({ kids: 2, hasPartner: true, filing: 'married' }));
+    const single = computeBudget(input({ kids: 1, filing: 'head' }));
+    expect(married.expenses.Childcare).toBe(118);
+    expect(married.expenses.Childcare).toBe(married.cexBaseline['Childcare']);
+    expect(single.expenses.Childcare).toBe(47);
+    expect(single.expenses.Childcare).toBe(single.cexBaseline['Childcare']);
+  });
+
   it('baseline is independent of lifestyle dial — only shipped value moves', () => {
     const modest = computeBudget(input({ incomeA: 80_000, lifestyle: 'modest' }));
     const comfortable = computeBudget(input({ incomeA: 80_000, lifestyle: 'comfortable' }));

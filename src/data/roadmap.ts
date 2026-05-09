@@ -424,6 +424,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
   },
   {
+    id: 231,
+    title: 'Childcare default → BLS Table 1502',
+    category: 'Cost of living',
+    status: 'shipped',
+    shippedAt: '2026-05-09',
+    summary:
+      "The Childcare leaf used Care.com private-market full-time center prices × kids × 0.85, which overstated by 5–10× for the typical household — most American childcare is informal (relatives, friends, churches) and CCDF subsidies cover most cost above a small co-pay for income-eligible families. Swapped to BLS CEX Table 1502 'Personal services' delta vs. married-no-kids per composition: ~$454/mo (married + oldest <6), ~$118/mo (married + oldest 6–17), ~$47/mo (single parent). Captures actual spending net of free / family / subsidized care. Care.com data stays in cityData for future re-introduction as a private-market reference column.",
+  },
+  {
     id: 230,
     title: 'Anchor-vs-quintile mismatch note',
     category: 'UX & navigation',

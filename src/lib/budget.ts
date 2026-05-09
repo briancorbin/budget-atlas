@@ -136,10 +136,10 @@ export const EXPENSE_SOURCE: Record<string, ExpenseSource> = {
       "Healthcare splits two ways. The premium portion comes from KFF Employer Health Benefits Survey (worker share of an employer-sponsored plan, single vs. family). The out-of-pocket portion (deductibles, copays, drugs, supplies) comes from BLS CEX with insurance premium explicitly excluded — so KFF and BLS are added without double-counting. Medicaid/CHIP is modeled as binary full/none — when eligible, the entire Healthcare line zeros out; when not, full OOP. State-level variation in adult Medicaid scope (dental, vision, orthodontics range from comprehensive to emergency-only) isn't modeled in v1; finer state-by-state coverage modeling is roadmap #10.",
   },
   Childcare: {
-    label: 'Care.com',
-    tier: 'commercial',
+    label: 'BLS CEX Table 1502 (Personal services)',
+    tier: 'primary',
     description:
-      "Care.com Cost of Care Report — annual commercial survey of US childcare costs. We use the preschool monthly value × kids × 0.85 (mix-of-ages discount for after-school / part-time). Note: BLS's Education line includes a small daycare share that overlaps slightly with this — see issue #190.",
+      'BLS CEX Table 1502 "Personal services" subline, delta vs. married-no-kids per composition. Captures what the average household with kids ACTUALLY spends on childcare out-of-pocket — net of free / family / community / CCDF-subsidized care. Per-composition values: ~$454/mo (married + oldest <6), ~$118/mo (married + oldest 6–17), ~$47/mo (single parent). Replaces the previous Care.com-based formula (private-market full-time center prices × kids × 0.85), which overstated by 5–10× for the typical household — most American childcare is informal (relatives, friends, churches) and CCDF subsidies cover most cost above a small co-pay for income-eligible families. Care.com private-market data stays in `cityData.childcarePreschool` for future re-introduction as a private-market reference. Note: BLS\'s Education line includes a small daycare share that overlaps slightly with this — see issue #190.',
   },
   Education: BLS_CEX,
   'Food at home': BLS_CEX,
@@ -579,8 +579,39 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   const healthcareOOP = cexMonthly('healthcareOOP');
   const healthcare = healthcarePremium + healthcareOOP;
 
-  // Childcare lite: kids × preschool average × 0.85 (mix of ages, after-school discount)
-  const childcare = kids > 0 ? cityData.childcarePreschool * kids * 0.85 : 0;
+  // Childcare — BLS Table 1502 "Personal services" subline delta
+  // vs. married-no-kids, per composition. This captures what the
+  // average household with kids of this composition ACTUALLY spends
+  // out-of-pocket on childcare — net of free / family / community /
+  // CCDF-subsidized care. The previous Care.com-based formula
+  // (cityData.childcarePreschool × kids × 0.85) used private-market
+  // full-time center prices and overstated by 5–10× for the
+  // typical household, since most kids aren't in full-time paid
+  // center care (most American childcare is informal — relatives,
+  // friends, churches — and CCDF subsidies cover most cost above a
+  // small co-pay for income-eligible families).
+  //
+  // No city-level scaling at v1: Table 1502 is published nationally
+  // by composition; per-city scaling would require re-introducing a
+  // private-market price (Care.com / DOL NDCP) as a cost-of-living
+  // multiplier — out of scope for the swap. Care.com data stays in
+  // `cityData.childcarePreschool` for future re-introduction as a
+  // private-market reference column or city-relative scaling factor.
+  //
+  // Households without kids: $0. marriedKids18p (adult children at
+  // home) and otherMarried (multigenerational): $0 — Personal
+  // services delta in those columns is dominated by adult care
+  // rather than childcare, and our model doesn't distinguish.
+  const CHILDCARE_BLS_PER_COMP: Record<typeof composition, number> = {
+    marriedNoKids: 0,
+    marriedKidsU6: 454,
+    marriedKids617: 118,
+    marriedKids18p: 0,
+    otherMarried: 0,
+    singleParent: 47,
+    singleOrOther: 0,
+  };
+  const childcare = kids > 0 ? CHILDCARE_BLS_PER_COMP[composition] : 0;
 
   // Phone & Internet split per the locked tree:
   //   Cell service → CEX "Cellular phone service" subline (BLS-anchored,
