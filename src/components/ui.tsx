@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -335,8 +336,16 @@ export function Cite({ source }: { source: Source | readonly Source[] }) {
  * for genuinely-confusing distinctions (e.g. "household" actually
  * meaning "BLS consumer unit"), not for every piece of jargon.
  */
+const HOVER_GLOSS_WIDTH = 320;
+const HOVER_GLOSS_VIEWPORT_MARGIN = 16;
+
 export function HoverGloss({ children, gloss }: { children: ReactNode; gloss: ReactNode }) {
   const [open, setOpen] = useState(false);
+  // Flip the tooltip to right-anchor when left-anchoring would overflow
+  // the right edge of the viewport. Without this the gloss clips off
+  // the screen for triggers near the right side of the page (e.g.
+  // dollar values in the right column of the detail panel).
+  const [hAlign, setHAlign] = useState<'left' | 'right'>('left');
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -345,6 +354,24 @@ export function HoverGloss({ children, gloss }: { children: ReactNode; gloss: Re
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+  // useLayoutEffect (vs useEffect) so the alignment is computed BEFORE
+  // the first painted frame — otherwise a right-edge trigger briefly
+  // shows a clipped tooltip on the very first render before flipping.
+  // Effective tooltip width is min(declared, 90vw) — the popover style
+  // caps at 90vw on narrow viewports, and on a small screen anchoring
+  // to the right edge could push the tooltip off the LEFT instead.
+  useLayoutEffect(() => {
+    if (!open || !ref.current || typeof window === 'undefined') return;
+    const triggerRect = ref.current.getBoundingClientRect();
+    const effectiveWidth = Math.min(HOVER_GLOSS_WIDTH, window.innerWidth * 0.9);
+    const wouldOverflowRight =
+      triggerRect.left + effectiveWidth + HOVER_GLOSS_VIEWPORT_MARGIN > window.innerWidth;
+    // Only flip when the right-anchor variant would actually fit; on
+    // very narrow viewports neither anchor leaves room and the
+    // 90vw cap will handle horizontal containment via maxWidth.
+    const rightAnchorFits = triggerRect.right - effectiveWidth >= HOVER_GLOSS_VIEWPORT_MARGIN;
+    setHAlign(wouldOverflowRight && rightAnchorFits ? 'right' : 'left');
   }, [open]);
 
   return (
@@ -369,9 +396,9 @@ export function HoverGloss({ children, gloss }: { children: ReactNode; gloss: Re
           style={{
             position: 'absolute',
             top: 'calc(100% + 6px)',
-            left: 0,
+            ...(hAlign === 'right' ? { right: 0 } : { left: 0 }),
             zIndex: 10,
-            width: 320,
+            width: HOVER_GLOSS_WIDTH,
             maxWidth: '90vw',
             padding: '10px 12px',
             background: T.surface,

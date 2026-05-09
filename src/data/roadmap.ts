@@ -424,6 +424,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
   },
   {
+    id: 228,
+    title: 'HoverGloss flips on overflow',
+    category: 'UX & navigation',
+    status: 'shipped',
+    shippedAt: '2026-05-09',
+    summary:
+      "HoverGloss tooltips were always left-anchored and clipped off the right edge of the viewport for triggers near the right side of the page (dollar values in the detail panel's right column, etc.). Added overflow detection via `getBoundingClientRect()` on open — when left-anchoring would push the 320px-wide tooltip past the viewport's right edge, switch to right-anchor (`right: 0` instead of `left: 0`).",
+  },
+  {
     id: 227,
     title: 'Consolidate calc tooltip',
     category: 'UX & navigation',
