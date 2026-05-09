@@ -270,8 +270,9 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
             }}
           >
             You're in {result.incomeQuintile} by floor, but anchored at{' '}
-            {trace.quintileAnchor.quintile} because your income is below {result.incomeQuintile}'s
-            mean — interpolating upward toward it.
+            {trace.quintileAnchor.quintile} because the smoothing anchors at quintile means rather
+            than floors — your income hasn't yet crossed {result.incomeQuintile}'s mean, so the
+            blend interpolates from {trace.quintileAnchor.quintile}'s mean upward.
           </div>
         )}
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
