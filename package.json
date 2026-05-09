@@ -27,7 +27,13 @@
     "dev:worker:seed": "wrangler d1 execute budget-atlas-audit --local --file=worker/schema.sql --persist-to=.wrangler/state",
     "dev:local": "concurrently --names worker,site --prefix-colors blue,green --kill-others-on-fail \"yarn dev:worker\" \"AUDIT_PROXY_TARGET=http://localhost:8787 yarn dev\"",
     "dev:local:fresh": "yarn dev:worker:seed && yarn db:sync && yarn dev:local",
-    "db:sync": "op run --env-file=.env.audit -- ./audit/links/sync-d1-from-prod.sh"
+    "db:sync": "op run --env-file=.env.audit -- ./audit/links/sync-d1-from-prod.sh",
+    "marginalia:install": "cd marginalia && yarn install",
+    "marginalia:dev": "cd marginalia && yarn dev",
+    "marginalia:build": "cd marginalia && yarn build",
+    "marginalia:preview": "cd marginalia && yarn preview",
+    "marginalia:typecheck": "cd marginalia && yarn typecheck",
+    "dev:all": "concurrently --names atlas,marginalia --prefix-colors green,blue --kill-others-on-fail \"yarn dev\" \"yarn marginalia:dev\""
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.2.9",

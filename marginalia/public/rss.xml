@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Marginalia</title>
+    <link>https://marginalia.thebudgetatlas.com</link>
+    <description>Weekly notes from working with AI on the Budget Atlas. By Brian Corbin.</description>
+    <language>en-us</language>
+    <atom:link href="https://marginalia.thebudgetatlas.com/rss.xml" rel="self" type="application/rss+xml" />
+
+    <item>
+      <title>Now do it and suffer</title>
+      <link>https://marginalia.thebudgetatlas.com/posts/post-1</link>
+      <guid isPermaLink="true">https://marginalia.thebudgetatlas.com/posts/post-1</guid>
+      <pubDate>Sat, 09 May 2026 00:00:00 GMT</pubDate>
+      <description>Why this tool did not already exist, and what changed.</description>
+    </item>
+
+    <item>
+      <title>Meh, why not</title>
+      <link>https://marginalia.thebudgetatlas.com/posts/post-0</link>
+      <guid isPermaLink="true">https://marginalia.thebudgetatlas.com/posts/post-0</guid>
+      <pubDate>Sat, 09 May 2026 00:00:00 GMT</pubDate>
+      <description>Why I started Marginalia, and what I am trying not to be.</description>
+    </item>
+  </channel>
+</rss>

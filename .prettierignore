@@ -14,3 +14,6 @@ pnpm-lock.yaml
 # Memory files (user-edited prose, not code)
 memory/
 
+# Marginalia is a separate project with its own formatting/lint config.
+marginalia/
+

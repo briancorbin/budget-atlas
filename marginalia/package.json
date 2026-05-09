@@ -1,0 +1,31 @@
+{
+  "name": "marginalia",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Marginalia — weekly notes from working with AI on the Budget Atlas. Subdomain publication at marginalia.thebudgetatlas.com.",
+  "packageManager": "yarn@4.9.1",
+  "scripts": {
+    "predev": "node scripts/build-stats.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/build-stats.mjs",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "build-stats": "node scripts/build-stats.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/fraunces": "^5.2.9",
+    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@fontsource/ibm-plex-sans": "^5.2.8",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.11"
+  }
+}

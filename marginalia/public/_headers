@@ -1,0 +1,7 @@
+# Same privacy posture as the Atlas: no analytics beacons leak from here.
+# Cloudflare Web Analytics is enabled at the project level via the dashboard.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: interest-cohort=()

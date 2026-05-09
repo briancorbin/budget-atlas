@@ -1,0 +1,4 @@
+# SPA fallback — Cloudflare Pages serves /index.html for any path that
+# doesn't match a file. The 200 status preserves the requested URL in the
+# address bar so client-side routing can read it from window.location.
+/*    /index.html   200

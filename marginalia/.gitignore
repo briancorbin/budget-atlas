@@ -1,0 +1,17 @@
+# Marginalia is a separate Yarn 4 project. The parent .gitignore covers
+# the global stuff (node_modules, *.tsbuildinfo, marginalia/dist), but Yarn
+# 4's local state lives inside this subdirectory and needs its own rules.
+
+# Yarn 4 local state (per https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored):
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Build output and TS incremental cache (parent .gitignore catches these too,
+# but kept here for clarity if marginalia ever moves to its own repo).
+dist/
+*.tsbuildinfo
+.vite/

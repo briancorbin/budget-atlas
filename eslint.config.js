@@ -24,6 +24,11 @@ export default tseslint.config(
       'node_modules/**',
       '.vite/**',
       '.claude/**',
+      // Marginalia is a separate project at marginalia/ with its own
+      // tsconfig + (eventually) its own lint config. The Atlas's CI shouldn't
+      // typecheck or lint it — that runs in a separate Cloudflare Pages
+      // build out of the marginalia/ directory.
+      'marginalia/**',
     ],
   },
 
