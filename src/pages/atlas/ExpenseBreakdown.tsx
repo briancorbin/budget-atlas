@@ -407,7 +407,8 @@ function calcExplanation(
       <>
         <Header>How this is calculated</Header>
         <div style={{ color: T.inkSoft }}>
-          Sourced from <strong>{src.label}</strong>. {src.description.split('.')[0]}.
+          Sourced from <strong>{src.label}</strong>.{' '}
+          {src.description.match(/^.*?\.(?=\s+[A-Z]|$)/)?.[0] ?? src.description}
         </div>
       </>
     );
