@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeBudget, LIFESTYLE_ELASTICITY } from '@/lib/budget';
-import {
-  cexLineItemSpendingForCity,
-  compositionBucket,
-  cuSizeBucket,
-} from '@/data/cex';
+import { cexLineItemSpendingForCity, compositionBucket, cuSizeBucket } from '@/data/cex';
 import type { BudgetInput } from '@/types';
 
 function input(overrides: Partial<BudgetInput> = {}): BudgetInput {

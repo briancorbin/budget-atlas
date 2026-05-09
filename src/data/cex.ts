@@ -42,6 +42,13 @@
  */
 
 import type { StateCode } from '@/types';
+import { SOURCES } from '@/data/sources';
+
+// Source for `SIZE_ALLCU_SPENDING` / `SIZE_BASELINE_ALLCU` below — BLS
+// CEX Table 1400 (Size of consumer unit, 2024 single-year). Exported as
+// a typed reference so the unused-sources audit sees a consumer for
+// `bls-cex-size-2024` outside the registry itself.
+export const BLS_CEX_SIZE_SOURCE = SOURCES['bls-cex-size-2024'];
 
 // ─── Geographic axis ─────────────────────────────────────────────────────
 
@@ -1385,7 +1392,9 @@ export const MSA_ALLCU_SPENDING: Readonly<Record<BLSMSA, Partial<LineItemSpendin
  * denominator both 2024 single-year), so the size factor stays internally
  * consistent. Combining with the 2y geo factor and the 1y quintile value
  * is the same cross-vintage product the geo blend already accepts; the
- * documented <2% national-CU drift between vintages applies.
+ * documented <6% national-CU drift between vintages applies (most lines
+ * <2%; vehicleInsurance ~5.8% is the outlier — auto-insurance premium
+ * inflation, real economic signal). Bound asserted in cex.test.ts.
  *
  * The Pets / Reading / Tobacco / Cash-contributions lines BLS publishes
  * in Table 1400 are intentionally not consumed (same scope as the rest

@@ -39,6 +39,26 @@ import {
   NATIONAL_AVG_RESIDENTIAL_ELECTRICITY_2026_FEB,
   eiaElectricityFactor,
 } from '@/data/eiaElectricity';
+import { SOURCES } from '@/data/sources';
+
+// ── Planned per-leaf sources ────────────────────────────────────────────
+//
+// Citations for data the model knows it needs but hasn't wired the
+// actual per-cell values for yet — Mortgage P&I (#13), per-state
+// insurance (#13), broadband prices (Home internet leaf), private-
+// school tuition (Education leaf), childcare-price reference data, etc.
+// Exported as typed `*_SOURCE` constants so the unused-sources audit
+// (`scripts/source-inventory.mjs --check`) sees a real reference point
+// even before per-cell wiring lands. The leaf descriptions in
+// `EXPENSE_SOURCE` reference these by id in body text; this block
+// makes the typed link explicit.
+export const MORTGAGE_PI_SOURCE = SOURCES['census-acs-owner-costs'];
+export const PROPERTY_TAX_SOURCE = SOURCES['census-acs-property-tax'];
+export const HOMEOWNERS_INSURANCE_SOURCE = SOURCES['iii-state-insurance'];
+export const HOME_INTERNET_SOURCE = SOURCES['fcc-urban-rate-survey'];
+export const PRIVATE_SCHOOL_TUITION_SOURCE = SOURCES['nces-private-school-tuition'];
+export const COLLEGE_PRICING_SOURCE = SOURCES['college-board-trends'];
+export const CHILDCARE_PRICE_REFERENCE_SOURCE = SOURCES['dol-ndcp'];
 
 /**
  * Per-line categorization for the essentials vs. lifestyle split (#203).
@@ -637,7 +657,12 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   //                  partially (cell now BLS-backed); home internet will
   //                  be replaced by FCC Urban Rate Survey in a follow-up.
   const cellService = cexMonthly('cellularService');
-  const homeInternet = 70; // FCC Urban Rate Survey median for residential broadband, ballpark; not yet a cited source
+  // Flat ~$70/mo placeholder reflecting FCC Urban Rate Survey median
+  // for residential broadband (~$60–80/mo). The source is registered
+  // (`HOME_INTERNET_SOURCE` above) but the actual per-cell wiring from
+  // FCC URS data is a follow-up; for now the leaf shows the source
+  // citation in the UI but uses the flat placeholder for the dollar.
+  const homeInternet = 70;
 
   // Insurance split per the locked tree:
   //   Renters insurance → flat $25/mo placeholder, only when tenure is

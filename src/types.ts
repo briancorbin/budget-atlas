@@ -128,16 +128,18 @@ export interface Scenario {
 /**
  * Housing tenure. Controls which housing-related leaves apply.
  *
- *   'renter'            → Rent + Renters insurance leaves populate;
- *                         owner leaves are $0.
- *   'owner-mortgage'    → Mortgage P&I + Property tax + HO insurance +
- *                         Maintenance leaves populate; rent + renters
- *                         insurance are $0. (Mortgage math itself is
- *                         roadmap #13 — for v1 these leaves all stay
- *                         at $0 placeholder until the math lands.)
- *   'owner-no-mortgage' → Property tax + HO insurance + Maintenance
- *                         populate; mortgage P&I + rent + renters
- *                         insurance are $0. (Paid-off retirees, gen.
+ *   'renter'            → Housing (rent) + Renters insurance leaves
+ *                         populate; owner leaves are $0.
+ *   'owner-mortgage'    → Mortgage P&I + Property tax + Homeowners
+ *                         insurance + Maintenance & repairs leaves
+ *                         populate; Housing + Renters insurance are $0.
+ *                         (Mortgage math itself is roadmap #13 — for
+ *                         v1 these leaves all stay at $0 placeholder
+ *                         until the math lands.)
+ *   'owner-no-mortgage' → Property tax + Homeowners insurance +
+ *                         Maintenance & repairs populate; Mortgage
+ *                         P&I + Housing + Renters insurance are $0.
+ *                         (Paid-off retirees, gen.
  *                         wealth — a real third path the model now
  *                         acknowledges even before the mortgage math
  *                         ships.)

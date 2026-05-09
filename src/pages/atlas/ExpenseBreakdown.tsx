@@ -807,10 +807,15 @@ function OverrideInput({
 }) {
   const [draft, setDraft] = useState<string>(override !== undefined ? String(override) : '');
   // Keep draft in sync if external state changes (share-link load, dial
-  // toggle on a non-overridden leaf, etc.).
-  useEffect(() => {
+  // toggle on a non-overridden leaf, etc.). Tracked via a previous-prop
+  // ref + adjust-during-render pattern instead of useEffect, per the
+  // react-hooks/set-state-in-effect rule (effects are for syncing React
+  // to external systems; deriving state from props is render-time work).
+  const [prevOverride, setPrevOverride] = useState(override);
+  if (prevOverride !== override) {
+    setPrevOverride(override);
     setDraft(override !== undefined ? String(override) : '');
-  }, [override]);
+  }
 
   const commit = () => {
     if (draft.trim() === '') {
