@@ -216,9 +216,11 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
           <strong>{result.electricityContext.stateCentsPerKwh.toFixed(1)}¢/kWh</strong> for
           residential electricity vs. a national average of{' '}
           {result.electricityContext.nationalAvgCentsPerKwh.toFixed(1)}¢/kWh —{' '}
-          {(result.electricityContext.stateVsNationalFactor * 100 - 100 >= 0 ? '+' : '') +
-            (result.electricityContext.stateVsNationalFactor * 100 - 100).toFixed(0)}
-          %. Surfaced as editorial context only; the leaf dollar amount stays CEX-driven so the
+          {`${result.electricityContext.stateVsNationalFactor * 100 - 100 >= 0 ? '+' : ''}${(
+            result.electricityContext.stateVsNationalFactor * 100 -
+            100
+          ).toFixed(0)}%`}
+          . Surfaced as editorial context only; the leaf dollar amount stays CEX-driven so the
           blend's regional signal isn't double-counted.
         </div>
       ) : null;
