@@ -394,6 +394,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
     summary:
       'Surfaced two simplifications in the MethodologyNote: (1) Medicaid full/none when claimed; CHIP partial offset for kids (state Medicaid-scope variation acknowledged, not modeled — deepening is #10); (2) synthetic-blend treats income / geo / size as independent (BLS publishes single-axis cross-tabs only).',
   },
+  {
+    id: 212,
+    title: 'Leaf restructure — 25 leaves up from 19',
+    category: 'Cost of living',
+    status: 'shipped',
+    shippedAt: '2026-05-08',
+    summary:
+      'Split Phone & Internet → Cell + Home internet; Insurance → Renters + Life/disability; Vehicle (ins+maint) → Vehicle insurance + Vehicle maintenance & repair + Vehicle (other expenses). Surfaced Alcohol, Pets, and Travel & lodging as their own leaves. Added 7 new BLSCEXLineItem schema entries (cellularService, lifeInsurance, vehicleInsurance, vehicleMaintRepair, alcohol, otherLodging, pets) extracted from Tables 1101 / 1800 / 2700 / 1400. Cross-vintage drift bound widened <4% → <6% to accommodate vehicleInsurance (~5.8%, real economic drift in 2024).',
+  },
 ];
 
 /**

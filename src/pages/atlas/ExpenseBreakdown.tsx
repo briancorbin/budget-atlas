@@ -145,7 +145,14 @@ const ROLLUPS: readonly RollupDef[] = [
     id: 'bills',
     label: 'Bills & home upkeep',
     kind: 'essential',
-    lines: ['Utilities', 'Phone & Internet', 'Insurance', 'Housekeeping Supplies'],
+    lines: [
+      'Utilities',
+      'Cell service',
+      'Home internet',
+      'Renters insurance',
+      'Life & disability insurance',
+      'Housekeeping Supplies',
+    ],
   },
   { id: 'healthcare', label: 'Healthcare', kind: 'essential', lines: ['Healthcare'] },
   {
@@ -156,9 +163,9 @@ const ROLLUPS: readonly RollupDef[] = [
   },
   // Food and Transportation are "mixed": each bundles an essential
   // portion (food at home / transit + gasoline + vehicle upkeep) with
-  // a lifestyle portion (dining out / vehicle upgrades). Drill-down
-  // reveals the split.
-  { id: 'food', label: 'Food', kind: 'mixed', lines: ['Food at home', 'Food away'] },
+  // a lifestyle portion (dining out / alcohol / vehicle upgrades).
+  // Drill-down reveals the split.
+  { id: 'food', label: 'Food', kind: 'mixed', lines: ['Food at home', 'Food away', 'Alcohol'] },
   {
     id: 'transport',
     label: 'Transportation',
@@ -169,13 +176,28 @@ const ROLLUPS: readonly RollupDef[] = [
     // car households have $0 transit). The summary list filters $0
     // out; the detail panel keeps them with a "no car modeled" or
     // similar reason badge.
-    lines: ['Transit', 'Gasoline', 'Vehicle (insurance & maint.)', 'Vehicle (purchase)'],
+    lines: [
+      'Transit',
+      'Gasoline',
+      'Vehicle insurance',
+      'Vehicle maintenance & repair',
+      'Vehicle (other expenses)',
+      'Vehicle (purchase)',
+    ],
   },
   {
     id: 'lifestyle',
     label: 'Personal & lifestyle',
     kind: 'lifestyle',
-    lines: ['Apparel', 'Entertainment', 'Personal Care', 'Household Operations', 'Furnishings'],
+    lines: [
+      'Apparel',
+      'Entertainment',
+      'Pets',
+      'Personal Care',
+      'Household Operations',
+      'Furnishings',
+      'Travel & lodging',
+    ],
   },
 ];
 

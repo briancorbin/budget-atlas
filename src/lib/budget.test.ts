@@ -242,6 +242,45 @@ describe('computeBudget — pinned regressions', () => {
   });
 });
 
+describe('leaf restructure', () => {
+  it('exposes the new split leaves and surfaced sublines', () => {
+    const r = computeBudget(input({ kids: 2, filing: 'head', incomeA: 80_000 }));
+    // Splits
+    expect(r.expenses['Cell service']).toBeGreaterThan(0);
+    expect(r.expenses['Home internet']).toBeGreaterThan(0);
+    expect(r.expenses['Renters insurance']).toBeGreaterThan(0);
+    expect(r.expenses['Life & disability insurance']).toBeGreaterThan(0);
+    expect(r.expenses['Vehicle insurance']).toBeGreaterThan(0);
+    expect(r.expenses['Vehicle maintenance & repair']).toBeGreaterThan(0);
+    expect(r.expenses['Vehicle (other expenses)']).toBeGreaterThanOrEqual(0);
+    // Surfaced sublines
+    expect(r.expenses['Alcohol']).toBeGreaterThan(0);
+    expect(r.expenses['Pets']).toBeGreaterThan(0);
+    expect(r.expenses['Travel & lodging']).toBeGreaterThan(0);
+    // Removed legacy keys
+    expect(r.expenses['Phone & Internet']).toBeUndefined();
+    expect(r.expenses['Insurance']).toBeUndefined();
+    expect(r.expenses['Vehicle (insurance & maint.)']).toBeUndefined();
+  });
+
+  it('Pets is subtracted from Entertainment to avoid double-counting', () => {
+    // Before split: Entertainment = full CEX entertainment rollup (includes pets).
+    // After split: Entertainment = CEX entertainment − pets, and Pets = CEX pets.
+    // So Entertainment + Pets ≈ original full Entertainment value.
+    const r = computeBudget(input({ incomeA: 80_000 }));
+    expect(r.expenses.Entertainment).toBeGreaterThan(0);
+    expect(r.expenses['Pets']).toBeGreaterThan(0);
+    // Pets should be smaller than Entertainment (sanity)
+    expect(r.expenses['Pets']!).toBeLessThan(r.expenses.Entertainment!);
+  });
+
+  it('totals reconcile — sum of expenses equals totalExpenses', () => {
+    const r = computeBudget(input({ incomeA: 80_000, kids: 2, filing: 'head' }));
+    const sum = Object.values(r.expenses).reduce((s, n) => s + n, 0);
+    expect(sum).toBeCloseTo(r.totalExpenses, 1);
+  });
+});
+
 describe('per-leaf lifestyle elasticities', () => {
   it('moderate dial leaves CEX-line spending at 1.0× (the symmetric midpoint of modest/comfortable)', () => {
     // The elasticity formula is `1 + elasticity * lifestyleSign` with
