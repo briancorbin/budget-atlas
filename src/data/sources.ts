@@ -227,6 +227,74 @@ const RAW_SOURCES = {
     addedBy: 'briancorbin',
     addedAt: '2026-05-02',
   },
+  'iii-state-insurance': {
+    label: 'Insurance Information Institute — Facts + Statistics (state-level)',
+    url: 'https://www.iii.org/fact-statistic/facts-statistics-auto-insurance',
+    // III publishes state-level avg expenditures for auto / homeowners /
+    // renters insurance from NAIC data. Single source covers all 50
+    // states; the displayed citation passes state context per the
+    // hybrid pattern.
+    date: '2025',
+    tier: 'reference',
+    addedBy: 'briancorbin',
+    addedAt: '2026-05-08',
+  },
+  'fcc-urban-rate-survey': {
+    label: 'FCC Urban Rate Survey — residential broadband price benchmarks',
+    url: 'https://www.fcc.gov/economics-analytics/industry-analysis-division/urban-rate-survey-data',
+    date: '2025',
+    tier: 'primary',
+    addedBy: 'briancorbin',
+    addedAt: '2026-05-08',
+  },
+  'eia-electricity-state': {
+    label: 'EIA — Average Price of Electricity to Ultimate Customers by State (residential)',
+    url: 'https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_6_a',
+    date: '2025',
+    tier: 'primary',
+    addedBy: 'briancorbin',
+    addedAt: '2026-05-08',
+  },
+  'nces-private-school-tuition': {
+    label: 'NCES — Private School Tuition (Digest of Education Statistics)',
+    url: 'https://nces.ed.gov/programs/digest/d23/tables/dt23_205.50.asp',
+    date: '2024',
+    tier: 'primary',
+    addedBy: 'briancorbin',
+    addedAt: '2026-05-08',
+  },
+  'college-board-trends': {
+    label: 'College Board — Trends in College Pricing',
+    url: 'https://research.collegeboard.org/trends/college-pricing',
+    date: '2025',
+    tier: 'reference',
+    addedBy: 'briancorbin',
+    addedAt: '2026-05-08',
+  },
+  'census-acs-owner-costs': {
+    label: 'Census ACS — Median Selected Monthly Owner Costs (B25088)',
+    url: 'https://data.census.gov/table?q=B25088',
+    date: '2024',
+    tier: 'primary',
+    addedBy: 'briancorbin',
+    addedAt: '2026-05-08',
+  },
+  'census-acs-property-tax': {
+    label: 'Census ACS — Median Real Estate Taxes Paid (B25103)',
+    url: 'https://data.census.gov/table?q=B25103',
+    date: '2024',
+    tier: 'primary',
+    addedBy: 'briancorbin',
+    addedAt: '2026-05-08',
+  },
+  'dol-ndcp': {
+    label: 'DOL National Database of Childcare Prices (NDCP)',
+    url: 'https://www.dol.gov/agencies/wb/topics/featured-childcare',
+    date: '2024',
+    tier: 'primary',
+    addedBy: 'briancorbin',
+    addedAt: '2026-05-08',
+  },
 
   // ── Cross-state aggregators ────────────────────────────────────────────
   'tax-foundation-state-rates': {

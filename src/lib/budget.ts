@@ -75,22 +75,22 @@ export const EXPENSE_SOURCE: Record<string, ExpenseSource> = {
       "City-specific median rents, hand-curated per city in src/data/cities.ts. RentCafe and Zillow publish monthly market data; values are rounded to the nearest $50–100. 1BR for solo / couple-no-kids, 3BR for any household with kids. Replaces BLS's 'Shelter' line, which is averaged across owners and renters and isn't useful as a renter-specific number. Only populates when tenure is 'renter'; owners see $0 here.",
   },
   'Mortgage P&I': {
-    label: 'Roadmap #13 (placeholder)',
+    label: 'Census ACS B25088 (planned, #13)',
     tier: 'none',
     description:
-      'Mortgage principal + interest. Currently a $0 placeholder — the actual mortgage math (purchase price, down payment, rate, term) lands with roadmap #13 (homeownership). The leaf is exposed now so tenure-aware households read honestly even before the math ships.',
+      'Mortgage principal + interest. Currently a $0 placeholder — the actual mortgage math (purchase price, down payment, rate, term) lands with roadmap #13. Census ACS Selected Monthly Owner Costs (B25088) is the planned baseline source for the median; cited in `sources.ts` (`census-acs-owner-costs`).',
   },
   'Property tax': {
-    label: 'Roadmap #13 (placeholder)',
+    label: 'Census ACS B25103 + Tax Foundation (planned, #13)',
     tier: 'none',
     description:
-      'Annual property tax / 12. State-level effective rates vary enormously (TX ~1.6%, NJ ~2.2%, HI ~0.3%) — Census ACS B25103 + Tax Foundation are the planned sources. Currently $0 placeholder; populates with roadmap #13.',
+      'Annual property tax / 12. State-level effective rates vary enormously (TX ~1.6%, NJ ~2.2%, HI ~0.3%). Census ACS B25103 (median real-estate taxes paid) and Tax Foundation per-state effective rates are now in `sources.ts`. Currently $0 placeholder; populates with roadmap #13.',
   },
   'Homeowners insurance': {
-    label: 'Roadmap #13 (placeholder)',
+    label: 'III state-level (planned, #13)',
     tier: 'none',
     description:
-      'Homeowners insurance premium. State spread is 5×+ (FL ~$5K/yr, VT ~$1K/yr) — III state-level avg expenditure tables are the planned source. Currently $0 placeholder; populates with roadmap #13.',
+      'Homeowners insurance premium. State spread is 5×+ (FL ~$5K/yr, VT ~$1K/yr). III state-level avg expenditure tables (key: `iii-state-insurance` in `sources.ts`) are the planned source. Currently $0 placeholder; populates with roadmap #13.',
   },
   'Maintenance & repairs': {
     label: 'Roadmap #13 (placeholder)',
@@ -101,16 +101,16 @@ export const EXPENSE_SOURCE: Record<string, ExpenseSource> = {
   Utilities: BLS_CEX,
   'Cell service': BLS_CEX,
   'Home internet': {
-    label: 'Hand formula (uncited)',
+    label: 'FCC Urban Rate Survey (planned)',
     tier: 'none',
     description:
-      'Flat $70/mo placeholder for residential broadband. CEX bundles internet into the "Telephone services" rollup ambiguously; FCC Urban Rate Survey is the better external source for residential broadband price benchmarks. Audit gap — to be replaced.',
+      'Flat $70/mo placeholder for residential broadband. The FCC Urban Rate Survey is now in `sources.ts` (key: `fcc-urban-rate-survey`) — wiring the actual benchmark values to this leaf is the next step. The placeholder reflects FCC URS median (~$60–80/mo); the source is cited even before the per-cell data lands.',
   },
   'Renters insurance': {
-    label: 'Hand formula (uncited)',
+    label: 'III state-level (planned)',
     tier: 'none',
     description:
-      'Flat $25/mo placeholder. Real renters insurance varies meaningfully by state — III publishes state-level avg expenditures (storm-risk states like TX/MS/OK higher; low-risk states lower). Audit gap — to be replaced with III state-level data.',
+      'Flat $25/mo placeholder. The Insurance Information Institute is now in `sources.ts` (key: `iii-state-insurance`) — wiring the actual state-level avg expenditure to this leaf is the next step. III publishes state-level renters insurance averages from NAIC data; storm-risk states (TX/MS/OK) run higher than the placeholder, low-risk states lower.',
   },
   'Life & disability insurance': {
     label: 'BLS CEX',
