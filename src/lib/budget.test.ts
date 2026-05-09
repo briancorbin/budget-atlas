@@ -398,15 +398,34 @@ describe('cexBaseline (three-column comparison)', () => {
     expect(r.cexBaseline['Cell service']).toBeGreaterThan(0);
   });
 
-  it('does NOT expose baseline for non-CEX leaves', () => {
+  it('does NOT expose baseline for non-CEX leaves (rent/internet/mortgage)', () => {
     const r = computeBudget(input({ incomeA: 80_000 }));
-    // Housing, Childcare, Healthcare premium portion, etc. are non-CEX
-    // (HUD/Care.com/KFF). Only Healthcare's CEX OOP is exposed.
     expect(r.cexBaseline['Housing']).toBeUndefined();
-    expect(r.cexBaseline['Childcare']).toBeUndefined();
     expect(r.cexBaseline['Renters insurance']).toBeUndefined();
     expect(r.cexBaseline['Home internet']).toBeUndefined();
     expect(r.cexBaseline['Mortgage P&I']).toBeUndefined();
+    // No-kids household: Childcare baseline is undefined (no signal).
+    expect(r.cexBaseline['Childcare']).toBeUndefined();
+  });
+
+  it('exposes a Childcare BLS baseline for households with kids (Table 1502 reassembly)', () => {
+    const youngKids = computeBudget(
+      input({ incomeA: 80_000, kids: 1, hasPartner: true, filing: 'married' }),
+    );
+    const schoolAgeKids = computeBudget(
+      input({ incomeA: 80_000, kids: 2, hasPartner: true, filing: 'married' }),
+    );
+    const singleParent = computeBudget(input({ incomeA: 60_000, kids: 1, filing: 'head' }));
+    // marriedKids617 is the default age-band for married-with-kids
+    expect(schoolAgeKids.cexBaseline['Childcare']).toBe(118);
+    // single-parent column 10
+    expect(singleParent.cexBaseline['Childcare']).toBe(47);
+    // young-kids household — note: compositionBucket defaults to
+    // marriedKids617 when adults>=2 + kids>0 because we don't track
+    // per-child age yet (#3). That's the documented v1 behavior; the
+    // marriedKidsU6 bucket fires once #3 lands and per-child age is
+    // tracked. So young-kids today returns the 6-17 baseline value.
+    expect(youngKids.cexBaseline['Childcare']).toBe(118);
   });
 
   it('baseline is independent of lifestyle dial — only shipped value moves', () => {

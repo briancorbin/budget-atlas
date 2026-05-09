@@ -424,6 +424,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
   },
   {
+    id: 218,
+    title: 'Childcare BLS baseline',
+    category: 'Cost of living',
+    status: 'shipped',
+    shippedAt: '2026-05-09',
+    summary:
+      "Childcare leaf now exposes a BLS baseline alongside its Care.com-derived shipped value. Pulled from Table 1502 'Personal services' subline as the delta between with-kids household composition columns and married-no-kids: ~$454/mo for households with kid <6, ~$118/mo for school-age kids, ~$47/mo for single parents. Useful contrast in the three-column comparison: BLS captures actual spending net of free/family/subsidized care; Care.com captures private-market price. The gap is the editorial reveal.",
+  },
+  {
     id: 217,
     title: 'Detail-view tooltips use HoverGloss',
     category: 'UX & navigation',
