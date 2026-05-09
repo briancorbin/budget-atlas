@@ -376,6 +376,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
     summary:
       'Every CEX-anchored line now scales by household size (1p / 2p / 3p / 4p / 5p+) using BLS Table 1400. Previously the model used "average CU" (~2.5 people) values regardless of actual household size — overstating singles by ~1.8× and understating families of 4 by ~0.7×. Adds a third axis to the synthetic blend (alongside region/division and income quintile).',
   },
+  {
+    id: 210,
+    title: 'Per-leaf lifestyle elasticities',
+    category: 'Cost of living',
+    status: 'shipped',
+    shippedAt: '2026-05-08',
+    summary:
+      'Replaced the global ±15-20% lifestyle multiplier with per-leaf elasticities (Low ±5%, Medium ±15%, High ±25%, Zero for config-driven lines). Rent and other contractually-fixed lines no longer modulate with the dial — the editorial principle is "modest means picking fewer bedrooms (a config decision), not paying less for the same unit." Foundation for the full lifestyle drill-down (#5).',
+  },
 ];
 
 /**
