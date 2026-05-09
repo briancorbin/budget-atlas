@@ -12,7 +12,34 @@ import {
   blendCexSpendingTrace,
   QUINTILE_MEANS_2024_BEFORE_TAX,
   type BLSCEXLineItem,
+  type CUSize,
+  type CompositionType,
+  type GeoGranularity,
 } from '@/data/cex';
+
+const SIZE_LABEL_SHORT: Record<CUSize, string> = {
+  p1: '1-person',
+  p2: '2-person',
+  p3: '3-person',
+  p4: '4-person',
+  p5plus: '5+ people',
+};
+
+const COMP_LABEL_SHORT: Record<CompositionType, string> = {
+  singleOrOther: 'single / other',
+  singleParent: 'single parent',
+  marriedNoKids: 'married, no kids',
+  marriedKidsU6: 'married, oldest <6',
+  marriedKids617: 'married, oldest 6–17',
+  marriedKids18p: 'married, adult kids',
+  otherMarried: 'other married',
+};
+
+const GEO_CUT_LABEL: Record<GeoGranularity, string> = {
+  msa: 'MSA',
+  division: 'division',
+  region: 'region',
+};
 
 // Per-axis cell labels are inlined into each trace row directly (see
 // `calcExplanation` below). Earlier revs surfaced them in a separate
@@ -192,30 +219,9 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
     // identity (q2, division, single parent) and the magnitude (0.97×,
     // 1.23×). Replaces the previous separate context block + numerical
     // trace, which was redundant — both surfaced the same axis info.
-    const sizeLabelShort =
-      cuSize === 'p1'
-        ? '1-person'
-        : cuSize === 'p2'
-          ? '2-person'
-          : cuSize === 'p3'
-            ? '3-person'
-            : cuSize === 'p4'
-              ? '4-person'
-              : '5+ person';
-    const compLabelShort =
-      composition === 'singleOrOther'
-        ? 'single / other'
-        : composition === 'singleParent'
-          ? 'single parent'
-          : composition === 'marriedNoKids'
-            ? 'married, no kids'
-            : composition === 'marriedKidsU6'
-              ? 'married, oldest <6'
-              : composition === 'marriedKids617'
-                ? 'married, oldest 6–17'
-                : composition === 'marriedKids18p'
-                  ? 'married, adult kids'
-                  : 'other married';
+    const sizeLabelShort = SIZE_LABEL_SHORT[cuSize];
+    const compLabelShort = COMP_LABEL_SHORT[composition];
+    const geoCutLabel = GEO_CUT_LABEL[trace?.geoCut ?? 'region'];
     const traceBlock = trace ? (
       <div
         style={{
@@ -233,14 +239,15 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
           <span>
-            {result.incomeQuintile} national (~$
-            {(QUINTILE_MEANS_2024_BEFORE_TAX[result.incomeQuintile] / 1000).toFixed(0)}K/yr)
+            {`${result.incomeQuintile} national (~$${(
+              QUINTILE_MEANS_2024_BEFORE_TAX[result.incomeQuintile] / 1000
+            ).toFixed(0)}K/yr)`}
           </span>
           <span style={{ color: T.ink }}>{fmt(trace.nationalQuintile / 12)}/mo</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
           <span>
-            × geo ({region}, {trace.geoCut})
+            × geo ({region}, {geoCutLabel})
           </span>
           <span>{trace.geoFactor.toFixed(2)}×</span>
         </div>
