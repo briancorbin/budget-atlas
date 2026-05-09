@@ -295,11 +295,10 @@ export const ROADMAP: readonly RoadmapItem[] = [
     id: 178,
     title: 'Drill-down monthly cost view',
     category: 'Cost of living',
-    status: 'in-progress',
-    startedAt: '2026-05-08',
-    progress: 75,
+    status: 'shipped',
+    shippedAt: '2026-05-08',
     summary:
-      'Condense the 15-line monthly cost-of-living view to 7 rolled-up categories sectioned Essentials / Mixed / Lifestyle, each expandable to drill into its sub-lines. Still ahead: per-cell geographic-granularity badge (msa/division/region) using cexProvenance, and inline income-quintile context.',
+      'Condensed the 15-line monthly cost-of-living view to 7 rolled-up categories sectioned Essentials / Mixed / Lifestyle, each expandable to drill into its sub-lines. Per-cell geographic-granularity badges (MSA / division / region) and inline income-quintile context land in the detail view. The drill-down UX with three-column comparison + per-leaf override is the separate #5 follow-on.',
   },
   {
     id: 205,

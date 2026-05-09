@@ -5,6 +5,52 @@ import { theme as T, fonts, PIE_COLORS, rem } from '@/theme';
 import { fmt } from '@/lib/format';
 import { SectionTitle } from '@/components/ui';
 import { EXPENSE_SOURCE, type ExpenseSource } from '@/lib/budget';
+import type { BLSCEXLineItem } from '@/data/cex';
+
+/**
+ * Map detail-view leaf labels to the CEX line item that drives them.
+ * Used to surface a per-cell geographic-granularity badge (msa /
+ * division / region) next to each CEX-anchored leaf, sourced from
+ * `BudgetResult.cexProvenance`. Composite leaves (Utilities) pick the
+ * dominant subline for the badge; non-CEX leaves (Housing, Home
+ * internet, Renters insurance, Childcare, Mortgage P&I, Property tax,
+ * Homeowners insurance, Maintenance & repairs, Transit) get no badge —
+ * those are sourced from per-city / per-state hand formulas or
+ * commercial / placeholder values, none of which carry a CEX geographic
+ * provenance to surface. Healthcare is intentionally omitted because
+ * it's a mixed-source leaf (CEX OOP + KFF premium) and a single
+ * granularity badge would misrepresent half the line.
+ */
+const QUINTILE_LABEL: Record<'q1' | 'q2' | 'q3' | 'q4' | 'q5', string> = {
+  q1: 'lowest fifth',
+  q2: 'second fifth',
+  q3: 'middle fifth',
+  q4: 'fourth fifth',
+  q5: 'top fifth',
+};
+
+const LEAF_TO_CEX_ITEM: Readonly<Partial<Record<string, BLSCEXLineItem>>> = {
+  Utilities: 'utilitiesElectricGas', // composite — pick electric/gas as the headline subline
+  'Cell service': 'cellularService',
+  'Life & disability insurance': 'lifeInsurance',
+  'Housekeeping Supplies': 'housekeepingSupplies',
+  Education: 'education',
+  'Food at home': 'foodAtHome',
+  'Food away': 'foodAway',
+  Alcohol: 'alcohol',
+  Gasoline: 'gasoline',
+  'Vehicle insurance': 'vehicleInsurance',
+  'Vehicle maintenance & repair': 'vehicleMaintRepair',
+  'Vehicle (other expenses)': 'vehicleOther',
+  'Vehicle (purchase)': 'vehiclePurchase',
+  Apparel: 'apparel',
+  Entertainment: 'entertainment',
+  Pets: 'pets',
+  'Personal Care': 'personalCare',
+  'Household Operations': 'householdOperations',
+  Furnishings: 'furnishings',
+  'Travel & lodging': 'otherLodging',
+};
 
 const TIER_COLOR: Record<ExpenseSource['tier'], string> = {
   primary: '#5B7C3F', // muted green — primary BLS / agency
@@ -669,6 +715,44 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
               </a>
               .
             </div>
+            {/* Quintile context — the synthetic-blend "where you sit on
+                the income axis" anchor for every CEX-derived line below.
+                Surfaces what was previously implicit in the model. */}
+            <div
+              style={{
+                display: 'flex',
+                gap: 16,
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                marginBottom: 16,
+                fontSize: rem(11),
+                color: T.inkSoft,
+                fontFamily: fonts.body,
+              }}
+            >
+              <span style={{ letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                Income axis:
+              </span>
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '2px 8px',
+                  background: T.bgAlt,
+                  border: `1px solid ${T.border}`,
+                  borderRadius: 2,
+                  fontFamily: fonts.mono,
+                }}
+              >
+                You're in the{' '}
+                <strong style={{ color: T.ink }}>{QUINTILE_LABEL[result.incomeQuintile]}</strong> of
+                the national income distribution
+              </span>
+              <span style={{ color: T.inkMuted }}>
+                (CEX shape interpolates smoothly between quintile means)
+              </span>
+            </div>
             {/* Source-tier legend. Each line label below carries a small
                 colored dot indicating where its number came from; hover
                 a dot for the full source name + description. */}
@@ -830,6 +914,41 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                                     {(() => {
                                       const src = EXPENSE_SOURCE[line.label];
                                       return src ? <SourceBadge src={src} /> : null;
+                                    })()}
+                                    {(() => {
+                                      // Per-cell geo-granularity badge —
+                                      // tells the reader whether this line
+                                      // resolved to MSA / division / region
+                                      // data. Most-specific = MSA (for
+                                      // cities BLS publishes separately);
+                                      // falls through to division then
+                                      // region. See cex.ts blendCexSpending.
+                                      const cexItem = LEAF_TO_CEX_ITEM[line.label];
+                                      const granularity = cexItem
+                                        ? result.cexProvenance[cexItem]
+                                        : undefined;
+                                      if (!granularity) return null;
+                                      const labelByG = {
+                                        msa: 'MSA',
+                                        division: 'div.',
+                                        region: 'region',
+                                      } as const;
+                                      return (
+                                        <span
+                                          style={{
+                                            fontSize: rem(9),
+                                            letterSpacing: '0.06em',
+                                            textTransform: 'uppercase',
+                                            color: T.inkMuted,
+                                            border: `1px solid ${T.border}`,
+                                            padding: '0 4px',
+                                            borderRadius: 2,
+                                          }}
+                                          title={`Geographic granularity used for this BLS lookup: ${granularity}. Most-specific = MSA; falls back to division then region.`}
+                                        >
+                                          {labelByG[granularity]}
+                                        </span>
+                                      );
                                     })()}
                                   </span>
                                   <span
