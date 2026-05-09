@@ -8,6 +8,19 @@ import { EXPENSE_SOURCE, LIFESTYLE_ELASTICITY, type ExpenseSource } from '@/lib/
 import type { BLSCEXLineItem } from '@/data/cex';
 
 /**
+ * Extract the first complete sentence of a description string. Splits on
+ * a period followed by whitespace (`. `) so file paths like
+ * `src/data/cities.ts` and abbreviations like `vs.` stay intact —
+ * `String.prototype.split('.')` would chop the string at any period and
+ * leave a malformed fragment in the tooltip.
+ */
+function firstSentence(text: string): string {
+  const idx = text.search(/\.\s/);
+  if (idx < 0) return text;
+  return text.slice(0, idx + 1);
+}
+
+/**
  * Map detail-view leaf labels to the CEX line item that drives them.
  * Used to surface a per-cell geographic-granularity badge (msa /
  * division / region) next to each CEX-anchored leaf, sourced from
@@ -109,24 +122,29 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
   }
 
   // CEX-anchored leaf with a baseline available — the textbook three-step
-  // explanation. Skip when shipped equals baseline exactly (moderate +
-  // zero elasticity, e.g. education) — that's a plain pass-through that
-  // doesn't need a calc tooltip.
+  // explanation. When shipped equals baseline exactly (moderate dial +
+  // zero elasticity, e.g. education) collapse the tooltip to a single
+  // line; the multi-step explanation is just noise in that case.
   if (baseline !== undefined && elasticity !== undefined) {
     const factor = 1 + elasticity * dialSign;
+    const flat = factor === 1; // no lifestyle modulation in effect
     const elasticityCopy =
       elasticity === 0
         ? 'not modulated by lifestyle dial (config-driven)'
-        : `× lifestyle ${dialSign === 0 ? '1.00' : (factor >= 1 ? '+' : '') + ((factor - 1) * 100).toFixed(0) + '%'} (${dialName} dial, ±${(elasticity * 100).toFixed(0)}% per-leaf elasticity)`;
+        : `Lifestyle multiplier: ${factor.toFixed(2)} (${factor >= 1 ? '+' : ''}${((factor - 1) * 100).toFixed(0)}% — ${dialName} dial, ±${(elasticity * 100).toFixed(0)}% per-leaf elasticity)`;
     return (
       <>
         <Header>How this is calculated</Header>
         <div style={{ color: T.inkSoft }}>
           BLS baseline at your region · quintile · CU size · family-comp blend:{' '}
           <strong>{fmt(baseline)}</strong>
-          <br />
-          {elasticityCopy}
-          <br />= shipped <strong>{fmt(shipped)}</strong>
+          {!flat && (
+            <>
+              <br />
+              {elasticityCopy}
+              <br />= shipped <strong>{fmt(shipped)}</strong>
+            </>
+          )}
         </div>
       </>
     );
@@ -141,7 +159,7 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
       <>
         <Header>How this is calculated</Header>
         <div style={{ color: T.inkSoft }}>
-          Sourced from <strong>{src.label}</strong>. {src.description.split('.')[0]}.
+          Sourced from <strong>{src.label}</strong>. {firstSentence(src.description)}
         </div>
       </>
     );
@@ -1333,8 +1351,10 @@ export function ExpenseBreakdown({
                                             // the override input is its own
                                             // affordance and "we used your
                                             // value" doesn't add anything.
-                                            const isOverridden =
-                                              line.label in result.appliedOverrides;
+                                            const isOverridden = Object.hasOwn(
+                                              result.appliedOverrides,
+                                              line.label,
+                                            );
                                             if (isOverridden) {
                                               return (
                                                 <span style={{ color: T.ink }}>{fmt(shipped)}</span>
