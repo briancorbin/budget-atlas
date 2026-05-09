@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeBudget, LIFESTYLE_ELASTICITY } from '@/lib/budget';
+import { cexLineItemSpendingForCity, cuSizeBucket } from '@/data/cex';
 import type { BudgetInput } from '@/types';
 
 function input(overrides: Partial<BudgetInput> = {}): BudgetInput {
@@ -264,14 +265,36 @@ describe('leaf restructure', () => {
   });
 
   it('Pets is subtracted from Entertainment to avoid double-counting', () => {
-    // Before split: Entertainment = full CEX entertainment rollup (includes pets).
-    // After split: Entertainment = CEX entertainment − pets, and Pets = CEX pets.
-    // So Entertainment + Pets ≈ original full Entertainment value.
+    // The non-overlap invariant under test: Entertainment is the CEX
+    // "Entertainment" rollup with the Pets subline subtracted out, and
+    // Pets is exposed separately as its own leaf. So Entertainment +
+    // Pets must reconstruct the full CEX entertainment rollup that the
+    // model would have produced before the split. Verifying via the
+    // raw blend output (call cexLineItemSpendingForCity directly to
+    // get the unsubtracted entertainment value) — without this, a
+    // regression that left Entertainment as the full rollup AND added
+    // Pets on top would silently double-count and still pass.
     const r = computeBudget(input({ incomeA: 80_000 }));
     expect(r.expenses.Entertainment).toBeGreaterThan(0);
     expect(r.expenses['Pets']).toBeGreaterThan(0);
-    // Pets should be smaller than Entertainment (sanity)
+    // Pets should be smaller than Entertainment (sanity).
     expect(r.expenses['Pets']!).toBeLessThan(r.expenses.Entertainment!);
+    // Reconstruct the pre-split rollup. Both the surfaced Entertainment
+    // and Pets leaves use the same blend inputs (city/quintile/size +
+    // lifestyle elasticity), so the sum of monthly values should equal
+    // the raw entertainment rollup's monthly value.
+    const raw = cexLineItemSpendingForCity(
+      'cmh',
+      r.cityData.state,
+      r.grossIncome,
+      'entertainment',
+      cuSizeBucket(r.householdSize),
+    );
+    // Lifestyle dial is 'moderate' in the default input → factor = 1.0×,
+    // so the raw monthly equals the pre-elasticity monthly.
+    const expectedSum = raw.spending / 12;
+    const actualSum = r.expenses.Entertainment! + r.expenses['Pets']!;
+    expect(actualSum).toBeCloseTo(expectedSum, 0);
   });
 
   it('totals reconcile — sum of expenses equals totalExpenses', () => {

@@ -468,10 +468,17 @@ export type LineItemSpending = Readonly<Record<BLSCEXLineItem, number>>;
 //   housekeepingSupplies = "Housekeeping supplies"
 //   furnishings          = "Household furnishings and equipment"
 //
-// Telephone services (CEX ~$1,431/CU/yr nationally) is intentionally
-// excluded — `lib/budget.ts` already carries a separate phoneInternet
-// line, and folding telephone services into utilitiesElectricGas would
-// double-count.
+// "Telephone services" rollup (CEX ~$1,431/CU/yr nationally — the
+// parent line that bundles cellular + residential phone + VoIP +
+// pagers) is intentionally not consumed as a top-level CEX line item.
+// We DO consume the `cellularService` subline (added with the leaf
+// restructure) and surface it as the 'Cell service' leaf; the
+// residential-phone share is left out (vanishingly small and not
+// individually published at our schema depth). The `Home internet`
+// leaf is a separate flat-value placeholder in `lib/budget.ts` —
+// CEX bundles internet ambiguously inside Telephone services and is
+// the wrong shape to extract a clean residential-broadband number;
+// FCC Urban Rate Survey is the planned replacement.
 //
 // Reading, Tobacco, and Cash contributions are excluded as out of
 // scope for the take-home model.

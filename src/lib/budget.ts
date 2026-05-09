@@ -17,10 +17,12 @@ import {
  * Keys are the labels used in `BudgetResult.expenses` — granular sub-
  * lines, not rolled-up parents. Food and transportation get split into
  * their constituent lines so each one lands cleanly in 'essential' or
- * 'lifestyle': 'Food at home' is essential, 'Food away' is lifestyle;
- * 'Transit' / 'Gasoline' / 'Vehicle (insurance & maint.)' are essential,
- * 'Vehicle (purchase)' is lifestyle. The ExpenseBreakdown component
- * groups these under "Mixed" rollups in the UI when both kinds appear.
+ * 'lifestyle': 'Food at home' is essential, 'Food away' / 'Alcohol'
+ * are lifestyle; 'Transit' / 'Gasoline' / 'Vehicle insurance' /
+ * 'Vehicle maintenance & repair' / 'Vehicle (other expenses)' are
+ * essential, 'Vehicle (purchase)' is lifestyle. The ExpenseBreakdown
+ * component groups these under "Mixed" rollups in the UI when both
+ * kinds appear.
  *
  * Apparel and Personal Care are gray-zone (the BLS lines bundle
  * essentials with discretionary), filed as lifestyle because the
@@ -35,12 +37,13 @@ import {
  * tier), the OOP component from BLS CEX (primary tier). Both are
  * surfaced.
  *
- * Audit gaps: Phone & Internet, Insurance, and Transit currently
- * carry no formal source (Phone+Internet and Insurance are hand
- * formulas in this file; Transit is a per-city curated value in
- * cityData with no published source citation). These are flagged as
- * `tier: 'none'` so the UI can render them honestly rather than
- * pretending they're cited.
+ * Audit gaps: 'Home internet', 'Renters insurance', and 'Transit'
+ * currently carry no formal source — Home internet and Renters
+ * insurance are flat-value placeholders in this file (FCC Urban Rate
+ * Survey and III state-level data are the right replacements); Transit
+ * is a per-city curated value in cityData with no published source
+ * citation. These are flagged as `tier: 'none'` so the UI can render
+ * them honestly rather than pretending they're cited.
  */
 export interface ExpenseSource {
   label: string;
