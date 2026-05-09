@@ -12,12 +12,15 @@ import {
  *
  * Two modes:
  *   - default (no `range` prop): "Last 7 days" + "All time". Used on
- *     the index. The 7-day window is anchored on the most recent dated
- *     row in the log, not the build clock — stable across rebuilds of
- *     the same commit.
- *   - ranged (`range` prop): the supplied date range + "All time". Used
- *     on post pages so each post shows the time tracked during the
- *     period it covers, not just the rolling week from build time.
+ *     the index — running publication-level rhythm + cumulative ledger.
+ *     The 7-day window is anchored on the most recent dated row in the
+ *     log, not the build clock — stable across rebuilds of the same
+ *     commit.
+ *   - ranged (`range` prop): a single window for the supplied date
+ *     range. Used on post pages so each post's strip is just the time
+ *     tracked during the period it covers. All-time is intentionally
+ *     omitted on posts — it lives on the index where the cumulative
+ *     framing belongs.
  */
 export function TimeLogStrip({
   range,
@@ -73,12 +76,12 @@ export function TimeLogStrip({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gridTemplateColumns: range ? '1fr' : 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: 18,
         }}
       >
         <Window label={primary.label} window={primary.window} />
-        <Window label="All time" window={timeLogStats.allTime} />
+        {!range && <Window label="All time" window={timeLogStats.allTime} />}
       </div>
     </section>
   );
