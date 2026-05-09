@@ -123,6 +123,22 @@ export function Masthead() {
           >
             Privacy →
           </a>
+          {/* Marginalia is a sister publication at a different subdomain
+              (not an Atlas route). The ↗ glyph signals "leaves this site"
+              vs. → for in-app routes; same red styling because it's the
+              same publication brand. */}
+          <a
+            href="https://marginalia.thebudgetatlas.com"
+            style={{
+              color: T.accent,
+              textDecoration: 'none',
+              fontWeight: 600,
+              borderBottom: `1px solid ${T.border}`,
+              paddingBottom: 1,
+            }}
+          >
+            Marginalia ↗
+          </a>
         </nav>
       </div>
       <h1
