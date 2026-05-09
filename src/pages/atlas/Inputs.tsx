@@ -351,34 +351,19 @@ export function CustomizePanel(s: InputsState) {
           )}
         </div>
 
-        <div>
-          <label style={labelStyle}>HOUSING TENURE</label>
-          <SearchableSelect<HousingTenure>
-            value={s.tenure}
-            options={[
-              { value: 'renter', label: 'Renter' },
-              {
-                value: 'owner-mortgage',
-                label: 'Homeowner, with mortgage',
-                hint: 'placeholder math',
-              },
-              {
-                value: 'owner-no-mortgage',
-                label: 'Homeowner, no mortgage',
-                hint: 'paid off',
-              },
-            ]}
-            onChange={s.setTenure}
-            placeholder="Housing tenure"
-            ariaLabel="Housing tenure"
-          />
-          {s.tenure !== 'renter' && (
-            <div style={{ fontSize: rem(11), color: T.inkMuted, marginTop: 6 }}>
-              Mortgage P&amp;I, property tax, HO insurance, and maintenance show as $0 placeholders
-              — full math lands with roadmap #13.
-            </div>
-          )}
-        </div>
+        {/* HOUSING TENURE picker is intentionally hidden in v1.
+            The full wiring (tenure axis on `BudgetInput`, gating on owner-
+            only leaves, three-way mode in `expenseModelNotes`, share-link
+            round-trip) is in place and tested — but the owner-only leaves
+            (Mortgage P&I, Property tax, Homeowners insurance, Maintenance & repairs)
+            are still $0 placeholders pending the actual mortgage math
+            (roadmap #13). Exposing the picker today would let users flip
+            into a mode where their housing line drops to $0 with nothing
+            useful to show — confusing.
+
+            When #13 lands and the owner leaves carry real values, re-add
+            the picker here. The setTenure prop stays on InputsState so
+            the wiring is reachable; it's just not user-flipped right now. */}
 
         <div>
           <label style={labelStyle}>CHILDREN</label>

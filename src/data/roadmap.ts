@@ -424,6 +424,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
   },
   {
+    id: 223,
+    title: 'Hide tenure UI + Healthcare tooltip',
+    category: 'UX & navigation',
+    status: 'shipped',
+    shippedAt: '2026-05-09',
+    summary:
+      "Two small fixes. (1) Removed the HOUSING TENURE picker from the Customize panel — the full tenure wiring (axis on BudgetInput, leaf gating, share-link round-trip) stays in place and tested, but the user-facing flip is hidden until #13's actual mortgage math lands so users don't drop into a $0 housing mode with nothing useful. (2) The Healthcare calc tooltip was using the generic CEX path which said `BLS baseline $81 × ±5% lifestyle = shipped $1,331` — wrong arithmetic since Healthcare is mixed source (KFF premium + CEX OOP). Special-cased so the tooltip now correctly explains the premium + OOP composition.",
+  },
+  {
     id: 222,
     title: 'Hide $0 leaves + calc tooltips',
     category: 'UX & navigation',

@@ -111,6 +111,71 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
     </div>
   );
 
+  // Healthcare special-case — mixed source. The cexBaseline only
+  // exposes the CEX out-of-pocket portion; the Atlas-shipped value
+  // also includes the KFF employer-sponsored premium worker-share,
+  // and Medicaid / CHIP can zero or partially offset the line.
+  // Without this branch the generic CEX path below would say
+  // "BLS baseline $81 × ±5% lifestyle = $1,331" which is wildly
+  // wrong arithmetic — the gap is the premium, not the elasticity.
+  if (label === 'Healthcare') {
+    const oopBaseline = result.cexBaseline['Healthcare'] ?? 0;
+    const premium = result.healthcarePremium;
+    // Read healthcareOOP elasticity from the central LIFESTYLE_ELASTICITY
+    // map rather than hard-coding 0.05 here — keeps the tooltip in sync
+    // if the calibration moves (e.g. PR #203's recalibration changed
+    // several lines).
+    const oopElasticity = LIFESTYLE_ELASTICITY.healthcareOOP ?? 0;
+    const factor = 1 + oopElasticity * dialSign;
+    const adjustedOop = oopBaseline * factor;
+    const preBenefitsTotal = adjustedOop + premium;
+    const benefitsOffset = Math.max(0, preBenefitsTotal - shipped);
+    const medicaidApplied = shipped === 0 && (result.benefitsApplied['Medicaid'] ?? 0) > 0;
+    const chipApplied = (result.benefitsApplied['CHIP'] ?? 0) > 0;
+    return (
+      <>
+        <Header>How this is calculated</Header>
+        <div style={{ color: T.inkSoft }}>
+          Healthcare combines two sources. CEX out-of-pocket (medical services + drugs + supplies,
+          no premium): <strong>{fmt(oopBaseline)}</strong>
+          {dialSign !== 0 && (
+            <>
+              {' '}
+              × {factor.toFixed(2)} ({dialName} dial, ±{(oopElasticity * 100).toFixed(0)}%) ={' '}
+              <strong>{fmt(adjustedOop)}</strong>
+            </>
+          )}
+          . Plus KFF Employer Health Benefits worker-share premium (family vs single by
+          composition): <strong>{fmt(premium)}</strong>. Pre-benefits total:{' '}
+          <strong>{fmt(preBenefitsTotal)}</strong>.
+          {medicaidApplied && (
+            <> Medicaid is claimed and the household is eligible — the entire line zeros out.</>
+          )}
+          {chipApplied && !medicaidApplied && (
+            <>
+              {' '}
+              CHIP is claimed and offsets the kids' premium share —{' '}
+              <strong>{fmt(benefitsOffset)}/mo</strong> off the line. Adults' premium and the
+              household's OOP stay.
+            </>
+          )}
+          {!medicaidApplied && !chipApplied && (
+            <>
+              {' '}
+              Final shipped: <strong>{fmt(shipped)}</strong>.
+            </>
+          )}
+          {(medicaidApplied || chipApplied) && (
+            <>
+              {' '}
+              Final shipped: <strong>{fmt(shipped)}</strong>.
+            </>
+          )}
+        </div>
+      </>
+    );
+  }
+
   // Override-driven overrides (transit-only, no-kids, owner-only) are
   // explained by the inline reason badge already; surface that in the
   // tooltip too so the explanation is consistent.
