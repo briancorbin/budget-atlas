@@ -337,7 +337,7 @@ function calcExplanation(
                 background: T.bgAlt,
                 borderRadius: 2,
                 display: 'grid',
-                gridTemplateColumns: '1fr auto auto',
+                gridTemplateColumns: '1fr auto 64px',
                 columnGap: 8,
                 rowGap: 2,
                 alignItems: 'baseline',
@@ -425,14 +425,14 @@ function calcExplanation(
         {traceBlock ?? (
           <div style={{ color: T.inkSoft }}>
             BLS baseline at your region · quintile · CU size · family-comp blend:{' '}
-            <strong>{fmt(baseline)}/mo</strong>
+            <strong>{fmt(baseline)}</strong>
           </div>
         )}
         {includeLifestyle &&
           (elasticity === 0 ? (
             <div style={{ color: T.inkSoft, marginTop: 6 }}>
               not modulated by lifestyle dial (config-driven)
-              <br />= Atlas estimate <strong>{fmt(shipped)}/mo</strong>
+              <br />= Atlas estimate <strong>{fmt(shipped)}</strong>
             </div>
           ) : (
             // Single grid for lifestyle + Atlas-estimate rows so the
@@ -445,7 +445,7 @@ function calcExplanation(
               style={{
                 marginTop: 6,
                 display: 'grid',
-                gridTemplateColumns: '1fr auto auto',
+                gridTemplateColumns: '1fr auto 64px',
                 columnGap: 8,
                 rowGap: 2,
                 alignItems: 'baseline',
@@ -806,12 +806,11 @@ function OverrideInput({
   onChange: (label: string, value: number | null) => void;
 }) {
   const [draft, setDraft] = useState<string>(override !== undefined ? String(override) : '');
-  // Adjust state during render — see https://react.dev/learn/you-might-not-need-an-effect
-  const [prevOverride, setPrevOverride] = useState<number | undefined>(override);
-  if (prevOverride !== override) {
-    setPrevOverride(override);
+  // Keep draft in sync if external state changes (share-link load, dial
+  // toggle on a non-overridden leaf, etc.).
+  useEffect(() => {
     setDraft(override !== undefined ? String(override) : '');
-  }
+  }, [override]);
 
   const commit = () => {
     if (draft.trim() === '') {
