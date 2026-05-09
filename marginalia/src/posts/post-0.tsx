@@ -5,7 +5,6 @@ export const post0: Post = {
   number: 'Post 0',
   title: 'Meh, why not',
   date: '2026-05-09',
-  coversFrom: '2026-05-01',
   dek: 'Why I started Marginalia, and what I am trying not to be.',
   editorial: () => (
     <>

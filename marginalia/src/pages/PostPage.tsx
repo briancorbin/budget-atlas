@@ -110,13 +110,15 @@ export function PostPage({ post }: { post: Post }) {
           )}
         </Prose>
 
-        <TimeLogStrip
-          range={{
-            from: post.coversFrom,
-            to: post.coversTo ?? post.date,
-            label: `This post · ${post.coversFrom} → ${post.coversTo ?? post.date}`,
-          }}
-        />
+        {post.coversFrom && (
+          <TimeLogStrip
+            range={{
+              from: post.coversFrom,
+              to: post.coversTo ?? post.date,
+              label: `This post · ${post.coversFrom} → ${post.coversTo ?? post.date}`,
+            }}
+          />
+        )}
       </div>
     </article>
   );

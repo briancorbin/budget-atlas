@@ -21,14 +21,16 @@ export type Post = {
   /** ISO date (YYYY-MM-DD) the post was published. */
   date: string;
   /**
-   * ISO date the post's coverage window starts on. Used by TimeLogStrip
-   * to scope the AI-time-log stats shown at the bottom of the post to
-   * the work this post is actually about.
+   * Optional ISO date the post's coverage window starts on. When set,
+   * the post page renders a TimeLogStrip scoped to that window. When
+   * absent (e.g., a manifesto / framing post like Post 0 that doesn't
+   * map to a tracked week), no strip is shown.
    */
-  coversFrom: string;
+  coversFrom?: string;
   /**
    * ISO date the post's coverage window ends on. Defaults to `date`
-   * (publication day) when omitted.
+   * (publication day) when omitted. Only meaningful when `coversFrom`
+   * is set.
    */
   coversTo?: string;
   /** One-line teaser for index list and RSS feed. */
