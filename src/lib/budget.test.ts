@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeBudget, LIFESTYLE_ELASTICITY } from '@/lib/budget';
-import { cexLineItemSpendingForCity, cuSizeBucket } from '@/data/cex';
+import { cexLineItemSpendingForCity, compositionBucket, cuSizeBucket } from '@/data/cex';
 import type { BudgetInput } from '@/types';
 
 function input(overrides: Partial<BudgetInput> = {}): BudgetInput {
@@ -317,6 +317,7 @@ describe('leaf restructure', () => {
       r.grossIncome,
       'entertainment',
       cuSizeBucket(r.householdSize),
+      compositionBucket(r.adults, 0),
     );
     // Lifestyle dial is 'moderate' in the default input → factor = 1.0×,
     // so the raw monthly equals the pre-elasticity monthly.

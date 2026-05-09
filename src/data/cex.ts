@@ -292,6 +292,7 @@ export type CUSize = 'p1' | 'p2' | 'p3' | 'p4' | 'p5plus';
  * by feeding in alongside the size factor in the synthetic blend.
  */
 export function cuSizeBucket(householdSize: number): CUSize {
+  if (!Number.isFinite(householdSize)) return 'p1';
   const n = Math.max(1, Math.floor(householdSize));
   if (n <= 1) return 'p1';
   if (n === 2) return 'p2';
