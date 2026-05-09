@@ -1381,11 +1381,13 @@ export function smoothNationalQuintile(
  * The size factor is opt-in: callers omit `sizeAllCU`/`sizeBaselineAllCU`
  * when they want the legacy "average CU" behavior. A 1-person household
  * gets ~0.55× scaling on diffuse lines; a 4-person household gets ~1.40×.
- * Honesty caveat: the size axis is treated as independent of income and
- * geography (synthetic-blend independence assumption). Surfaced in the
- * page's MethodologyNote callout for users; per-leaf `EXPENSE_SOURCE`
- * descriptions in `lib/budget.ts` flag specific lines where the
- * independence assumption is least defensible.
+ * Honesty caveat: the size axis is treated as independent of income
+ * and geography (the synthetic-blend independence assumption). The
+ * caveat is true in degree, not in kind — small households skew older
+ * and lower-income, larger households skew toward middle quintiles
+ * and peak earning years. Surfacing this honestly to users is a
+ * separate work-stream (MethodologyNote callout, per-leaf source
+ * descriptions); see roadmap entries on transparency.
  *
  * Returns 0 when:
  *   - `nationalAllCU` is 0 (no denominator), or
