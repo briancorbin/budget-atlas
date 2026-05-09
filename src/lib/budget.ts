@@ -967,6 +967,43 @@ export function computeBudget(input: BudgetInput): BudgetResult {
     // CEX-baseline portion — the KFF premium is a non-CEX source and
     // is not part of the "what BLS would say" anchor.
     cexBaseline: {
+      // Childcare BLS baseline — Table 1502 "Personal services" subline
+      // delta vs. married-no-kids. This is what households with kids
+      // actually spend out-of-pocket on childcare on average (NOT the
+      // Care.com private-market price the model uses for shipped value
+      // — a useful contrast: BLS captures actual spending net of free
+      // care from family / community / government-subsidized programs;
+      // Care.com captures private-market prices). Surfaces as the BLS
+      // baseline column of the three-column comparison so users can
+      // see the gap between "average household with kids" and
+      // "private-market childcare price." The "married couple, oldest
+      // <6" delta is ~$454/mo; "married, oldest 6-17" is ~$118/mo;
+      // single parent is ~$47/mo (lower because single-parent
+      // households in CEX use less paid care on average).
+      //
+      // Two honesty caveats baked into the shape:
+      //   - Returns `undefined` for compositions BLS doesn't surface
+      //     a delta for (marriedKids18p, marriedNoKids, otherMarried,
+      //     singleOrOther). The UI treats "no baseline signal" as
+      //     "skip the comparison" rather than rendering "BLS = $0 →
+      //     shipped = $X" which would read as a misleading data point.
+      //   - This baseline is a national composition-only delta. It
+      //     does NOT vary by income / geo / CU-size the way every
+      //     other `cexBaseline` entry does. The detail-view tooltip's
+      //     "BLS baseline at your income/region/size/composition cell"
+      //     copy is technically inaccurate for Childcare; until we
+      //     extend `BudgetResult` with per-leaf baseline-provenance
+      //     metadata (followup PR), the gap is documented here.
+      Childcare:
+        kids > 0
+          ? composition === 'marriedKidsU6'
+            ? 454
+            : composition === 'marriedKids617'
+              ? 118
+              : composition === 'singleParent'
+                ? 47
+                : undefined // marriedKids18p, marriedNoKids, otherMarried, singleOrOther — no Table-1502 signal
+          : undefined,
       Utilities:
         (cexBaselineCache.utilitiesElectricGas ?? 0) + (cexBaselineCache.utilitiesWaterPublic ?? 0),
       'Cell service': cexBaselineCache.cellularService,
