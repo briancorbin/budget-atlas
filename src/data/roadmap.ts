@@ -424,6 +424,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
   },
   {
+    id: 235,
+    title: 'SNAP cliff: BBCE explainer',
+    category: 'Benefits & safety net',
+    status: 'shipped',
+    shippedAt: '2026-05-09',
+    summary:
+      "The SNAP cliff appearing in non-BBCE states (AL, AR, ID, IN, KS, LA, MO, MS, SC, SD, TN, UT, WY) used to read like a bug — why does losing SNAP cost the household money in some states but not others? Now the per-cliff caption appends a body-font footnote explaining the federal 130% gross-income floor: the 30%-of-net phase-out doesn't reach $0 by 130% FPL for multi-person households, so residual benefit gets cliffed at the cutoff. BBCE states (165%/185%/200% FPL) give the phase-out enough runway to land at $0 naturally. Surfaced only when the household is in a no-BBCE state — irrelevant chrome elsewhere.",
+  },
+  {
     id: 234,
     title: 'Calc tooltip: running $/mo per row',
     category: 'UX & navigation',

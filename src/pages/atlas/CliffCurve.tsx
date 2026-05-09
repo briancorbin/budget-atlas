@@ -20,6 +20,7 @@ import { BENEFIT_IDS } from '@/lib/benefits';
 import { fpl } from '@/data/poverty';
 import {
   MEDICAID_EXPANSION_LIMIT_FPL,
+  SNAP_GROSS_INCOME_LIMIT_FPL_FEDERAL,
   STATE_CHIP_LIMIT_FPL,
   STATE_MEDICAID_POLICY,
   snapIncomeLimitFpl,
@@ -581,6 +582,39 @@ export function CliffCurve({
                       than they were at {fmt(c.gross)} all the way to {fmt(maxGross)}.
                     </>
                   )}
+                  {/* SNAP-specific addendum: explain why the cliff exists in
+                      this state. SNAP benefit phase-out (30% of net income)
+                      tries to reach $0 gracefully as income rises. In states
+                      using only the federal 130% gross-income floor, the
+                      phase-out runs out of runway before income reaches the
+                      cutoff — residual benefit gets cliffed. States with BBCE
+                      (165%/185%/200%) give the phase-out enough runway for
+                      benefits to land at $0 naturally, eliminating the cliff. */}
+                  {c.id === 'snap' &&
+                    snapIncomeLimitFpl(cityData.state) ===
+                      SNAP_GROSS_INCOME_LIMIT_FPL_FEDERAL && (
+                      <>
+                        {' '}
+                        <span
+                          style={{
+                            display: 'block',
+                            marginTop: 6,
+                            fontFamily: fonts.body,
+                            fontSize: rem(12),
+                            fontStyle: 'normal',
+                            color: T.inkMuted,
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {cityData.state} uses the 130% federal gross-income floor for SNAP — no
+                          BBCE expansion. SNAP benefits phase out at 30% of net income, which
+                          doesn't reach $0 by 130% FPL for multi-person households, so whatever
+                          remains gets cliffed at the cutoff. States with Broad-Based Categorical
+                          Eligibility (165% / 185% / 200% FPL) give the phase-out enough runway to
+                          reach $0 naturally, eliminating this cliff.
+                        </span>
+                      </>
+                    )}
                 </li>
               ))}
           </ul>
