@@ -385,6 +385,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
     summary:
       'Replaced the global ±15-20% lifestyle multiplier with per-leaf elasticities (Low ±5%, Medium ±15%, High ±25%, Zero for config-driven lines). Rent and other contractually-fixed lines no longer modulate with the dial — the editorial principle is "modest means picking fewer bedrooms (a config decision), not paying less for the same unit." Foundation for the full lifestyle drill-down (#5).',
   },
+  {
+    id: 211,
+    title: 'Methodology callouts: Medicaid full/none + synthetic blend',
+    category: 'UX & navigation',
+    status: 'shipped',
+    shippedAt: '2026-05-08',
+    summary:
+      'Surfaced two model simplifications in the front-and-center MethodologyNote: (1) Medicaid/CHIP is binary full/none — state-level variation in adult dental, vision, and other Medicaid scope is acknowledged but not modeled (deepening is #10); (2) the cost-of-living blend treats income, geography, and household size as independent because BLS publishes single-axis cross-tabs only — most accurate for diffuse lines, less so where size correlates with income.',
+  },
 ];
 
 /**
