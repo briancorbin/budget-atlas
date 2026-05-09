@@ -425,7 +425,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
   },
   {
     id: 221,
-    title: 'SearchableSelect autofill fix',
+    title: 'Picker autofill suppression',
     category: 'UX & navigation',
     status: 'shipped',
     shippedAt: '2026-05-09',
