@@ -425,7 +425,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
   },
   {
     id: 220,
-    title: 'Tenure UI + filing SearchableSelect',
+    title: 'Tenure picker + filing dropdown',
     category: 'UX & navigation',
     status: 'shipped',
     shippedAt: '2026-05-09',

@@ -82,6 +82,12 @@ export function CustomizePanel(s: InputsState) {
     s.setCity(sc.city);
     s.setKids(sc.kids);
     s.setLifestyle(sc.lifestyle);
+    // Scenarios don't (yet) carry a tenure field — they're all
+    // renter-modeled in v1 — but the picker promises "prefill every
+    // input below," so explicitly reset tenure to renter so a user who
+    // had flipped to an owner mode doesn't get stuck on $0 placeholder
+    // owner leaves after picking an example.
+    s.setTenure('renter');
   };
 
   const onStateChange = (code: StateCode) => {
