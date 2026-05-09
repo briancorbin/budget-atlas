@@ -5,7 +5,39 @@ import { theme as T, fonts, PIE_COLORS, rem } from '@/theme';
 import { fmt } from '@/lib/format';
 import { SectionTitle, HoverGloss } from '@/components/ui';
 import { EXPENSE_SOURCE, LIFESTYLE_ELASTICITY, type ExpenseSource } from '@/lib/budget';
-import type { BLSCEXLineItem } from '@/data/cex';
+import {
+  stateToRegion,
+  cuSizeBucket,
+  compositionBucket,
+  QUINTILE_MEANS_2024_BEFORE_TAX,
+  type BLSCEXLineItem,
+  type CUSize,
+  type CompositionType,
+  type IncomeQuintile,
+} from '@/data/cex';
+
+const CU_SIZE_LABEL: Record<CUSize, string> = {
+  p1: '1-person',
+  p2: '2-person',
+  p3: '3-person',
+  p4: '4-person',
+  p5plus: '5+ person',
+};
+
+const COMP_LABEL: Record<CompositionType, string> = {
+  marriedNoKids: 'Married couple, no kids',
+  marriedKidsU6: 'Married couple, oldest child <6',
+  marriedKids617: 'Married couple, oldest child 6–17',
+  marriedKids18p: 'Married couple, adult child(ren) at home',
+  otherMarried: 'Other married CU (multigenerational, etc.)',
+  singleParent: 'Single parent',
+  singleOrOther: 'Single person / other',
+};
+
+function quintileLabel(q: IncomeQuintile): string {
+  const mean = QUINTILE_MEANS_2024_BEFORE_TAX[q];
+  return `${q} (national mean ~$${(mean / 1000).toFixed(0)}K/yr)`;
+}
 
 /**
  * Extract the first complete sentence of a description string. Splits on
@@ -203,6 +235,47 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
       elasticity === 0
         ? 'not modulated by lifestyle dial (config-driven)'
         : `× lifestyle ${dialSign === 0 ? '1.00' : (factor >= 1 ? '+' : '') + ((factor - 1) * 100).toFixed(0) + '%'} (${dialName} dial, ±${(elasticity * 100).toFixed(0)}% per-leaf elasticity)`;
+
+    // Build the per-axis context block so readers can see what cell of
+    // the synthetic blend they actually landed in. Geographic granularity
+    // (msa/division/region) shows the most-specific level the blend
+    // resolved to — see `cexProvenance` in budget.ts.
+    const region = stateToRegion(result.cityData.state);
+    const cuSize = cuSizeBucket(result.householdSize);
+    const composition = compositionBucket(
+      result.adults,
+      Math.max(0, result.householdSize - result.adults),
+    );
+    const granularity = cexItem ? result.cexProvenance[cexItem] : undefined;
+    const axisRow = (k: string, v: string) => (
+      <div style={{ display: 'flex', gap: 6, fontSize: rem(11) }}>
+        <span style={{ color: T.inkMuted, minWidth: 92 }}>{k}</span>
+        <span style={{ color: T.ink }}>{v}</span>
+      </div>
+    );
+    const contextBlock = (
+      <div
+        style={{
+          marginTop: 6,
+          padding: '6px 8px',
+          background: T.bgAlt,
+          borderRadius: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        {axisRow('Region', region)}
+        {axisRow('Income quintile', quintileLabel(result.incomeQuintile))}
+        {axisRow('CU size', CU_SIZE_LABEL[cuSize])}
+        {axisRow('Family comp.', COMP_LABEL[composition])}
+        {granularity &&
+          axisRow(
+            'Geo cut used',
+            granularity === 'msa' ? 'MSA' : granularity === 'division' ? 'Division' : 'Region',
+          )}
+      </div>
+    );
     // Utilities is mixed-tier (CEX rollup + EIA state-level
     // electricity context). The dollar amount comes from CEX, but
     // the EIA context is editorial signal: "your state pays X%
@@ -230,13 +303,11 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
         <div style={{ color: T.inkSoft }}>
           BLS baseline at your region · quintile · CU size · family-comp blend:{' '}
           <strong>{fmt(baseline)}</strong>
-          {!flat && (
-            <>
-              <br />
-              {elasticityCopy}
-              <br />= shipped <strong>{fmt(shipped)}</strong>
-            </>
-          )}
+        </div>
+        {contextBlock}
+        <div style={{ color: T.inkSoft, marginTop: 6 }}>
+          {elasticityCopy}
+          <br />= shipped <strong>{fmt(shipped)}</strong>
         </div>
         {utilitiesEiaNote}
       </>
