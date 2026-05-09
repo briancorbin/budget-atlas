@@ -230,7 +230,6 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
   // explanation is just noise in that case.
   if (baseline !== undefined && elasticity !== undefined) {
     const factor = 1 + elasticity * dialSign;
-    const flat = factor === 1; // no lifestyle modulation in effect
     const elasticityCopy =
       elasticity === 0
         ? 'not modulated by lifestyle dial (config-driven)'
