@@ -21,7 +21,15 @@ import type { BLSCEXLineItem } from '@/data/cex';
  * it's a mixed-source leaf (CEX OOP + KFF premium) and a single
  * granularity badge would misrepresent half the line.
  */
-const LEAF_TO_CEX_ITEM: Readonly<Record<string, BLSCEXLineItem>> = {
+const QUINTILE_LABEL: Record<'q1' | 'q2' | 'q3' | 'q4' | 'q5', string> = {
+  q1: 'lowest fifth',
+  q2: 'second fifth',
+  q3: 'middle fifth',
+  q4: 'fourth fifth',
+  q5: 'top fifth',
+};
+
+const LEAF_TO_CEX_ITEM: Readonly<Partial<Record<string, BLSCEXLineItem>>> = {
   Utilities: 'utilitiesElectricGas', // composite — pick electric/gas as the headline subline
   'Cell service': 'cellularService',
   'Life & disability insurance': 'lifeInsurance',
@@ -737,8 +745,9 @@ export function ExpenseBreakdown({ result }: { result: BudgetResult }) {
                   fontFamily: fonts.mono,
                 }}
               >
-                You're in <strong style={{ color: T.ink }}>{result.incomeQuintile}</strong> of the
-                national income distribution
+                You're in the{' '}
+                <strong style={{ color: T.ink }}>{QUINTILE_LABEL[result.incomeQuintile]}</strong> of
+                the national income distribution
               </span>
               <span style={{ color: T.inkMuted }}>
                 (CEX shape interpolates smoothly between quintile means)
