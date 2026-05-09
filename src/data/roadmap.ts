@@ -424,6 +424,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
   },
   {
+    id: 222,
+    title: 'Hide $0 leaves + calc tooltips',
+    category: 'UX & navigation',
+    status: 'shipped',
+    shippedAt: '2026-05-09',
+    summary:
+      "Two detail-view tweaks. (1) $0 lines now hidden by default — toggle reveals them for households that want to see what was zeroed out and override. Cleans up the panel for households where many leaves don't apply (renters in owner mode, transit-only households, etc.). (2) Each shipped value now has a hover tooltip explaining how the model arrived at it: BLS baseline → ± lifestyle elasticity → shipped, named with the dial position; or, for specialized-source leaves, the source-rule description. Suppressed when the user has set an override (the override input is its own affordance).",
+  },
+  {
     id: 221,
     title: 'Picker autofill suppression',
     category: 'UX & navigation',

@@ -299,6 +299,7 @@ export function BudgetExplorer() {
         <section id="expenses" style={{ scrollMarginTop: 24 }}>
           <ExpenseBreakdown
             result={result}
+            lifestyle={lifestyle}
             overrides={overrides}
             onOverrideChange={(label, value) => {
               setOverrides((prev) => {

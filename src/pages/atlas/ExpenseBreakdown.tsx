@@ -1,10 +1,10 @@
-import type { BudgetResult } from '@/types';
-import { useEffect, useState } from 'react';
+import type { BudgetResult, Lifestyle } from '@/types';
+import { useEffect, useState, type ReactNode } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { theme as T, fonts, PIE_COLORS, rem } from '@/theme';
 import { fmt } from '@/lib/format';
 import { SectionTitle, HoverGloss } from '@/components/ui';
-import { EXPENSE_SOURCE, type ExpenseSource } from '@/lib/budget';
+import { EXPENSE_SOURCE, LIFESTYLE_ELASTICITY, type ExpenseSource } from '@/lib/budget';
 import type { BLSCEXLineItem } from '@/data/cex';
 
 /**
@@ -51,6 +51,104 @@ const LEAF_TO_CEX_ITEM: Readonly<Partial<Record<string, BLSCEXLineItem>>> = {
   Furnishings: 'furnishings',
   'Travel & lodging': 'otherLodging',
 };
+
+/**
+ * Build the per-leaf "how this is calculated" explanation rendered in
+ * the shipped-value HoverGloss popover. Suppressed when a user override
+ * is active (the override input is its own affordance — a calc tooltip
+ * for "we used your value" doesn't add anything).
+ *
+ * Format depends on the leaf's source:
+ *   - CEX-anchored leaves: BLS baseline → ± lifestyle elasticity → shipped.
+ *     Names the dial position so the reader sees how the multiplier fired.
+ *   - Specialized-source leaves (rent, KFF premium, Care.com childcare):
+ *     describe the source + computation rule.
+ *   - Tenure / config-driven $0 placeholders: explain the gating.
+ *
+ * Values are rendered with `fmt` so the popover reads in the same
+ * currency-formatted way as the inline budget.
+ */
+function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifestyle): ReactNode {
+  const shipped = result.expenses[label] ?? 0;
+  const note = result.expenseModelNotes[label];
+  const cexItem = LEAF_TO_CEX_ITEM[label];
+  const elasticity = cexItem ? LIFESTYLE_ELASTICITY[cexItem] : undefined;
+  const baseline = result.cexBaseline[label];
+  const dialName =
+    lifestyle === 'modest' ? 'modest' : lifestyle === 'comfortable' ? 'comfortable' : 'moderate';
+  const dialSign = lifestyle === 'modest' ? -1 : lifestyle === 'comfortable' ? 1 : 0;
+
+  const Header = ({ children }: { children: ReactNode }) => (
+    <div
+      style={{
+        fontSize: rem(10),
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        color: T.accent,
+        fontWeight: 600,
+        marginBottom: 4,
+      }}
+    >
+      {children}
+    </div>
+  );
+
+  // Override-driven overrides (transit-only, no-kids, owner-only) are
+  // explained by the inline reason badge already; surface that in the
+  // tooltip too so the explanation is consistent.
+  if (note?.modelValue !== undefined && note.modelValue !== null && note.modelValue !== shipped) {
+    return (
+      <>
+        <Header>How this is calculated</Header>
+        <div style={{ color: T.inkSoft }}>
+          BLS would have given <strong>{fmt(note.modelValue)}</strong> for this household, but the
+          model overrode to <strong>{fmt(shipped)}</strong> — {note.reason}.
+        </div>
+      </>
+    );
+  }
+
+  // CEX-anchored leaf with a baseline available — the textbook three-step
+  // explanation. Skip when shipped equals baseline exactly (moderate +
+  // zero elasticity, e.g. education) — that's a plain pass-through that
+  // doesn't need a calc tooltip.
+  if (baseline !== undefined && elasticity !== undefined) {
+    const factor = 1 + elasticity * dialSign;
+    const elasticityCopy =
+      elasticity === 0
+        ? 'not modulated by lifestyle dial (config-driven)'
+        : `× lifestyle ${dialSign === 0 ? '1.00' : (factor >= 1 ? '+' : '') + ((factor - 1) * 100).toFixed(0) + '%'} (${dialName} dial, ±${(elasticity * 100).toFixed(0)}% per-leaf elasticity)`;
+    return (
+      <>
+        <Header>How this is calculated</Header>
+        <div style={{ color: T.inkSoft }}>
+          BLS baseline at your region · quintile · CU size · family-comp blend:{' '}
+          <strong>{fmt(baseline)}</strong>
+          <br />
+          {elasticityCopy}
+          <br />= shipped <strong>{fmt(shipped)}</strong>
+        </div>
+      </>
+    );
+  }
+
+  // Specialized-source leaves — point at the source description for the
+  // rule. EXPENSE_SOURCE descriptions already explain the formula; just
+  // surface them here without re-deriving.
+  const src = EXPENSE_SOURCE[label];
+  if (src) {
+    return (
+      <>
+        <Header>How this is calculated</Header>
+        <div style={{ color: T.inkSoft }}>
+          Sourced from <strong>{src.label}</strong>. {src.description.split('.')[0]}.
+        </div>
+      </>
+    );
+  }
+
+  return null;
+}
 
 const TIER_COLOR: Record<ExpenseSource['tier'], string> = {
   primary: '#5B7C3F', // muted green — primary BLS / agency
@@ -302,6 +400,10 @@ interface RollupRow {
 
 export interface ExpenseBreakdownProps {
   result: BudgetResult;
+  /** Current lifestyle dial position. Drives the calculation tooltip
+   *  copy ("± 5% lifestyle (modest)" etc.); not strictly needed for
+   *  rendering but makes the per-leaf calculation explanation honest. */
+  lifestyle: Lifestyle;
   /** Current per-leaf user overrides (display-label → monthly $). */
   overrides?: Readonly<Record<string, number>>;
   /**
@@ -428,7 +530,12 @@ function OverrideInput({
   );
 }
 
-export function ExpenseBreakdown({ result, overrides, onOverrideChange }: ExpenseBreakdownProps) {
+export function ExpenseBreakdown({
+  result,
+  lifestyle,
+  overrides,
+  onOverrideChange,
+}: ExpenseBreakdownProps) {
   // Detailed breakdown is a separate disclosure below the pie + summary,
   // not an inline expand on each rollup row. Reasons:
   //   - Inline expand made the right column grow, which forced the left
@@ -440,6 +547,12 @@ export function ExpenseBreakdown({ result, overrides, onOverrideChange }: Expens
   //     granular sub-lines, percentile context, geo-granularity badges)
   //     without compressing the summary view.
   const [detailOpen, setDetailOpen] = useState(false);
+  // $0 lines are hidden by default — they crowd the panel for households
+  // where they don't apply (e.g. owner leaves for renters, vehicle leaves
+  // for transit-only). Toggle on to reveal them; useful for overriding a
+  // $0 line back to a real value, or for seeing what the model considered
+  // and zeroed out.
+  const [showZeroLines, setShowZeroLines] = useState(false);
   // Hover state for the pie. Drives the dynamic center label so we
   // don't need a separate floating tooltip — the center is the
   // tooltip, no fly-in animation, no collision with the static
@@ -880,6 +993,25 @@ export function ExpenseBreakdown({ result, overrides, onOverrideChange }: Expens
               <span style={{ color: T.inkMuted }}>
                 (CEX shape interpolates smoothly between quintile means)
               </span>
+              <button
+                type="button"
+                onClick={() => setShowZeroLines((v) => !v)}
+                style={{
+                  marginLeft: 'auto',
+                  fontSize: rem(11),
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                  padding: '4px 10px',
+                  background: showZeroLines ? T.bgAlt : T.bg,
+                  color: T.ink,
+                  border: `1px solid ${T.border}`,
+                  fontFamily: fonts.body,
+                  cursor: 'pointer',
+                }}
+                aria-pressed={showZeroLines}
+              >
+                {showZeroLines ? 'Hide $0 lines' : 'Show $0 lines'}
+              </button>
             </div>
             {/* Source-tier legend. Each line label below carries a small
                 colored dot indicating where its number came from; hover
@@ -999,6 +1131,10 @@ export function ExpenseBreakdown({ result, overrides, onOverrideChange }: Expens
                           </span>
                         </div>
                         {[...r.lines]
+                          // Hide $0 lines by default — toggle below the
+                          // detail header reveals them. Override input
+                          // is still reachable when revealed.
+                          .filter((l) => showZeroLines || l.value !== 0)
                           .sort((a, b) => b.value - a.value)
                           .map((line) => {
                             const note = result.expenseModelNotes[line.label];
@@ -1187,7 +1323,39 @@ export function ExpenseBreakdown({ result, overrides, onOverrideChange }: Expens
                                           {!overrideShown && showBaseline && (
                                             <span style={{ color: T.inkMuted }}>→</span>
                                           )}
-                                          <span style={{ color: T.ink }}>{fmt(shipped)}</span>
+                                          {(() => {
+                                            // Calculation tooltip — explains
+                                            // BLS baseline → ± lifestyle
+                                            // elasticity → shipped, or names
+                                            // the source rule for non-CEX
+                                            // leaves. Suppressed when the
+                                            // user has overridden this leaf:
+                                            // the override input is its own
+                                            // affordance and "we used your
+                                            // value" doesn't add anything.
+                                            const isOverridden =
+                                              line.label in result.appliedOverrides;
+                                            if (isOverridden) {
+                                              return (
+                                                <span style={{ color: T.ink }}>{fmt(shipped)}</span>
+                                              );
+                                            }
+                                            const explanation = calcExplanation(
+                                              line.label,
+                                              result,
+                                              lifestyle,
+                                            );
+                                            if (!explanation) {
+                                              return (
+                                                <span style={{ color: T.ink }}>{fmt(shipped)}</span>
+                                              );
+                                            }
+                                            return (
+                                              <HoverGloss gloss={explanation}>
+                                                <span style={{ color: T.ink }}>{fmt(shipped)}</span>
+                                              </HoverGloss>
+                                            );
+                                          })()}
                                         </>
                                       );
                                     })()}
