@@ -424,6 +424,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
   },
   {
+    id: 230,
+    title: 'Anchor-vs-quintile mismatch note',
+    category: 'UX & navigation',
+    status: 'shipped',
+    shippedAt: '2026-05-09',
+    summary:
+      'Two definitions of "your quintile" don\'t perfectly align: the floor-based quintile (IncomePosition thermometer) puts a $60K household in q3, but the smoothing anchors at quintile MEANS, so the same $60K household anchors at q2 and interpolates up. Added a small italic note in the calc trace when the smoothing anchor differs from the household\'s floor-based quintile, so readers understand why the trace says "q2 anchor" while elsewhere the household is labeled q3.',
+  },
+  {
     id: 229,
     title: 'Tooltip: quintile smoothing row',
     category: 'UX & navigation',
