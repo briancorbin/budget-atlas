@@ -250,6 +250,30 @@ function calcExplanation(label: string, result: BudgetResult, lifestyle: Lifesty
             <span>{trace.quintileInterpolationFactor.toFixed(2)}×</span>
           </div>
         )}
+        {/* Anchor-vs-quintile mismatch note. Two definitions of "your
+            quintile" don't perfectly align: the floor-based quintile
+            (used by the IncomePosition thermometer) puts a household at
+            $60K in q3, but the smoothing anchors at quintile MEANS, so
+            the same $60K household anchors at q2 and interpolates up.
+            Surface this explicitly when they differ — otherwise readers
+            wonder why the trace says "q2 anchor" while elsewhere the
+            household is labeled q3. */}
+        {trace.quintileAnchor.quintile !== result.incomeQuintile && (
+          <div
+            style={{
+              fontSize: rem(10),
+              color: T.inkMuted,
+              fontStyle: 'italic',
+              fontFamily: fonts.body,
+              paddingTop: 2,
+              lineHeight: 1.4,
+            }}
+          >
+            You're in {result.incomeQuintile} by floor, but anchored at{' '}
+            {trace.quintileAnchor.quintile} because your income is below {result.incomeQuintile}'s
+            mean — interpolating upward toward it.
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
           <span>
             × geo ({region}, {trace.geoCut})
