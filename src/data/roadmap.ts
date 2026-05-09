@@ -424,6 +424,15 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
   },
   {
+    id: 220,
+    title: 'Tenure UI + filing SearchableSelect',
+    category: 'UX & navigation',
+    status: 'shipped',
+    shippedAt: '2026-05-09',
+    summary:
+      "Added the missing UI control for `BudgetInput.tenure` (renter / owner-mortgage / owner-no-mortgage) — the field had landed in the model in #197 but the user had no way to flip it. Plus harmonized filing-status from native `<select>` to `SearchableSelect` to match the City/State picker family. Tenure round-trips through the share-link via `te=` URL param (omitted when default 'renter'). 2 new tests for tenure round-trip and default suppression.",
+  },
+  {
     id: 219,
     title: 'EIA state electricity context',
     category: 'Cost of living',

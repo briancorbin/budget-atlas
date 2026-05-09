@@ -1,4 +1,4 @@
-import type { FilingStatus, Lifestyle, StateCode } from '@/types';
+import type { FilingStatus, HousingTenure, Lifestyle, StateCode } from '@/types';
 import { theme as T, fonts, rem } from '@/theme';
 import { fmt, fmtPct } from '@/lib/format';
 import { CITIES, RENT_LOGIC_SOURCES, getCityData, stateSlug } from '@/data/cities';
@@ -21,6 +21,8 @@ export interface InputsState {
   setKids: (n: number) => void;
   lifestyle: Lifestyle;
   setLifestyle: (l: Lifestyle) => void;
+  tenure: HousingTenure;
+  setTenure: (t: HousingTenure) => void;
 }
 
 export function CustomizePanel(s: InputsState) {
@@ -98,16 +100,6 @@ export function CustomizePanel(s: InputsState) {
     color: T.ink,
     outline: 'none',
     boxSizing: 'border-box' as const,
-  };
-  const selectStyle = {
-    width: '100%',
-    padding: '10px 12px',
-    fontFamily: fonts.body,
-    fontSize: rem(14),
-    background: T.bg,
-    border: `1px solid ${T.border}`,
-    color: T.ink,
-    outline: 'none',
   };
   const labelStyle = {
     fontSize: rem(12),
@@ -335,18 +327,49 @@ export function CustomizePanel(s: InputsState) {
 
         <div>
           <label style={labelStyle}>FILING STATUS</label>
-          <select
+          <SearchableSelect<FilingStatus>
             value={s.filing}
-            onChange={(e) => s.setFiling(e.target.value as FilingStatus)}
-            style={selectStyle}
-          >
-            <option value="single">Single</option>
-            <option value="married">Married, filing jointly</option>
-            <option value="head">Head of household</option>
-          </select>
+            options={[
+              { value: 'single', label: 'Single' },
+              { value: 'married', label: 'Married, filing jointly', hint: 'MFJ' },
+              { value: 'head', label: 'Head of household', hint: 'HoH' },
+            ]}
+            onChange={s.setFiling}
+            placeholder="Filing status"
+            ariaLabel="Filing status"
+          />
           {s.twoIncome && s.filing !== 'married' && (
             <div style={{ fontSize: rem(11), color: T.inkMuted, marginTop: 6 }}>
               Cohabitating · each files separately
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label style={labelStyle}>HOUSING TENURE</label>
+          <SearchableSelect<HousingTenure>
+            value={s.tenure}
+            options={[
+              { value: 'renter', label: 'Renter' },
+              {
+                value: 'owner-mortgage',
+                label: 'Homeowner, with mortgage',
+                hint: 'placeholder math',
+              },
+              {
+                value: 'owner-no-mortgage',
+                label: 'Homeowner, no mortgage',
+                hint: 'paid off',
+              },
+            ]}
+            onChange={s.setTenure}
+            placeholder="Housing tenure"
+            ariaLabel="Housing tenure"
+          />
+          {s.tenure !== 'renter' && (
+            <div style={{ fontSize: rem(11), color: T.inkMuted, marginTop: 6 }}>
+              Mortgage P&amp;I, property tax, HO insurance, and maintenance show as $0 placeholders
+              — full math lands with roadmap #13.
             </div>
           )}
         </div>

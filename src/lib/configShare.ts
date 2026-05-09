@@ -1,4 +1,4 @@
-import type { FilingStatus, Lifestyle } from '@/types';
+import type { FilingStatus, HousingTenure, Lifestyle } from '@/types';
 import { CITIES } from '@/data/cities';
 import { BENEFIT_IDS, type BenefitId } from '@/lib/benefits';
 
@@ -13,6 +13,7 @@ export interface SharedConfig {
   city: string;
   kids: number;
   lifestyle: Lifestyle;
+  tenure: HousingTenure;
   compareCity: string;
   claimedBenefits: ReadonlySet<string>;
   /**
@@ -49,6 +50,7 @@ export const DEFAULTS_V1: SharedConfig = Object.freeze({
   city: 'cmh',
   kids: 2,
   lifestyle: 'moderate' as Lifestyle,
+  tenure: 'renter' as HousingTenure,
   compareCity: 'sf',
   // Plain empty Set. We don't `Object.freeze` it because freeze doesn't
   // affect Set internal slots (`.add()` / `.delete()` still work). The
@@ -74,6 +76,17 @@ const CODE_TO_LIFESTYLE: Record<string, Lifestyle> = {
   '2': 'comfortable',
 };
 
+const TENURE_TO_CODE: Record<HousingTenure, string> = {
+  renter: 'r',
+  'owner-mortgage': 'om',
+  'owner-no-mortgage': 'on',
+};
+const CODE_TO_TENURE: Record<string, HousingTenure> = {
+  r: 'renter',
+  om: 'owner-mortgage',
+  on: 'owner-no-mortgage',
+};
+
 const VALID_BENEFITS: ReadonlySet<string> = new Set<BenefitId>(BENEFIT_IDS);
 
 function setEqual(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
@@ -92,6 +105,7 @@ export function encodeConfig(cfg: SharedConfig): string {
   if (cfg.city !== DEFAULTS_V1.city) p.set('c', cfg.city);
   if (cfg.kids !== DEFAULTS_V1.kids) p.set('k', String(cfg.kids));
   if (cfg.lifestyle !== DEFAULTS_V1.lifestyle) p.set('l', LIFESTYLE_TO_CODE[cfg.lifestyle]);
+  if (cfg.tenure !== DEFAULTS_V1.tenure) p.set('te', TENURE_TO_CODE[cfg.tenure]);
   if (cfg.compareCity !== DEFAULTS_V1.compareCity) p.set('cc', cfg.compareCity);
   if (!setEqual(cfg.claimedBenefits, DEFAULTS_V1.claimedBenefits)) {
     const sorted = [...cfg.claimedBenefits].sort();
@@ -193,6 +207,9 @@ export function decodeConfig(payload: string): SharedConfig {
   const l = p.get('l');
   if (l != null && Object.hasOwn(CODE_TO_LIFESTYLE, l)) out.lifestyle = CODE_TO_LIFESTYLE[l];
 
+  const te = p.get('te');
+  if (te != null && Object.hasOwn(CODE_TO_TENURE, te)) out.tenure = CODE_TO_TENURE[te];
+
   const cc = p.get('cc');
   if (cc != null && Object.hasOwn(CITIES, cc)) out.compareCity = cc;
 
@@ -239,7 +256,7 @@ export function looksLikeConfigHash(payload: string): boolean {
   const stripped = payload.startsWith('#') ? payload.slice(1) : payload;
   if (stripped.length === 0) return false;
   const p = new URLSearchParams(stripped);
-  return ['v', 'a', 'b', 't', 'f', 'c', 'k', 'l', 'cc', 'cb', 'o'].some((k) => p.has(k));
+  return ['v', 'a', 'b', 't', 'f', 'c', 'k', 'l', 'te', 'cc', 'cb', 'o'].some((k) => p.has(k));
 }
 
 export function loadFromStorage(): SharedConfig | null {

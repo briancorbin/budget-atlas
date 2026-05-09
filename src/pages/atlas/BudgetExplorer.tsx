@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { FilingStatus, Lifestyle } from '@/types';
+import type { FilingStatus, HousingTenure, Lifestyle } from '@/types';
 import { theme as T } from '@/theme';
 import { computeBudget } from '@/lib/budget';
 import { checkBenefit, type BenefitId } from '@/lib/benefits';
@@ -57,6 +57,7 @@ const INITIAL: SharedConfig = {
   city: 'cmh',
   kids: 2,
   lifestyle: 'moderate',
+  tenure: 'renter',
   compareCity: 'sf',
   claimedBenefits: new Set(),
   overrides: {},
@@ -86,6 +87,7 @@ export function BudgetExplorer() {
   const [city, setCity] = useState(boot.city);
   const [kids, setKids] = useState(boot.kids);
   const [lifestyle, setLifestyle] = useState<Lifestyle>(boot.lifestyle);
+  const [tenure, setTenure] = useState<HousingTenure>(boot.tenure);
   const [compareCity, setCompareCity] = useState(boot.compareCity);
   const [claimedBenefits, setClaimedBenefits] = useState<ReadonlySet<string>>(
     () => new Set(boot.claimedBenefits),
@@ -106,6 +108,7 @@ export function BudgetExplorer() {
         city,
         kids,
         lifestyle,
+        tenure,
         claimedBenefits,
         overrides,
       }),
@@ -117,6 +120,7 @@ export function BudgetExplorer() {
       city,
       kids,
       lifestyle,
+      tenure,
       claimedBenefits,
       overrides,
     ],
@@ -190,6 +194,7 @@ export function BudgetExplorer() {
       city,
       kids,
       lifestyle,
+      tenure,
       compareCity,
       claimedBenefits,
       overrides,
@@ -202,6 +207,7 @@ export function BudgetExplorer() {
       city,
       kids,
       lifestyle,
+      tenure,
       compareCity,
       claimedBenefits,
       overrides,
@@ -239,6 +245,8 @@ export function BudgetExplorer() {
     setKids,
     lifestyle,
     setLifestyle,
+    tenure,
+    setTenure,
   };
 
   return (
