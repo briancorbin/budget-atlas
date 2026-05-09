@@ -337,7 +337,7 @@ function calcExplanation(
                 background: T.bgAlt,
                 borderRadius: 2,
                 display: 'grid',
-                gridTemplateColumns: '1fr auto 64px',
+                gridTemplateColumns: '1fr auto auto',
                 columnGap: 8,
                 rowGap: 2,
                 alignItems: 'baseline',
@@ -425,14 +425,14 @@ function calcExplanation(
         {traceBlock ?? (
           <div style={{ color: T.inkSoft }}>
             BLS baseline at your region · quintile · CU size · family-comp blend:{' '}
-            <strong>{fmt(baseline)}</strong>
+            <strong>{fmt(baseline)}/mo</strong>
           </div>
         )}
         {includeLifestyle &&
           (elasticity === 0 ? (
             <div style={{ color: T.inkSoft, marginTop: 6 }}>
               not modulated by lifestyle dial (config-driven)
-              <br />= Atlas estimate <strong>{fmt(shipped)}</strong>
+              <br />= Atlas estimate <strong>{fmt(shipped)}/mo</strong>
             </div>
           ) : (
             // Single grid for lifestyle + Atlas-estimate rows so the
@@ -445,7 +445,7 @@ function calcExplanation(
               style={{
                 marginTop: 6,
                 display: 'grid',
-                gridTemplateColumns: '1fr auto 64px',
+                gridTemplateColumns: '1fr auto auto',
                 columnGap: 8,
                 rowGap: 2,
                 alignItems: 'baseline',
