@@ -782,7 +782,7 @@ function PhantomEligibilityNote({
             background: T.surface,
             border: `1px solid ${T.warning}`,
             borderRadius: 4,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+            boxShadow: T.shadows.md,
             fontSize: rem(12),
             lineHeight: 1.5,
             color: T.ink,

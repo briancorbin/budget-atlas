@@ -42,7 +42,7 @@ export function ScrollToTop({ threshold = 600 }: { threshold?: number }) {
         background: T.surface,
         color: T.accent,
         border: `1px solid ${T.border}`,
-        boxShadow: '0 4px 14px rgba(0,0,0,0.10)',
+        boxShadow: T.shadows.md,
         cursor: 'pointer',
         fontFamily: fonts.body,
         fontSize: rem(18),
