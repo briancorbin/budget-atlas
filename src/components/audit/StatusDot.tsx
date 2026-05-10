@@ -117,7 +117,7 @@ export function StatusDot({
             whiteSpace: 'normal',
             width: 'max-content',
             maxWidth: 'min(260px, calc(100vw - 32px))',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            boxShadow: T.shadows.lg,
             zIndex: 10,
             pointerEvents: 'none',
           }}

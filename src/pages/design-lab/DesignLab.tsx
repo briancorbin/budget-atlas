@@ -602,8 +602,6 @@ function SectionRowVariations() {
   );
 }
 
-const AI_ONLY_BLUE = '#3E5A7A';
-
 type LabStatus = 'verified' | 'overdue' | 'ai-only' | 'broken';
 
 const LAB_STATUS_PALETTE: Record<LabStatus, { color: string; short: string; long: string }> = {
@@ -618,7 +616,7 @@ const LAB_STATUS_PALETTE: Record<LabStatus, { color: string; short: string; long
     long: 'No review within the tier-specific window. Pick this up during a periodic sweep.',
   },
   'ai-only': {
-    color: AI_ONLY_BLUE,
+    color: T.aiAccent,
     short: 'AI-reviewed',
     long: 'Loads correctly and has been reviewed with AI assistance, but a human has not yet given it a pass.',
   },
@@ -713,7 +711,7 @@ function LabStatusDot({
             whiteSpace: 'normal',
             width: 'max-content',
             maxWidth: 'min(260px, calc(100vw - 32px))',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            boxShadow: T.shadows.lg,
             zIndex: 10,
             pointerEvents: 'none',
           }}
@@ -756,8 +754,6 @@ function MockRow({
   );
 }
 
-const AI_BADGE_BLUE = '#3E5A7A';
-
 function AiBadge() {
   const [hover, setHover] = useState(false);
   const long =
@@ -781,7 +777,7 @@ function AiBadge() {
         letterSpacing: '0.05em',
         padding: '2px 5px',
         borderRadius: 2,
-        background: AI_BADGE_BLUE,
+        background: T.aiAccent,
         color: T.bg,
         flexShrink: 0,
         lineHeight: 1.2,
@@ -808,12 +804,12 @@ function AiBadge() {
             whiteSpace: 'normal',
             width: 'max-content',
             maxWidth: 'min(260px, calc(100vw - 32px))',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            boxShadow: T.shadows.lg,
             zIndex: 10,
             pointerEvents: 'none',
           }}
         >
-          <span style={{ fontWeight: 600, color: AI_BADGE_BLUE }}>AI</span>
+          <span style={{ fontWeight: 600, color: T.aiAccent }}>AI</span>
           <span> — {long}</span>
         </span>
       )}
@@ -1091,7 +1087,7 @@ function RowSetV8() {
   const prefix = (k: ReviewKind | 'never'): { text: string; color: string } | null => {
     if (k === 'never') return null;
     if (k === 'human') return { text: 'Human reviewed', color: T.positive };
-    return { text: 'AI reviewed', color: AI_BADGE_BLUE };
+    return { text: 'AI reviewed', color: T.aiAccent };
   };
   return (
     <>
@@ -1138,7 +1134,7 @@ function RowSetV9() {
   const prefix = (k: ReviewKind | 'never'): { text: string; color: string } | null => {
     if (k === 'never') return null;
     if (k === 'human') return { text: 'Human reviewed', color: T.positive };
-    return { text: 'AI reviewed', color: AI_BADGE_BLUE };
+    return { text: 'AI reviewed', color: T.aiAccent };
   };
   return (
     <>
@@ -2380,7 +2376,7 @@ function PopoverShell({ children }: { children: React.ReactNode }) {
         border: `1px solid ${T.border}`,
         padding: '8px 0',
         maxWidth: 360,
-        boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+        boxShadow: T.shadows.md,
         fontFamily: fonts.body,
         fontSize: rem(12),
       }}
@@ -4065,7 +4061,7 @@ function CompoundConfigPanel({
         borderRadius: 4,
         padding: collapsed ? '8px 16px' : 16,
         marginBottom: 4,
-        boxShadow: '0 4px 12px rgba(27, 24, 21, 0.08)',
+        boxShadow: T.shadows.card,
       }}
     >
       <div

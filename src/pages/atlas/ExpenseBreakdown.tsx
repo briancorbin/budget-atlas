@@ -520,13 +520,7 @@ function calcExplanation(
   return null;
 }
 
-const TIER_COLOR: Record<ExpenseSource['tier'], string> = {
-  primary: '#5B7C3F', // muted green — primary BLS / agency
-  reference: '#A88A40', // muted gold — single-source reference (KFF, EPI, etc.)
-  mixed: '#6E7AA8', // muted blue — multi-source combinations (KFF + BLS, etc.)
-  commercial: '#7A6B5A', // muted brown — commercial / proprietary
-  none: '#B85C5C', // muted red — audit gap, no formal source
-};
+const TIER_COLOR: Record<ExpenseSource['tier'], string> = T.tierColors;
 
 const TIER_NAME: Record<ExpenseSource['tier'], string> = {
   primary: 'Primary',
@@ -600,7 +594,7 @@ function SourceBadge({ src }: { src: ExpenseSource }) {
             padding: '10px 12px',
             background: T.surface,
             border: `1px solid ${T.border}`,
-            boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+            boxShadow: T.shadows.md,
             fontFamily: fonts.body,
             fontSize: rem(12),
             lineHeight: 1.5,

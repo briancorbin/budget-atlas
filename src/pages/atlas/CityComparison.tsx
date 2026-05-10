@@ -30,7 +30,16 @@ export function CityComparison({
 }) {
   const compare = useMemo(
     () =>
-      computeBudget({ incomeA, incomeB, hasPartner, filing, city: compareCity, kids, lifestyle }),
+      computeBudget({
+        incomeA,
+        incomeB,
+        hasPartner,
+        filing,
+        city: compareCity,
+        kids,
+        lifestyle,
+        claimedBenefits: new Set(),
+      }),
     [incomeA, incomeB, hasPartner, filing, compareCity, kids, lifestyle],
   );
 

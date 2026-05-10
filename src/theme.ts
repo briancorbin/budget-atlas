@@ -22,7 +22,69 @@ export const theme = {
   // uniformly "weaker / stronger evidence within the family."
   aiAccent: '#3E5A7A',
   commercialAccent: '#7A6628', // deep gold, used for the commercial source tier
+  splurge: '#8A4A6E', // muted plum, used for the discretionary "splurge / dining" role
   surface: '#FBF8EF',
+
+  /**
+   * Box-shadow scale — four variants:
+   *   sm   — subtle lift (sticky bars, low-elevation chrome)
+   *   md   — cards, hover popovers, the default
+   *   lg   — heavier popovers (audit reports, source detail)
+   *   card — ink-tinted card elevation. Slightly warmer cast than the
+   *          neutral-black sm/md/lg, picks up the editorial-cream surface
+   *          beneath. Used by larger panel surfaces where a black drop
+   *          shadow would feel too "screen-y."
+   * Reach for one of these before inventing a new shadow.
+   */
+  shadows: {
+    sm: '0 2px 8px rgba(0,0,0,0.06)',
+    md: '0 4px 14px rgba(0,0,0,0.08)',
+    lg: '0 4px 16px rgba(0,0,0,0.15)',
+    card: '0 4px 12px rgba(27, 24, 21, 0.12)',
+  },
+
+  /**
+   * Two-stop radial gradient layered behind every top-level page (atlas,
+   * about, privacy, roadmap, sources). A faint editorial-red glow at the
+   * top-left and a fainter forest-green glow at the bottom-right. The
+   * literal colors are T.accent at 0.04 alpha and T.positive at 0.03.
+   */
+  pageGradient: `radial-gradient(circle at 20% 0%, rgba(166, 38, 28, 0.04), transparent 50%),
+         radial-gradient(circle at 80% 100%, rgba(45, 80, 22, 0.03), transparent 50%)`,
+
+  /** Tinted backgrounds for the sustainable / unsustainable status banner. */
+  bannerBg: {
+    success: '#E8EBDF',
+    danger: '#F1DBD8',
+  },
+
+  /**
+   * Source-tier colors used by the expense breakdown's source badges.
+   * Each value is a muted tint of one of the editorial accents, chosen so
+   * the five tiers read as a small palette rather than a noisy rainbow.
+   */
+  tierColors: {
+    primary: '#5B7C3F', // muted green — primary BLS / agency
+    reference: '#A88A40', // muted gold — single-source reference (KFF, EPI, etc.)
+    mixed: '#6E7AA8', // muted blue — multi-source combinations
+    commercial: '#7A6B5A', // muted brown — commercial / proprietary
+    none: '#B85C5C', // muted red — audit gap, no formal source
+  },
+
+  /**
+   * Income-quintile palette — graduated tan→brown scale for the equal-
+   * width banded thermometer in IncomePosition. Each band is one BLS
+   * quintile (q1 = lowest, q5 = highest); the gradient reads as ascending
+   * weight rather than a shift in hue, deliberately keeping the chart
+   * editorial rather than rainbow.
+   */
+  quintileScale: {
+    q1: '#D9C9A3',
+    q2: '#C7B57F',
+    q3: '#A89968',
+    q4: '#8A7B4F',
+    q5: '#6B5E3A',
+  },
 } as const;
 
 export const fonts = {

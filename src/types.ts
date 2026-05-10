@@ -167,9 +167,10 @@ export interface BudgetInput {
   /**
    * Set of benefit program IDs the household is claiming. Eligibility is
    * computed separately; this only controls whether the program's effect
-   * is applied to the budget. Unknown / ineligible IDs are ignored.
+   * is applied to the budget. Unknown / ineligible IDs are ignored. Pass
+   * an empty set when no benefits are claimed.
    */
-  claimedBenefits?: ReadonlySet<string>;
+  claimedBenefits: ReadonlySet<string>;
   /**
    * Per-leaf user overrides — display-label → monthly $. When a key
    * matches a leaf in result.expenses, the override REPLACES the
@@ -223,9 +224,7 @@ export interface BudgetResult {
    * Keys that aren't present here mean the shipped value already IS
    * the model value — no override happened.
    */
-  expenseModelNotes: Readonly<
-    Partial<Record<string, { modelValue: number | null; reason: string }>>
-  >;
+  expenseModelNotes: Readonly<Partial<Record<string, ExpenseModelNote>>>;
   totalExpenses: number;
   /**
    * Sum of "essential" expense lines: housing, utilities, food at home,
@@ -335,6 +334,18 @@ export interface BudgetResult {
 }
 
 export type TaxBracket = readonly [number, number]; // [cap, rate]
+
+/**
+ * One row of `BudgetResult.expenseModelNotes`: where the shipped expense
+ * value differs from what a pure-model calculation would produce.
+ */
+export interface ExpenseModelNote {
+  /** What the BLS-only model would have computed; null when there's no
+   * BLS counterpart (e.g. Childcare, sourced from cityData). */
+  modelValue: number | null;
+  /** Short editorial gloss of why the model value was overridden. */
+  reason: string;
+}
 
 /**
  * Reference for a piece of data shown in the app. Every numeric value the
