@@ -93,6 +93,7 @@ export function Footer() {
             ['/sources', 'Sources'],
             ['/roadmap', 'Roadmap'],
             ['/privacy', 'Privacy'],
+            ['/terms', 'Terms'],
           ] as const
         ).map(([href, label]) => (
           <a
