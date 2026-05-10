@@ -2,8 +2,7 @@ import type { ReactNode } from 'react';
 
 /**
  * The 5 polish levels. The slider snaps to these positions.
- * Definitions are spec'd in marginalia/POLISH_GUIDE.md — anything
- * ambiguous about how to author a level lives in the guide, not here.
+ * Definitions are spec'd in marginalia/POLISH_GUIDE.md.
  */
 export const POLISH_LEVELS = ['raw', 'light', 'medium', 'heavy', 'full'] as const;
 export type PolishLevel = (typeof POLISH_LEVELS)[number];
@@ -25,10 +24,46 @@ export const POLISH_LEVEL_DESCRIPTIONS: Record<PolishLevel, string> = {
 };
 
 /**
- * One Marginalia post. Each polish level renders the entire post body
- * (Editorial narrative + Field Notes if any). The slider swaps the
- * whole render — readers can see exactly what each level of AI editing
- * produces. See marginalia/POLISH_GUIDE.md for the level spec.
+ * One unit of Editorial content at a given polish level. Sections are
+ * the atomic unit of the compare view: hovering one highlights its
+ * counterpart on the other pane.
+ *
+ *  - id        Stable semantic identifier (e.g. 'why-now', 'the-moment').
+ *              Raw sections own the canonical IDs. Higher polish levels
+ *              reference Raw IDs via mapsFrom.
+ *  - mapsFrom  IDs from the Raw level whose substance this section
+ *              transformed. Empty/absent at Raw itself. May contain
+ *              multiple IDs when a higher-polish paragraph collapses
+ *              several Raw chunks into one.
+ *  - aiAdded   true when the paragraph has no Raw source at all (purely
+ *              structural / editorial connective tissue Claude added,
+ *              like "That's the why. The rest of Marginalia is the what.").
+ *              Visually flagged in the compare view so readers can see
+ *              what's invented vs. transformed.
+ *  - content   The rendered paragraph(s).
+ */
+export type Section = {
+  id: string;
+  mapsFrom?: string[];
+  aiAdded?: boolean;
+  content: ReactNode;
+};
+
+/**
+ * One polish level's content for a single post. Editorial is sectioned
+ * for the compare view; Field Notes stays as a single render for v0
+ * (Editorial-only compare; Field Notes can be backfilled later).
+ */
+export type Level = {
+  editorial: Section[];
+  fieldNotes?: () => ReactNode;
+};
+
+/**
+ * One Marginalia post. Each polish level is a Level (sectioned
+ * Editorial + optional Field Notes). The slider swaps the active
+ * level; the compare view renders Raw alongside any non-Raw level.
+ * See marginalia/POLISH_GUIDE.md for the level spec.
  */
 export type Post = {
   slug: string;
@@ -43,9 +78,6 @@ export type Post = {
   coversTo?: string;
   /** One-line teaser for index list and RSS feed. */
   dek: string;
-  /**
-   * Five level renderings. Each one is the WHOLE post body at that
-   * polish level — Editorial + (optional) Field Notes inlined.
-   */
-  levels: Record<PolishLevel, () => ReactNode>;
+  /** Five level renderings. Editorial sectioned; Field Notes optional. */
+  levels: Record<PolishLevel, Level>;
 };

@@ -918,56 +918,21 @@ const FieldNotesFull = () => (
 );
 
 // =============================================================================
-// LEVEL COMPOSITIONS
+// LEVEL COMPOSITIONS — section-shape stub
 // =============================================================================
+//
+// Post 1 isn't yet sectioned for the compare view (Editorial-only compare,
+// authored against the per-paragraph Section model on Post 0 first).
+// Each level here wraps the existing Editorial content into a single
+// degenerate Section so the new Post type compiles. Compare view will
+// render Post 1 as one big block on each side — usable but uninformative
+// until Post 1 gets properly sectioned in a follow-up.
 
-const Raw = () => (
-  <>
-    <EditorialRaw />
-    <hr />
-    <h2 style={{ marginTop: 0 }}>From the journal</h2>
-    <p>
-      AI_LEARNINGS entries from the week, in chronological order, verbatim.
-    </p>
-    <FieldNotesRaw />
-  </>
-);
+import type { Section } from '../types';
 
-const Light = () => (
-  <>
-    <EditorialLight />
-    <hr />
-    <h2 style={{ marginTop: 0 }}>Field Notes</h2>
-    <FieldNotesLight />
-  </>
-);
-
-const Medium = () => (
-  <>
-    <EditorialMedium />
-    <hr />
-    <h2 style={{ marginTop: 0 }}>Field Notes</h2>
-    <FieldNotesMedium />
-  </>
-);
-
-const Heavy = () => (
-  <>
-    <EditorialHeavy />
-    <hr />
-    <h2 style={{ marginTop: 0 }}>Field Notes</h2>
-    <FieldNotesHeavy />
-  </>
-);
-
-const Full = () => (
-  <>
-    <EditorialFull />
-    <hr />
-    <h2 style={{ marginTop: 0 }}>Field Notes</h2>
-    <FieldNotesFull />
-  </>
-);
+const oneSection = (Body: () => React.ReactElement): Section[] => [
+  { id: 'all', mapsFrom: ['all'], content: <Body /> },
+];
 
 export const post1: Post = {
   slug: 'post-1',
@@ -976,5 +941,11 @@ export const post1: Post = {
   date: '2026-05-09',
   coversFrom: '2026-05-01',
   dek: 'Why this tool did not already exist, and what changed.',
-  levels: { raw: Raw, light: Light, medium: Medium, heavy: Heavy, full: Full },
+  levels: {
+    raw: { editorial: oneSection(EditorialRaw), fieldNotes: FieldNotesRaw },
+    light: { editorial: oneSection(EditorialLight), fieldNotes: FieldNotesLight },
+    medium: { editorial: oneSection(EditorialMedium), fieldNotes: FieldNotesMedium },
+    heavy: { editorial: oneSection(EditorialHeavy), fieldNotes: FieldNotesHeavy },
+    full: { editorial: oneSection(EditorialFull), fieldNotes: FieldNotesFull },
+  },
 };
