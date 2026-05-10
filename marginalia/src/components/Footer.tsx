@@ -1,4 +1,5 @@
 import { theme, fonts, rem } from '../theme';
+import { atlasUrl } from '../lib/cross-site';
 
 export function Footer() {
   return (
@@ -26,7 +27,7 @@ export function Footer() {
       >
         <span>
           Marginalia is a companion publication to{' '}
-          <a href="https://thebudgetatlas.com">The Budget Atlas</a>.
+          <a href={atlasUrl()}>The Budget Atlas</a>.
         </span>
         <span style={{ display: 'flex', gap: 18 }}>
           <a href="/rss.xml">RSS</a>

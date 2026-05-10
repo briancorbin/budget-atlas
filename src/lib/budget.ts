@@ -837,10 +837,10 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   let lifestyleExpenses = 0;
   // When overrides are present, build a per-leaf override-value lookup
   // we can consult during the sum loop. Null-prototype map keeps
-  // prototype keys (e.g. `toString`) from acting as live entries. Always
-  // allocated (cheap empty object) so downstream reads don't need null
-  // guards; `anyOverrideMatched` gates whether it's actually consulted.
-  const overrideMap: Record<string, number> = Object.create(null);
+  // prototype keys (e.g. `toString`) from acting as live entries.
+  // Allocated only when there are overrides — `computeBudget` runs in
+  // tight cliff-sweep loops, so the no-overrides fast path matters.
+  const overrideMap: Record<string, number> | null = hasOverrides ? Object.create(null) : null;
   let anyOverrideMatched = false;
   if (hasOverrides) {
     for (const [label, value] of overrideEntries) {
@@ -849,7 +849,7 @@ export function computeBudget(input: BudgetInput): BudgetResult {
         // and would propagate through the sum to break totalExpenses.
         if (!Number.isFinite(value)) continue;
         const clamped = Math.max(0, value);
-        overrideMap[label] = clamped;
+        overrideMap![label] = clamped;
         appliedOverrides[label] = clamped;
         anyOverrideMatched = true;
       }
@@ -862,14 +862,14 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   // non-empty but only contains stale labels from an old share-link
   // (no real leaf is overridden, no need to allocate a copy).
   const expensesAfterOverrides: Record<string, number> = anyOverrideMatched
-    ? { ...computedExpenses, ...overrideMap }
+    ? { ...computedExpenses, ...overrideMap! }
     : computedExpenses;
   // Sum loop. Iterate the keys of the canonical map (`computedExpenses`)
   // since that's the schema; consult `overrideMap` per key for the
   // possibly-clamped value.
   for (const label of Object.keys(computedExpenses)) {
     const value =
-      anyOverrideMatched && label in overrideMap ? overrideMap[label] : computedExpenses[label];
+      anyOverrideMatched && label in overrideMap! ? overrideMap![label] : computedExpenses[label];
     if (EXPENSE_CATEGORY[label] === 'lifestyle') {
       lifestyleExpenses += value;
     } else {

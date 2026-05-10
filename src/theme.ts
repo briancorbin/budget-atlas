@@ -25,22 +25,20 @@ export const theme = {
   surface: '#FBF8EF',
 
   /**
-   * Box-shadow scale. Three steps cover the patterns the app actually uses:
-   *   sm — subtle lift (sticky bars, low-elevation chrome)
-   *   md — cards, hover popovers, the default
-   *   lg — heavier popovers (audit reports, source detail)
+   * Box-shadow scale — four variants:
+   *   sm   — subtle lift (sticky bars, low-elevation chrome)
+   *   md   — cards, hover popovers, the default
+   *   lg   — heavier popovers (audit reports, source detail)
+   *   card — ink-tinted card elevation. Slightly warmer cast than the
+   *          neutral-black sm/md/lg, picks up the editorial-cream surface
+   *          beneath. Used by larger panel surfaces where a black drop
+   *          shadow would feel too "screen-y."
    * Reach for one of these before inventing a new shadow.
    */
   shadows: {
     sm: '0 2px 8px rgba(0,0,0,0.06)',
     md: '0 4px 14px rgba(0,0,0,0.08)',
     lg: '0 4px 16px rgba(0,0,0,0.15)',
-    /**
-     * Ink-tinted card elevation. Slightly warmer cast than `md`/`lg` (which
-     * are neutral black) — picks up the editorial-cream surface beneath.
-     * Used by larger panel surfaces where a black drop shadow would feel
-     * too "screen-y."
-     */
     card: '0 4px 12px rgba(27, 24, 21, 0.12)',
   },
 

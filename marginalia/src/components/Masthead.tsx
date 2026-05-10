@@ -1,5 +1,6 @@
 import { theme, fonts, rem } from '../theme';
 import { Link } from './Link';
+import { atlasUrl } from '../lib/cross-site';
 
 /**
  * Marginalia's editorial header. Mirrors the Atlas's masthead voice
@@ -67,7 +68,7 @@ export function Masthead() {
         >
           <span>By Brian Corbin</span>
           <a
-            href="https://thebudgetatlas.com"
+            href={atlasUrl()}
             style={{ color: theme.inkSoft }}
           >
             thebudgetatlas.com →

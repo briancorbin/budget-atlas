@@ -1,5 +1,6 @@
 import { theme as T, fonts, rem } from '@/theme';
 import { navigate } from '@/lib/nav';
+import { marginaliaUrl } from '@/lib/cross-site';
 
 const navLinkStyle = {
   color: T.accent,
@@ -107,7 +108,7 @@ export function Footer() {
             {label}
           </a>
         ))}
-        <a href="https://marginalia.thebudgetatlas.com" style={navLinkStyle}>
+        <a href={marginaliaUrl()} style={navLinkStyle}>
           Marginalia <ExternalArrow />
         </a>
       </nav>
