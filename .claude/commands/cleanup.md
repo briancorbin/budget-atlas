@@ -6,17 +6,17 @@ The user just merged a PR and is asking for cleanup. Run this end-to-end, but co
 
 ## 1. Confirm the merge
 
-- Identify the PR for the current branch: `gh pr list --head $(git branch --show-current) --state merged --json number,mergeCommit,mergedAt --jq '.[]'`
+- Identify the PR for the current branch: `gh pr list --head "$(git branch --show-current)" --state merged --limit 1 --json number,mergeCommit,mergedAt --jq '.[0]'` (most recent merged PR; deterministic if a branch name was reused).
 - If no merged PR is found, stop and tell the user — they may have meant something else by "cleanup."
-- Check the remote branch — it's usually auto-deleted on merge: `git ls-remote --heads origin <branch>` (empty output = already deleted)
+- Check the remote branch — it's usually auto-deleted on merge. Use the fully-qualified ref so prefix matches don't false-positive: `git ls-remote origin "refs/heads/<branch-name>"` (empty output = already deleted).
 
 ## 2. Sync the main checkout
 
 - This session may be running inside a worktree under `.claude/worktrees/`. Worktrees can't be removed from inside themselves.
-- The main checkout is at the repo root (e.g. `/Users/briancorbin/Documents/Programming/budget-atlas`). The user runs `git pull` there separately.
+- The main checkout is the repo root (resolve it via `git worktree list | head -1 | awk '{print $1}'`, not a hardcoded path). The user runs `git pull` there separately.
 - Tell the user the exact commands they should run from the main checkout — don't try to run them yourself unless explicitly asked. Example:
   ```
-  cd /Users/briancorbin/Documents/Programming/budget-atlas
+  cd <path-to-main-checkout>
   git checkout develop && git pull
   git worktree remove .claude/worktrees/<this-worktree-name>
   git branch -d <branch-name>
