@@ -126,8 +126,8 @@ function Intro() {
           The Budget Atlas is a free educational tool, not financial advice
         </strong>
         . It models how taxes, cost of living, and benefits interact for hypothetical households. It
-        is not a tax return, not a benefits application, and not a substitute for talking to a CPA, a
-        benefits caseworker, or a financial planner about your actual situation.
+        is not a tax return, not a benefits application, and not a substitute for talking to a CPA,
+        a benefits caseworker, or a financial planner about your actual situation.
       </p>
       <p style={proseStyle}>
         Use the numbers to think. Don't use them to file, to claim, or to make a decision you can't
@@ -155,12 +155,12 @@ function NotAdvice() {
         This is not financial, tax, legal, or benefits advice
       </SectionTitle>
       <p style={proseStyle}>
-        Everything the atlas displays — federal and state tax estimates, FICA, EITC and CTC outcomes,
-        SNAP/Medicaid/CHIP eligibility, take-home pay, lifestyle budgets, cliff-curve sweeps — is a{' '}
-        <strong style={{ color: T.ink }}>model</strong>. A model is a simplification of reality. It
-        omits things real households deal with (retirement contributions, HSAs, student loans,
-        homeownership, capital gains, ACA marketplace insurance, self-employment, ITIN filers, and
-        more — the{' '}
+        Everything the atlas displays — federal and state tax estimates, FICA, EITC and CTC
+        outcomes, SNAP/Medicaid/CHIP eligibility, take-home pay, lifestyle budgets, cliff-curve
+        sweeps — is a <strong style={{ color: T.ink }}>model</strong>. A model is a simplification
+        of reality. It omits things real households deal with (retirement contributions, HSAs,
+        student loans, homeownership, capital gains, ACA marketplace insurance, self-employment,
+        ITIN filers, and more — the{' '}
         <a
           href="/about"
           onClick={(e) => {
@@ -179,15 +179,15 @@ function NotAdvice() {
         <em>understanding the shape of how American household finances work</em>. It does{' '}
         <strong style={{ color: T.ink }}>not</strong> make it a substitute for personalized advice.
         Before you do anything that has real money or legal consequences attached — file a return,
-        apply for a benefit, accept a job offer, move across state lines, change filing status — talk
-        to a qualified professional who can look at your actual paperwork.
+        apply for a benefit, accept a job offer, move across state lines, change filing status —
+        talk to a qualified professional who can look at your actual paperwork.
       </p>
       <p style={proseStyle}>
-        Specifically: nothing on this site is{' '}
-        <strong style={{ color: T.ink }}>tax advice</strong> (we are not your CPA or enrolled agent),{' '}
+        Specifically: nothing on this site is <strong style={{ color: T.ink }}>tax advice</strong>{' '}
+        (we are not your CPA or enrolled agent),{' '}
         <strong style={{ color: T.ink }}>legal advice</strong> (we are not your lawyer),{' '}
-        <strong style={{ color: T.ink }}>financial-planning advice</strong> (we are not your CFP), or{' '}
-        <strong style={{ color: T.ink }}>benefits-eligibility determination</strong> (only the
+        <strong style={{ color: T.ink }}>financial-planning advice</strong> (we are not your CFP),
+        or <strong style={{ color: T.ink }}>benefits-eligibility determination</strong> (only the
         relevant agency can make that call).
       </p>
     </section>
@@ -200,7 +200,9 @@ function NoWarranty() {
       <SectionTitle kicker="As-is">No warranty</SectionTitle>
       <p style={proseStyle}>
         The Budget Atlas is provided{' '}
-        <strong style={{ color: T.ink }}>"as is" and "as available," with no warranties of any kind</strong>{' '}
+        <strong style={{ color: T.ink }}>
+          "as is" and "as available," with no warranties of any kind
+        </strong>{' '}
         — express, implied, statutory, or otherwise. That includes, without limitation, any implied
         warranty of merchantability, fitness for a particular purpose, accuracy, completeness,
         non-infringement, or uninterrupted availability.
@@ -234,8 +236,8 @@ function LimitOfLiability() {
         <strong style={{ color: T.ink }}>not liable</strong> for any damages — direct, indirect,
         incidental, special, consequential, or punitive — arising from your use of the site, your
         reliance on anything it displays, or any errors or omissions in its content. That includes
-        lost money, lost benefits, missed deadlines, tax penalties, denied applications, or any other
-        downstream consequence of treating the model as if it were advice.
+        lost money, lost benefits, missed deadlines, tax penalties, denied applications, or any
+        other downstream consequence of treating the model as if it were advice.
       </p>
       <p style={proseStyle}>
         Some jurisdictions don't allow limits like this; where that's the case, the limit applies to
@@ -255,8 +257,8 @@ function AccuracyAndFreshness() {
     <section style={{ marginBottom: 40 }}>
       <SectionTitle kicker="Tax years and updates">Accuracy and freshness</SectionTitle>
       <p style={proseStyle}>
-        Tax brackets, deductions, FICA wage bases, poverty guidelines, and benefits thresholds change
-        every year — sometimes mid-year. The atlas is stamped with a volume label (e.g.{' '}
+        Tax brackets, deductions, FICA wage bases, poverty guidelines, and benefits thresholds
+        change every year — sometimes mid-year. The atlas is stamped with a volume label (e.g.{' '}
         <em>Vol. 2026</em>) on the masthead, indicating the tax year it models. We refresh the model
         each year as the IRS, SSA, HHS, and the relevant state agencies publish new figures.
       </p>
@@ -366,9 +368,9 @@ function IntellectualProperty() {
         attribution. If you want to republish a substantial passage, please ask.
       </p>
       <p style={proseStyle}>
-        "The Budget Atlas" is the name and identity of this project. The wordmark, color palette, and
-        typography choices belong to the project; please don't use them to brand something that isn't
-        ours, in a way that would confuse a reader about who made it.
+        "The Budget Atlas" is the name and identity of this project. The wordmark, color palette,
+        and typography choices belong to the project; please don't use them to brand something that
+        isn't ours, in a way that would confuse a reader about who made it.
       </p>
       <p style={proseStyle}>
         Tax brackets, benefit thresholds, poverty guidelines, and other government-published figures

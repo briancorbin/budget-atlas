@@ -70,8 +70,8 @@ export function Masthead() {
     >
       {/* Title-and-nav header row. Desktop shows the full inline nav to
           the right of the title block; mobile hides that nav and shows a
-          MENU trigger that opens a full-screen overlay sheet — five nav
-          items don't fit cleanly on a phone width without wrapping
+          MENU trigger that opens a full-screen overlay sheet — the full
+          nav doesn't fit cleanly on a phone width without wrapping
           unpredictably. */}
       <style>{`
         .masthead-header { display: flex; justify-content: space-between;
