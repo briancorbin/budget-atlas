@@ -718,7 +718,7 @@ export function computeBudget(input: BudgetInput): BudgetResult {
     monthlyHealthcareSingle: cityData.healthSingle,
   };
 
-  if (claimedBenefits?.has('snap')) {
+  if (claimedBenefits.has('snap')) {
     const snap = checkSnap(benefitInputs);
     if (snap.eligible && snap.monthlyBenefit > 0) {
       const offset = Math.min(snap.monthlyBenefit, foodAtHome);
@@ -733,7 +733,7 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   // computed from monthlyHealthcarePremium (kids' marginal premium share)
   // and applied as a partial offset against the same line.
   let medicaidApplied = false;
-  if (claimedBenefits?.has('medicaid')) {
+  if (claimedBenefits.has('medicaid')) {
     const med = checkMedicaid(benefitInputs);
     if (med.eligible) {
       benefitsApplied['Medicaid'] = healthcareAfterBenefits;
@@ -742,7 +742,7 @@ export function computeBudget(input: BudgetInput): BudgetResult {
     }
   }
 
-  if (!medicaidApplied && claimedBenefits?.has('chip')) {
+  if (!medicaidApplied && claimedBenefits.has('chip')) {
     const chip = checkChip(benefitInputs);
     if (chip.eligible && chip.monthlyBenefit > 0) {
       const offset = Math.min(chip.monthlyBenefit, healthcareAfterBenefits);
@@ -837,10 +837,10 @@ export function computeBudget(input: BudgetInput): BudgetResult {
   let lifestyleExpenses = 0;
   // When overrides are present, build a per-leaf override-value lookup
   // we can consult during the sum loop. Null-prototype map keeps
-  // prototype keys (e.g. `toString`) from acting as live entries.
-  const overrideMap: Record<string, number> = hasOverrides
-    ? Object.create(null)
-    : (null as unknown as Record<string, number>);
+  // prototype keys (e.g. `toString`) from acting as live entries. Always
+  // allocated (cheap empty object) so downstream reads don't need null
+  // guards; `anyOverrideMatched` gates whether it's actually consulted.
+  const overrideMap: Record<string, number> = Object.create(null);
   let anyOverrideMatched = false;
   if (hasOverrides) {
     for (const [label, value] of overrideEntries) {

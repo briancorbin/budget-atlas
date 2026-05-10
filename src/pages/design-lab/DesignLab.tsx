@@ -602,7 +602,7 @@ function SectionRowVariations() {
   );
 }
 
-const AI_ONLY_BLUE = '#3E5A7A';
+const AI_ONLY_BLUE = T.aiAccent;
 
 type LabStatus = 'verified' | 'overdue' | 'ai-only' | 'broken';
 
@@ -713,7 +713,7 @@ function LabStatusDot({
             whiteSpace: 'normal',
             width: 'max-content',
             maxWidth: 'min(260px, calc(100vw - 32px))',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            boxShadow: T.shadows.lg,
             zIndex: 10,
             pointerEvents: 'none',
           }}
@@ -756,7 +756,7 @@ function MockRow({
   );
 }
 
-const AI_BADGE_BLUE = '#3E5A7A';
+const AI_BADGE_BLUE = T.aiAccent;
 
 function AiBadge() {
   const [hover, setHover] = useState(false);
@@ -808,7 +808,7 @@ function AiBadge() {
             whiteSpace: 'normal',
             width: 'max-content',
             maxWidth: 'min(260px, calc(100vw - 32px))',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            boxShadow: T.shadows.lg,
             zIndex: 10,
             pointerEvents: 'none',
           }}
@@ -2380,7 +2380,7 @@ function PopoverShell({ children }: { children: React.ReactNode }) {
         border: `1px solid ${T.border}`,
         padding: '8px 0',
         maxWidth: 360,
-        boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+        boxShadow: T.shadows.md,
         fontFamily: fonts.body,
         fontSize: rem(12),
       }}

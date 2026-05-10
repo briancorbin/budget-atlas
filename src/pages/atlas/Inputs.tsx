@@ -608,7 +608,7 @@ export function CustomizeStickyBar(s: InputsState & { visible: boolean }) {
         zIndex: 50,
         background: T.surface,
         borderBottom: `1px solid ${T.border}`,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        boxShadow: T.shadows.sm,
         padding: '8px 16px',
         transform: s.visible ? 'translateY(0)' : 'translateY(-100%)',
         transition: 'transform 180ms ease-out',

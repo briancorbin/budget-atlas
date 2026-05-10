@@ -29,14 +29,14 @@ import { ReportFlag } from './audit/ReportFlag';
  * couldn't reach it), bot-blocked-verified is closer to overdue (we have
  * recent human eyes-on-page, just not eyes-on-citation).
  */
-const SEVERITY: Record<StatusKind, number> = {
+const SEVERITY = {
   verified: 0,
   'ai-verified': 1,
   overdue: 2,
   'bot-blocked-verified': 3,
   intermittent: 4,
   broken: 5,
-};
+} satisfies Record<StatusKind, number>;
 
 function worstStatusOf(
   sources: readonly Source[],
@@ -51,14 +51,14 @@ function worstStatusOf(
   return worst;
 }
 
-const STATUS_COLOR: Record<StatusKind, string> = {
+const STATUS_COLOR = {
   broken: T.accent,
   intermittent: T.aiAccent,
   'bot-blocked-verified': T.aiAccent,
   overdue: T.warning,
   verified: T.positive,
   'ai-verified': T.positive,
-};
+} satisfies Record<StatusKind, string>;
 
 /**
  * Editorial citation pill. Renders a small uppercase "SRC" badge in the
@@ -170,7 +170,7 @@ export function CiteGroup({ sources }: { sources: readonly Source[] }) {
             minWidth: 260,
             maxWidth: 360,
             zIndex: 50,
-            boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+            boxShadow: T.shadows.md,
             fontFamily: fonts.body,
             fontSize: rem(12),
             color: T.ink,
@@ -406,7 +406,7 @@ export function HoverGloss({ children, gloss }: { children: ReactNode; gloss: Re
             // Match Cite popover chrome — same shadow, same bg/border —
             // so click-popovers and hover-glosses feel like the same
             // family even though the trigger semantics differ.
-            boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+            boxShadow: T.shadows.md,
             fontFamily: fonts.body,
             fontSize: rem(12),
             lineHeight: 1.5,
@@ -618,7 +618,7 @@ export function SearchableSelect<T extends string>({
             maxHeight: 280,
             overflowY: 'auto',
             zIndex: 60,
-            boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+            boxShadow: T.shadows.md,
           }}
         >
           {filtered.length === 0 && (
