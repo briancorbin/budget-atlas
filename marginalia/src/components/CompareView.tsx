@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useMemo } from 'react';
+import { useRef, useState, useEffect, useMemo, type MutableRefObject } from 'react';
 import { theme, fonts, rem } from '../theme';
 import {
   POLISH_LEVEL_LABELS,
@@ -18,6 +18,15 @@ import {
  * Mobile: this component is hidden by the parent (PostPage) on narrow
  * viewports. No stacked fallback for v0 — desktop-only.
  */
+
+type Side = 'left' | 'right';
+type HoverState = { side: Side; id: string };
+
+// Highlight-tint helpers — derived from theme tokens so a token change
+// propagates here automatically (vs. hard-coded RGBA literals).
+const ACCENT_TINT = `${theme.accent}14`; // ~8% alpha (0x14 / 0xff ≈ 0.078)
+const AI_ACCENT_TINT = `${theme.aiAccent}1f`; // ~12% alpha
+
 export function CompareView({
   rawLevel,
   rightLevel,
@@ -27,7 +36,11 @@ export function CompareView({
   rightLevel: Level;
   rightLabel: PolishLevel;
 }) {
-  const [hovered, setHovered] = useState<string | null>(null);
+  // Track hover SOURCE explicitly. Section IDs can be stable across panes
+  // (Post 0's 'bio' exists on both Raw and Full) — without the source
+  // marker, hovering the right pane would be misclassified as "this is on
+  // the left" and scroll-into-view would target the wrong pane.
+  const [hovered, setHovered] = useState<HoverState | null>(null);
   const leftRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const rightRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
 
@@ -45,48 +58,38 @@ export function CompareView({
     return m;
   }, [rightLevel]);
 
-  // Set of Raw section IDs that the currently-hovered section corresponds to.
-  // - If hovering a Raw section, it's just that ID.
-  // - If hovering a right-pane section, it's that section's mapsFrom.
+  // Set of Raw section IDs to highlight given the current hover source+id.
   const highlightedRawIds = useMemo(() => {
     if (!hovered) return new Set<string>();
-    const isRaw = rawLevel.editorial.some((s) => s.id === hovered);
-    if (isRaw) return new Set([hovered]);
-    const right = rightLevel.editorial.find((s) => s.id === hovered);
+    if (hovered.side === 'left') return new Set([hovered.id]);
+    // hovered on the right — highlight the right section's mapsFrom on the left
+    const right = rightLevel.editorial.find((s) => s.id === hovered.id);
     return new Set(right?.mapsFrom ?? []);
-  }, [hovered, rawLevel, rightLevel]);
+  }, [hovered, rightLevel]);
 
-  // Set of right-pane section IDs that should highlight.
+  // Set of right-pane section IDs to highlight.
   const highlightedRightIds = useMemo(() => {
     if (!hovered) return new Set<string>();
-    const isRight = rightLevel.editorial.some((s) => s.id === hovered);
-    if (isRight) return new Set([hovered]);
-    // hovering a Raw section: light up every right section that maps from it
-    return new Set(rawIdToRightIds.get(hovered) ?? []);
-  }, [hovered, rawIdToRightIds, rightLevel]);
+    if (hovered.side === 'right') return new Set([hovered.id]);
+    // hovered on the left — light up every right section that maps from it
+    return new Set(rawIdToRightIds.get(hovered.id) ?? []);
+  }, [hovered, rawIdToRightIds]);
 
   // Scroll-into-view sync: when hover changes, bring the corresponding
   // section on the OTHER pane into view. Smooth scroll within each
   // pane's scroll container.
   useEffect(() => {
     if (!hovered) return;
-    const isRaw = rawLevel.editorial.some((s) => s.id === hovered);
-    const targets: HTMLDivElement[] = [];
-    if (isRaw) {
-      for (const id of highlightedRightIds) {
-        const el = rightRefs.current.get(id);
-        if (el) targets.push(el);
-      }
-    } else {
-      for (const id of highlightedRawIds) {
-        const el = leftRefs.current.get(id);
-        if (el) targets.push(el);
+    const targetIds = hovered.side === 'left' ? highlightedRightIds : highlightedRawIds;
+    const targetRefs = hovered.side === 'left' ? rightRefs : leftRefs;
+    for (const id of targetIds) {
+      const el = targetRefs.current.get(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        break;
       }
     }
-    if (targets[0]) {
-      targets[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  }, [hovered, highlightedRawIds, highlightedRightIds, rawLevel]);
+  }, [hovered, highlightedRawIds, highlightedRightIds]);
 
   return (
     <div
@@ -99,6 +102,7 @@ export function CompareView({
     >
       <Pane
         label={POLISH_LEVEL_LABELS.raw}
+        side="left"
         sections={rawLevel.editorial}
         highlighted={highlightedRawIds}
         refs={leftRefs}
@@ -106,6 +110,7 @@ export function CompareView({
       />
       <Pane
         label={POLISH_LEVEL_LABELS[rightLabel]}
+        side="right"
         sections={rightLevel.editorial}
         highlighted={highlightedRightIds}
         refs={rightRefs}
@@ -117,16 +122,18 @@ export function CompareView({
 
 function Pane({
   label,
+  side,
   sections,
   highlighted,
   refs,
   onHover,
 }: {
   label: string;
+  side: Side;
   sections: Section[];
   highlighted: Set<string>;
-  refs: React.MutableRefObject<Map<string, HTMLDivElement | null>>;
-  onHover: (id: string | null) => void;
+  refs: MutableRefObject<Map<string, HTMLDivElement | null>>;
+  onHover: (s: HoverState | null) => void;
 }) {
   return (
     <div
@@ -158,6 +165,7 @@ function Pane({
         <SectionBlock
           key={s.id}
           section={s}
+          side={side}
           highlighted={highlighted.has(s.id)}
           registerRef={(el) => refs.current.set(s.id, el)}
           onHover={onHover}
@@ -169,20 +177,22 @@ function Pane({
 
 function SectionBlock({
   section,
+  side,
   highlighted,
   registerRef,
   onHover,
 }: {
   section: Section;
+  side: Side;
   highlighted: boolean;
   registerRef: (el: HTMLDivElement | null) => void;
-  onHover: (id: string | null) => void;
+  onHover: (s: HoverState | null) => void;
 }) {
   const isAi = section.aiAdded === true;
   return (
     <div
       ref={registerRef}
-      onMouseEnter={() => onHover(section.id)}
+      onMouseEnter={() => onHover({ side, id: section.id })}
       onMouseLeave={() => onHover(null)}
       style={{
         padding: '8px 12px',
@@ -191,8 +201,8 @@ function SectionBlock({
         borderLeft: isAi ? `3px solid ${theme.aiAccent}` : '3px solid transparent',
         background: highlighted
           ? isAi
-            ? 'rgba(62, 90, 122, 0.12)'
-            : 'rgba(166, 38, 28, 0.08)'
+            ? AI_ACCENT_TINT
+            : ACCENT_TINT
           : 'transparent',
         transition: 'background 120ms ease',
         cursor: 'default',

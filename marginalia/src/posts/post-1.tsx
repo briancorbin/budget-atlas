@@ -925,9 +925,10 @@ const FieldNotesFull = () => (
 // render Post 1 as one big block on each side — usable but uninformative
 // until Post 1 gets properly sectioned in a follow-up.
 
+import type { ReactElement } from 'react';
 import type { Section } from '../types';
 
-const oneSection = (Body: () => React.ReactElement): Section[] => [
+const oneSection = (Body: () => ReactElement): Section[] => [
   { id: 'all', mapsFrom: ['all'], content: <Body /> },
 ];
 

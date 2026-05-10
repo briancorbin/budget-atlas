@@ -180,11 +180,15 @@ function CompareToggle({
     : on
       ? 'Hide side-by-side compare with Raw.'
       : 'Show side-by-side compare with Raw.';
+  // Use native `disabled` (not just aria-disabled) so the button can't
+  // receive focus/clicks when off — keeps semantics and interaction
+  // consistent with the visual state. aria-pressed is omitted when
+  // disabled to avoid exposing a stale "on" state.
   return (
     <button
       type="button"
-      aria-pressed={on}
-      aria-disabled={disabled}
+      aria-pressed={disabled ? undefined : on}
+      disabled={disabled}
       title={title}
       onClick={() => !disabled && onChange(!on)}
       style={{
