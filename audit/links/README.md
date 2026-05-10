@@ -150,24 +150,18 @@ Run history lives in a Cloudflare D1 database (`budget-atlas-audit`) bound to th
 
 The audit pipeline is fully API-backed — the nightly job POSTs runs, the /sources page fetches `/api/audit/latest`, the rolling broken-citation issue is seeded from `/api/audit/latest` + `/api/audit/history`. No machine-generated audit data lives in the repo. `reviewed.tsv` stays as the only file under version control because it's authored content (git history is meaningful).
 
-**One-time bootstrap** (only relevant for setting up a fresh D1 instance, e.g. moving providers, recreating from scratch, or seeding a new env like `develop`). Any `wrangler d1 ... --remote` call needs the API token from `.env.audit` — see "Cloudflare API token" in the next section for why — so wrap with `op run`:
+**One-time bootstrap** (only relevant for setting up a fresh D1 instance, e.g. moving providers, recreating from scratch, or seeding a new env like `develop`):
 
 ```sh
-wrangler d1 create budget-atlas-audit                              # OAuth is fine for create
-op run --env-file=.env.audit -- \
-  npx wrangler d1 execute budget-atlas-audit --remote \
-  --file=worker/schema.sql                                          # any --remote op needs the API token
-
-# For a non-prod env (e.g. develop), append --env <name> so wrangler
-# resolves the right binding from wrangler.jsonc:
-op run --env-file=.env.audit -- \
-  npx wrangler d1 execute budget-atlas-audit-develop --remote \
-  --file=worker/schema.sql --env develop
-
+wrangler d1 create budget-atlas-audit                # or budget-atlas-audit-develop, etc.
+yarn db:apply-schema prod                            # or develop / local
+yarn db:sync prod develop                            # optional: copy prod data into develop
 # If old TSVs exist somewhere (e.g. an artifact), backfill-d1.mjs reads
 # from a `results/` directory and POSTs each run.
 AUDIT_WRITE_TOKEN=<token> node audit/links/backfill-d1.mjs
 ```
+
+Both `db:apply-schema` and `db:sync` accept `prod`, `develop`, or `local` and resolve the right wrangler flags (`--remote` / `--env develop` / `--local --persist-to`). They're wrapped with `op run` automatically — see "Cloudflare API token" below for why that wrap is required for any `--remote` op.
 
 ### Local backend
 
