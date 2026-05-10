@@ -26,10 +26,12 @@ The user just merged a PR and is asking for cleanup. Run this end-to-end, but co
 ## 3. Capture AI learnings (per `feedback_offer_ai_learnings_capture.md`)
 
 Ask an **open** question — never leading. Examples that work:
+
 - "Anything from this session worth jotting down?"
 - "What surprised you about how this went — good or bad?"
 
 Things that don't work and shouldn't be asked:
+
 - "Did the X moment frustrate you?" (suggests substance)
 - "Was the Y refactor a good call?" (asks for ratification, not observation)
 - Bulleted lists of guesses about what the user might say.
@@ -37,6 +39,7 @@ Things that don't work and shouldn't be asked:
 If the user offers substance, light copy-edit is fine. If they say "nothing," that's a complete answer — don't fish.
 
 The user-substance, when captured, can land in two places:
+
 - **Memory** (private; for shaping future Claude behavior on this project) — see step 4.
 - **Marginalia field notes** (public; weekly editorial synthesis at marginalia.thebudgetatlas.com) — only if the user routes it there. Never propose substance for Marginalia; the "human substance only" rule is strict.
 
@@ -48,12 +51,13 @@ Scan the session for things that belong in the project's auto-memory directory (
 
 Categories to scan, with examples of what would qualify:
 
-- **`feedback`** — Did the user correct an approach? Affirm a non-obvious choice? ("Don't add a roadmap row per PR" was this kind of thing — captured as `feedback_roadmap_not_per_pr.md`.) Watch especially for *quiet affirmations* — easy to miss vs. corrections.
+- **`feedback`** — Did the user correct an approach? Affirm a non-obvious choice? ("Don't add a roadmap row per PR" was this kind of thing — captured as `feedback_roadmap_not_per_pr.md`.) Watch especially for _quiet affirmations_ — easy to miss vs. corrections.
 - **`project`** — Did anything change about who's doing what / why / by when? PR statuses, ongoing initiatives, deadlines, decisions. Convert relative dates ("today") to absolute dates (YYYY-MM-DD) before saving.
 - **`reference`** — Did a new external surface come up? Linear projects, Slack channels, Grafana boards, file paths in shared systems.
 - **`user`** — Did you learn something new about the user's role, expertise, or working preferences? (Less common in established sessions.)
 
 What NOT to save (per the auto-memory rules):
+
 - Code patterns, conventions, or architecture derivable from reading the project state.
 - Git history / who-changed-what (use `git log`/`git blame`).
 - Debugging recipes (the fix is in the code; the commit message has the why).
