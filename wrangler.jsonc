@@ -43,4 +43,28 @@
     "enabled": true,
     "logs": { "enabled": true },
   },
+  // Develop instance — separate Worker script + custom domain + D1 database
+  // so develop traffic and audit-run writes never touch production. Cloudflare
+  // Workers Builds is configured with the develop branch deploying with
+  // `--env develop`. Anything not overridden here inherits from top-level
+  // (compatibility_date, main, assets config, observability).
+  "env": {
+    "develop": {
+      "name": "thebudgetatlas-develop",
+      "routes": [
+        {
+          "pattern": "develop.thebudgetatlas.com",
+          "zone_name": "thebudgetatlas.com",
+          "custom_domain": true,
+        },
+      ],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "budget-atlas-audit-develop",
+          "database_id": "6b6a5437-913d-4984-aa7c-8b36c8878a01",
+        },
+      ],
+    },
+  },
 }

@@ -2,12 +2,40 @@
 // triple-slash directive (tsconfig.node.json has an explicit `types` array
 // that suppresses ambient lookups). vitest/config re-exports vite's
 // defineConfig with the test field merged in.
-import { defineConfig } from 'vitest/config';
+import { defineConfig, type Plugin } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
+import fs from 'node:fs';
+import path from 'node:path';
+
+// On the develop instance (DEPLOY_ENV=develop in the build env), inject a
+// noindex meta tag and write a disallow-all robots.txt so search engines
+// don't index develop.thebudgetatlas.com.
+function noindexOnDevelop(): Plugin {
+  const isDevelop = process.env.DEPLOY_ENV === 'develop';
+  let outDir = 'dist';
+  return {
+    name: 'noindex-on-develop',
+    apply: 'build',
+    configResolved(c) {
+      outDir = c.build.outDir;
+    },
+    transformIndexHtml(html) {
+      if (!isDevelop) return html;
+      return html.replace(
+        '</head>',
+        '    <meta name="robots" content="noindex, nofollow" />\n  </head>',
+      );
+    },
+    closeBundle() {
+      if (!isDevelop) return;
+      fs.writeFileSync(path.resolve(outDir, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
+    },
+  };
+}
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), noindexOnDevelop()],
   base: './', // works for static hosts and GitHub Pages out of the box
   // Vitest reads this same config; tests are colocated as `*.test.ts` next
   // to the source they cover. Pure-function libs only — no jsdom needed.
@@ -25,20 +53,17 @@ export default defineConfig({
     allowedHosts: ['dev.thebudgetatlas.com', '.trycloudflare.com'],
     // Proxy /api/* to a backend so the dev server can fetch audit data.
     //
-    // Default target is the deployed Worker — zero-effort for UI-only
-    // work, no need to spin up local infra. When iterating on the
-    // backend itself, run `yarn dev:worker` (wrangler in --local mode)
-    // and set AUDIT_PROXY_TARGET=http://localhost:8787 in your shell so
-    // the proxy hits the local Worker (with its local D1) instead of
-    // production. See audit/links/README.md "Local backend" for the
-    // full workflow.
-    //
-    // The backend has no auth on reads (the data is public), so the
-    // default of pointing at prod is safe; writes are gated by
-    // AUDIT_WRITE_TOKEN regardless of origin.
+    // Default target is the deployed develop Worker — UI work hits develop
+    // data so prod isn't the staging surface. Three modes:
+    //   - `yarn dev`       → develop (this default)
+    //   - `yarn dev:local` → local wrangler worker (with local D1)
+    //   - `yarn dev:prod`  → production (read-only safe; writes are gated
+    //                        by AUDIT_WRITE_TOKEN regardless of origin)
+    // Each script sets AUDIT_PROXY_TARGET explicitly; this fallback only
+    // kicks in if you run `vite` outside the package scripts.
     proxy: {
       '/api': {
-        target: process.env.AUDIT_PROXY_TARGET ?? 'https://thebudgetatlas.com',
+        target: process.env.AUDIT_PROXY_TARGET ?? 'https://develop.thebudgetatlas.com',
         changeOrigin: true,
         secure: true,
       },
