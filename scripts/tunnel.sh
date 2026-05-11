@@ -29,7 +29,9 @@ trap 'kill 0' SIGINT SIGTERM EXIT
 
 # Start Vite bound to localhost — only the tunnel sees it; we don't want it
 # on the LAN at the same time.
-yarn start --port "$PORT" &
+# --strictPort is required here: if Vite drifts to the next free port,
+# cloudflared would silently forward to a dead one. Fail loud instead.
+yarn start --port "$PORT" --strictPort &
 
 # Give Vite a moment to bind before cloudflared tries to forward.
 sleep 1

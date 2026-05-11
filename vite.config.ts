@@ -45,7 +45,10 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
-    strictPort: true, // fail instead of silently drifting to 5174/5175
+    // strictPort intentionally unset — ad-hoc `yarn dev` should drift to
+    // the next free port rather than erroring. scripts/tunnel.sh passes
+    // --strictPort explicitly so a port drift surfaces immediately there
+    // (otherwise cloudflared would silently forward to an empty port).
     // Allow Cloudflare quick-tunnel hostnames so `yarn dev:tunnel` works for
     // testing on phones / over cellular. Vite blocks unknown Host headers
     // by default as a DNS-rebinding mitigation; the wildcard scopes the
