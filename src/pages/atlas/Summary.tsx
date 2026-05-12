@@ -59,7 +59,7 @@ export function StatusBanner({ result }: { result: BudgetResult }) {
       style={{
         marginBottom: 36,
         padding: '18px 24px',
-        background: sustainable ? '#E8EBDF' : '#F1DBD8',
+        background: sustainable ? T.bannerBg.success : T.bannerBg.danger,
         borderLeft: `4px solid ${sustainable ? T.positive : T.accent}`,
         fontFamily: fonts.display,
         fontSize: rem(17),

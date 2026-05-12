@@ -239,8 +239,7 @@ export function Sources({ onBack }: { onBack: () => void }) {
         color: T.ink,
         fontFamily: fonts.body,
         padding: '40px 24px 80px',
-        backgroundImage: `radial-gradient(circle at 20% 0%, rgba(166, 38, 28, 0.04), transparent 50%),
-         radial-gradient(circle at 80% 100%, rgba(45, 80, 22, 0.03), transparent 50%)`,
+        backgroundImage: T.pageGradient,
       }}
     >
       <div style={{ maxWidth: 880, margin: '0 auto' }}>
@@ -839,7 +838,7 @@ function StatCell({ stat }: { stat: Stat }) {
             whiteSpace: 'normal',
             width: 'max-content',
             maxWidth: 'min(280px, calc(100vw - 32px))',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            boxShadow: T.shadows.lg,
             zIndex: 10,
             pointerEvents: 'none',
           }}

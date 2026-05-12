@@ -10,6 +10,7 @@ function input(overrides: Partial<BudgetInput> = {}): BudgetInput {
     city: 'cmh',
     kids: 0,
     lifestyle: 'moderate',
+    claimedBenefits: new Set(),
     ...overrides,
   };
 }

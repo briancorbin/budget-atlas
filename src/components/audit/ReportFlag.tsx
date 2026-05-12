@@ -81,7 +81,7 @@ export function ReportFlag({ source }: { source: Source }) {
             letterSpacing: '0.01em',
             borderRadius: 3,
             whiteSpace: 'nowrap',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            boxShadow: T.shadows.lg,
             zIndex: 10,
             pointerEvents: 'none',
           }}

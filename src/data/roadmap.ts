@@ -75,7 +75,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
   },
   {
     id: 4,
-    title: '401(k) / HSA / FSA pre-tax contributions',
+    title: 'Pre-tax 401(k) / HSA / FSA',
     category: 'Tax modeling',
     status: 'planned',
     summary:
@@ -88,7 +88,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     status: 'shipped',
     shippedAt: '2026-05-08',
     summary:
-      'Per-leaf user overrides land in the detail view: type any leaf to your actual value, share-link round-trips it. Dial keeps the simple Modest/Moderate/Comfortable global lever; overridden leaves stick across dial toggles. Per-leaf elasticities (#210), three-column comparison (#208), and the drill-down (#178) all shipped together — the full lifestyle granularity stack.',
+      'Per-leaf user overrides in the detail view — type any leaf to your actual value, share-link round-trips it. The Modest/Moderate/Comfortable dial stays a global lever; overrides stick across dial toggles. Shipped with per-leaf elasticities, three-column comparison, and drill-down (#239).',
   },
   {
     id: 6,
@@ -100,7 +100,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
   },
   {
     id: 7,
-    title: 'Filing-status comparison (MFJ vs MFS vs Single vs HoH)',
+    title: 'Filing-status comparison',
     category: 'Tax modeling',
     status: 'planned',
     summary:
@@ -129,7 +129,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Benefits & safety net',
     status: 'planned',
     summary:
-      "Surface alternate Medicaid tracks the model omits — SSI-linked, aged (65+), and pregnancy (often 200%+ FPL even in non-expansion states). Plus state waiver programs. Also: state-charged CHIP premiums for families above ~150% FPL (varies by state — TX ~$35–50/mo, PA tiered up to ~$56/mo/child, FL ~$15–20/mo, etc.). Today CHIP value = full kids' share of the family premium with no offset for the small monthly premium real higher-income families actually pay; small but real overstatement near the upper eligibility bands. (The 138% FPL Medicaid cliff is now visualized in the income-sweep curve.)",
+      'Surface alternate Medicaid tracks the model omits — SSI-linked, aged 65+, pregnancy ≥200% FPL — plus state waivers. Offset CHIP value by state-charged premiums (varies; TX ~$35-50/mo, PA up to ~$56/mo/child) for families above ~150% FPL — today CHIP value omits these.',
   },
   {
     id: 11,
@@ -137,9 +137,9 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Geography',
     status: 'in-progress',
     startedAt: '2026-05-01',
-    progress: 60,
+    progress: 70,
     summary:
-      'Phase 1 (shipped): state-first picker with searchable typeahead and statewide-average fallback for any of 51 jurisdictions. Phase 2: per-locality custom overrides. Phase 3: round-trip via shareable links.',
+      'Phase 1 (shipped): state-first picker, statewide-average fallback for all 51 jurisdictions. Phase 2 (in motion): per-locality overrides — state-external sources (III/FCC/EIA/NCES/ACS) wired, EIA state electricity is the first per-cell fill. Phase 3: shareable-link round-trip.',
   },
   {
     id: 12,
@@ -176,13 +176,13 @@ export const ROADMAP: readonly RoadmapItem[] = [
   },
   {
     id: 15,
-    title: 'Community suggestions & contributions',
+    title: 'Community contributions',
     category: 'Sharing',
     status: 'in-progress',
     startedAt: '2026-05-04',
-    progress: 20,
+    progress: 40,
     summary:
-      'A lightweight path for visitors to suggest roadmap items, flag bad data, or contribute fixes without needing a GitHub account. Likely a "Suggest an idea" form that opens a pre-filled issue, plus clear CONTRIBUTING docs. Bad-data flagging shipped via the audit:report issue template; suggestion form + ungated contribution path remain.',
+      "A lightweight path for visitors to suggest items, flag bad data, or contribute without a GitHub account. Bad-data flagging shipped via the audit:report issue template. Still ahead: 'Suggest an idea' form opening a pre-filled issue, plus CONTRIBUTING docs.",
   },
   {
     id: 14,
@@ -207,15 +207,7 @@ export const ROADMAP: readonly RoadmapItem[] = [
     category: 'Tax modeling',
     status: 'planned',
     summary:
-      'Today every dollar is treated as W-2 wages. Add the income types that get taxed differently — Social Security, pensions and traditional 401(k), Roth withdrawals, long-term capital gains, municipal bond interest, unemployment, SE income. Likely shipped in waves; SS + retirement first.',
-  },
-  {
-    id: 206,
-    title: 'Marginalia (weekly notes)',
-    category: 'Transparency',
-    status: 'planned',
-    summary:
-      "Weekly-cadence microsite for project updates, time-save retros, and lessons learned — same editorial voice as the explorer. Likely static markdown at blog.thebudgetatlas.com (Cloudflare Pages). Working name 'Marginalia' (editorial-margin notes + financial-margin pun); open to alternatives (The Margin, Field Notes, Dispatches).",
+      'Today every dollar is treated as W-2 wages. Add types taxed differently — Social Security, pensions, traditional 401(k), Roth withdrawals, long-term capital gains, muni bond interest, unemployment, SE income. Likely shipped in waves; SS + retirement first.',
   },
   {
     id: 21,
@@ -229,33 +221,35 @@ export const ROADMAP: readonly RoadmapItem[] = [
     id: 13,
     title: 'Homeownership / mortgage',
     category: 'Cost of living',
-    status: 'planned',
+    status: 'in-progress',
+    startedAt: '2026-05-08',
+    progress: 25,
     summary:
-      'Add an "I own" toggle that swaps rent for full PITI plus HOA and a 1%/yr maintenance reserve. State-specific property tax (TX ~1.6%, NJ ~2.2%, HI ~0.3%). Owning often looks cheaper monthly until you net out maintenance and the down-payment opportunity cost.',
+      'Tenure axis (renter / owner-mortgage / owner-no-mortgage) landed on BudgetInput; owner-only leaves are $0 placeholders. UI hidden until full mortgage math lands. Still ahead: PITI + HOA + 1%/yr maintenance reserve, state-specific property tax (TX ~1.6%, NJ ~2.2%, HI ~0.3%).',
   },
   {
     id: 126,
-    title: 'Guided assistance for applying to benefit programs',
+    title: 'Guided benefit application',
     category: 'Benefits & safety net',
     status: 'planned',
     summary:
-      'When the model says a household qualifies for SNAP / Medicaid / CHIP / EITC, the next question is "so how do I actually apply?" Today the page links to the state agency landing and stops there. A guided flow could surface the application form, the documents needed, the benefits portal URL for that specific state, and (where possible) the income/eligibility pre-check the agency runs — turning "you qualify" into "here\'s the next step," without leaving the page.',
+      "When the model says a household qualifies for SNAP / Medicaid / CHIP / EITC, the next question is 'how do I apply?' A guided flow could surface the application form, documents needed, and state portal URL — turning 'you qualify' into 'here's the next step,' without leaving the page.",
   },
   {
-    id: 127,
-    title: 'Pointers + guided assistance for programs outside the Atlas model',
+    id: 242,
+    title: 'Adjacent benefit programs',
     category: 'Benefits & safety net',
     summary:
-      'The Atlas computes eligibility for SNAP, Medicaid, and CHIP, but plenty of programs sit adjacent to the same life situations and never surface. A laid-off worker should hear about unemployment insurance the moment they tell us their income dropped. A new parent should hear about WIC. A renter behind on utilities should hear about LIHEAP. A household near tax-filing time should hear about VITA / Free File. A disabled adult should hear about SSDI / SSI. Two layers: (1) a contextual "you may also want to look into…" callout that triggers off household state changes — state-specific links to the right portal; and (2) the same guided-application treatment #126 plans for SNAP / Medicaid / CHIP, applied here too — application form, documents needed, portal URL for the user\'s state, and any agency-run pre-check we can surface — so "you might qualify" becomes "here\'s the next step," not just a hyperlink and a shrug.',
+      "Programs adjacent to the Atlas model — unemployment for a laid-off worker, WIC for a new parent, LIHEAP for utility arrears, VITA/Free File at tax time, SSDI/SSI for disabled adults. Contextual callouts triggered by household state, plus #126's guided-application treatment.",
     status: 'planned',
   },
   {
-    id: 128,
+    id: 243,
     title: 'Implicit marginal tax rate view',
     category: 'Benefits & safety net',
     status: 'planned',
     summary:
-      'Plot the *slope* of the discretionary curve as its own line — the implicit marginal tax rate the household actually faces, including benefit phase-outs and refundable-credit reductions, not just income-tax brackets. Each cliff would show as a brief spike to ≥100% (every $1 earned costs more than $1) followed by an elevated plateau through the recovery zone. Makes legible why a $4K Medicaid loss takes an $11K raise to climb out of: the marginal keep-rate is much worse than the headline tax bracket suggests once EITC/SNAP phase-downs and untaxed-benefit replacement costs stack up. Companion to the existing cliff curve.',
+      'Plot the slope of the discretionary curve — the marginal rate the household actually faces (benefit phase-outs and credit reductions, not just income-tax brackets). Each cliff shows as a spike ≥100% then an elevated plateau through recovery. Companion to the cliff curve.',
   },
   {
     id: 166,
@@ -275,34 +269,33 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Plots discretionary across a gross-income sweep so benefit cliffs (138% FPL Medicaid, SNAP phase-down, CHIP overshadow) read as visible drops. Pit-zone shading marks income bands where a raise leaves the household worse off net of lost benefits.',
   },
   {
-    id: 129,
-    title: 'Asymmetric Medicaid value vs. post-cliff cost',
+    id: 244,
+    title: 'Medicaid value vs cliff cost',
     category: 'Benefits & safety net',
     status: 'planned',
     summary:
-      "Today the model conflates two different things into a single number (cityData.healthFamily, sourced from KFF's Employer Health Benefits Survey): (a) the dollar VALUE of Medicaid/CHIP coverage when a household qualifies, and (b) the household's healthcare EXPENSE when they don't. Setting these equal makes the cliff drop on the Discretionary line equal the cliff drop on the Take-home + benefits line — they're the same magnitude, just measured from different angles. In reality the two diverge: Medicaid is meaningfully better than typical employer coverage ($0 deductible, $0 copays, broader pediatric benefits) so its real actuarial value is HIGHER than a worker would pay for an equivalent plan; AND a household losing Medicaid often lands on an ACA marketplace plan that costs MORE than the modeled employer premium. Splitting these into separate values (medicaidValue, chipValue, postCliffCost) would make the Discretionary cliff legitimately differ in size from the Take-home + benefits cliff — capturing a real economic asymmetry. Likely sources: ACA marketplace median premium data (Healthcare.gov/state exchanges), MEPS for actuarial value of Medicaid, KFF for employer comparisons.",
+      'The model conflates Medicaid/CHIP value when qualifying with healthcare expense post-cliff (one cityData.healthFamily number). Reality diverges: Medicaid is actuarially better than employer coverage; post-cliff ACA often costs more. Split into medicaidValue / chipValue / postCliffCost.',
   },
   {
     id: 131,
     title: 'BLS CEX line-item COL schema',
     category: 'Cost of living',
-    status: 'in-progress',
-    startedAt: '2026-05-08',
-    progress: 80,
+    status: 'shipped',
+    shippedAt: '2026-05-09',
     summary:
-      'Expand cost-of-living to ~15+ BLS CEX line items with two axes: geographic (city → MSA → division → region) and income (national-quintile shape × geo factor). 15 line items + 2023-2024 geo data + 2024 income-quintile data all landed; model consumes them end-to-end. Still ahead: pull "Telephone services" + "Personal insurance" sub-lines (currently hand formulas), drill-down UI (#178).',
+      'Four-axis synthetic blend — income quintile (smoothed), geography (MSA/division/region), CU size, family composition — drives 26 line-item leaves grouped under 7 rollups with per-leaf elasticity tiers. State-external sources registered (III/FCC/EIA/NCES/ACS); first per-cell fill via EIA. Per-leaf calc tooltips expose the trace.',
   },
   {
-    id: 178,
+    id: 239,
     title: 'Drill-down monthly cost view',
     category: 'Cost of living',
     status: 'shipped',
     shippedAt: '2026-05-08',
     summary:
-      'Condensed the 15-line monthly cost-of-living view to 7 rolled-up categories sectioned Essentials / Mixed / Lifestyle, each expandable to drill into its sub-lines. Per-cell geographic-granularity badges (MSA / division / region) and inline income-quintile context land in the detail view. The drill-down UX with three-column comparison + per-leaf override is the separate #5 follow-on.',
+      'Condensed the 15-line cost-of-living view into 7 rollups (Essentials/Mixed/Lifestyle), each expandable. Per-cell geo-granularity badges (MSA/division/region) and inline quintile context in the detail view. Three-column comparison + per-leaf overrides under #5.',
   },
   {
-    id: 205,
+    id: 248,
     title: 'Expand income thermometer',
     category: 'Geography',
     status: 'planned',
@@ -310,298 +303,37 @@ export const ROADMAP: readonly RoadmapItem[] = [
       'Expand the income thermometer (#187) beyond a fixed national + regional view: scope toggles (national / region / state / MSA where available), comparison mode (Midwest vs. NYC, two cities side-by-side), richer per-scope anchors (median + mean + percentile floors).',
   },
   {
-    id: 204,
+    id: 247,
     title: 'State-level median income marker',
     category: 'Geography',
     status: 'planned',
     summary:
-      'The income-position thermometer (#187) currently overlays the BLS Census-region average ($94K South / $97K Midwest / $116K Northeast / $120K West). State-level is the more useful cut — Mississippi vs. Massachusetts vs. California are very different stories within their regions. Pull median household income by state from Census ACS 1-year (2024) and add a state-marker that supersedes the regional one when present. Adds the Census ACS source to the registry with a paired reviewed.tsv row.',
+      'The thermometer overlays Census-region averages today. State-level is more useful — MS vs MA vs CA are different stories within their regions. Pull median household income by state from Census ACS 1-year (2024); state marker supersedes regional when present.',
   },
   {
-    id: 203,
+    id: 240,
     title: 'Essentials vs. lifestyle split',
     category: 'Cost of living',
     status: 'shipped',
     shippedAt: '2026-05-08',
     summary:
-      "Today's 'Discretionary' line is misnamed: it's the surplus AFTER deducting every line including dining out and entertainment, not income minus necessities. Split the BLS CEX line items into essentials (rent, utilities, groceries, healthcare, childcare, utilitarian transport) vs. lifestyle (dining out, entertainment, vehicle upgrades, fashion, furnishings) and surface two numbers: discretionary income (textbook) = take-home − essentials, and surplus = discretionary income − lifestyle. Reframes the cliff curve and unblocks the two-sided plan in #201.",
+      "Discretionary today is misnamed — it's the surplus after deducting every line including lifestyle, not income minus necessities. Split CEX into essentials vs. lifestyle and surface both: discretionary = take-home − essentials, surplus = discretionary − lifestyle.",
   },
   {
-    id: 202,
-    title: 'Smooth CEX quintile transitions',
-    category: 'Cost of living',
-    status: 'shipped',
-    shippedAt: '2026-05-08',
-    summary:
-      "BLS CEX spending shape is a step function across quintile boundaries (q1Max=$29,931, q4Max=$155,924). Crossing a boundary makes modeled expenses jump, producing artifact 'pits' on the cliff curve that look identical to real benefit cliffs. Linear interpolation between published quintile means ($16,658 / $42,925 / $74,474 / $121,548 / $264,510) eliminates the steps; the income axis is now continuous.",
-  },
-  {
-    id: 208,
-    title: 'Three-column comparison: BLS / Atlas / You',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-08',
-    summary:
-      "Detail-view leaves now show the BLS baseline (raw CEX at the user's quintile/region/size/composition cell) alongside the Atlas-shipped value (BLS × elasticity, with specialized-source overrides for housing/healthcare/childcare). Collapses when numerically identical — moderate dial + no override = single value. Foundation for per-leaf user overrides (#5 / PR10).",
-  },
-  {
-    id: 207,
-    title: 'BLS composition cross-tab',
-    category: 'Cost of living',
-    status: 'shipped',
-    shippedAt: '2026-05-08',
-    summary:
-      "Pulled BLS CEX Table 1502 as the fourth axis on the synthetic blend: family-composition (single, married no kids, married + oldest <6 / 6–17 / adult, single parent, other). Captures structural spending differences pure CU size misses — a single parent of 3 and a married couple of 4 are both 4-person CUs but spend very differently. BLS tops at 'any kids' (no exact kid count). Companion to #131; foundation for #208 / #5 / #3.",
-  },
-  {
-    id: 201,
+    id: 246,
     title: 'Two-sided discretionary plan',
     category: 'Household detail',
     status: 'planned',
     summary:
-      "Today the model only allocates surplus (savings / vacation / splurge / emergency) when discretionary is positive. Generalize: when it's negative, surface concrete gap-closing levers ranked by impact — claimable benefits the household isn't using, lifestyle step-down, lower-rent housing tier, transit vs. car, childcare alternatives — with the dollar delta of each. Symmetric guidance whether the household has $400 left over or is $400 short.",
+      'Today the model allocates surplus (savings/vacation/splurge/emergency) only when discretionary is positive. Generalize: when negative, surface gap-closing levers ranked by impact — claimable benefits, lifestyle step-down, lower-rent tier, transit vs. car — with each dollar delta.',
   },
   {
-    id: 200,
+    id: 245,
     title: 'Demographic + population context',
     category: 'Cost of living',
     status: 'planned',
     summary:
-      "Use the BLS demographic data we already mirror under audit/data-sources/bls-cex/2024 (race, age, education, occupation, household composition, housing tenure) to show where the user's income sits (quintile + percentile rank), how households at the same income spend differently across demographic cuts, and side-by-side geographic comparisons. The line-item schema (#131) opened the door; this puts the rest of the BLS data we already host to work.",
-  },
-  {
-    id: 209,
-    title: 'CU-size scaling for CEX lines',
-    category: 'Cost of living',
-    status: 'shipped',
-    shippedAt: '2026-05-08',
-    summary:
-      'Every CEX-anchored line now scales by household size (1p / 2p / 3p / 4p / 5p+) using BLS Table 1400. Previously the model used "average CU" (~2.5 people) values regardless of actual household size — overstating singles by ~1.8× and understating families of 4 by ~0.7×. Adds a third axis to the synthetic blend (alongside region/division and income quintile).',
-  },
-  {
-    id: 210,
-    title: 'Per-leaf lifestyle elasticities',
-    category: 'Cost of living',
-    status: 'shipped',
-    shippedAt: '2026-05-08',
-    summary:
-      'Replaced the global ±15-20% lifestyle multiplier with per-leaf elasticities (Low ±5%, Medium ±15%, High ±25%, Zero for config-driven lines). Rent and other contractually-fixed lines no longer modulate with the dial — the editorial principle is "modest means picking fewer bedrooms (a config decision), not paying less for the same unit." Foundation for the full lifestyle drill-down (#5).',
-  },
-  {
-    id: 211,
-    title: 'Methodology callouts (explorer)',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-08',
-    summary:
-      'Surfaced two simplifications in the MethodologyNote: (1) Medicaid full/none when claimed; CHIP partial offset for kids (state Medicaid-scope variation acknowledged, not modeled — deepening is #10); (2) synthetic-blend treats income / geo / size as independent (BLS publishes single-axis cross-tabs only).',
-  },
-  {
-    id: 212,
-    title: 'Leaf restructure — 26 leaves up from 19',
-    category: 'Cost of living',
-    status: 'shipped',
-    shippedAt: '2026-05-08',
-    summary:
-      'Split Phone & Internet → Cell + Home internet; Insurance → Renters + Life/disability; Vehicle (ins+maint) → Vehicle insurance + Vehicle maintenance & repair + Vehicle (other expenses). Surfaced Alcohol, Pets, and Travel & lodging as their own leaves. Added 7 new BLSCEXLineItem schema entries (cellularService, lifeInsurance, vehicleInsurance, vehicleMaintRepair, alcohol, otherLodging, pets) extracted from Tables 1101 / 1800 / 2700 / 1400. Cross-vintage drift bound widened <4% → <6% to accommodate vehicleInsurance (~5.8%, real economic drift in 2024).',
-  },
-  {
-    id: 213,
-    title: 'Tenure axis (renter / owner / owner-no-mortgage)',
-    category: 'Household detail',
-    status: 'shipped',
-    shippedAt: '2026-05-08',
-    summary:
-      "Added a `tenure` field to BudgetInput, defaulting to 'renter' (existing behavior). Owner-with-mortgage and owner-without-mortgage are real third paths the model now recognizes. Owner-only leaves (Mortgage P&I, Property tax, Homeowners insurance, Maintenance & repairs) are exposed as $0 placeholders — actual mortgage math + per-leaf reasons land with roadmap #13. Stops the model from silently assuming everyone rents.",
-  },
-  {
-    id: 214,
-    title: 'State-external sources registry (III, FCC, EIA, NCES, College Board, ACS, DOL NDCP)',
-    category: 'Cost of living',
-    status: 'shipped',
-    shippedAt: '2026-05-08',
-    summary:
-      'Added 8 new entries to `sources.ts` for state-external data: III (insurance), FCC URS (broadband), EIA state electricity, NCES private school tuition, College Board college pricing, Census ACS B25088/B25103 (owner costs + property tax), DOL NDCP (childcare). Hybrid pattern — one entry per publisher, state context passed at render time. EXPENSE_SOURCE descriptions for Home internet, Renters insurance, Mortgage P&I, Property tax, and Homeowners insurance now reference the concrete planned sources instead of vague placeholders. Per-cell data wiring follows.',
-  },
-  {
-    id: 235,
-    title: 'SNAP cliff: BBCE explainer',
-    category: 'Benefits & safety net',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "The SNAP cliff appearing in non-BBCE states (AL, AR, ID, IN, KS, LA, MO, MS, SC, SD, TN, UT, WY) used to read like a bug — why does losing SNAP cost the household money in some states but not others? Now the per-cliff caption appends a body-font footnote explaining the federal 130% gross-income floor: the 30%-of-net phase-out doesn't reach $0 by 130% FPL for multi-person households, so residual benefit gets cliffed at the cutoff. BBCE states (165%/185%/200% FPL) give the phase-out enough runway to land at $0 naturally. Surfaced only when the household is in a no-BBCE state — irrelevant chrome elsewhere.",
-  },
-  {
-    id: 234,
-    title: 'Calc tooltip: running $/mo per row',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "Multiplier rows in the blend-trace tooltip now carry the running monthly $ that emerges after each factor is applied (e.g. `1.20× → $137/mo`). Reader doesn't have to compound 1.08 × 1.05 × 1.20 × 0.95 mentally to see where the value lands at each step. Single 3-column grid so columns align across all rows; anchor + baseline values bolded with full-width separators to mark them as endpoints. Renamed user-facing 'shipped' → 'Atlas estimate' for parity with 'BLS baseline'. Picked over six visual variants (bars, sparklines, deflection charts) in /design-lab — visual treatments either lied about the math or carried directional semantics that aren't actually present.",
-  },
-  {
-    id: 233,
-    title: 'Sticky compact Customize bar',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      'The Customize panel now slides in as a compact bar at the top of the viewport once you scroll past the full panel — keep tweaking inputs without scrolling back up. Shows: income (number-only, no slider, no min-wage tag), partner +/- toggle, state+city, filing, kids, lifestyle. Skips: scenario picker, slider, rent/state-tax detail, tenure (already hidden). IntersectionObserver on a sentinel below the full panel gates visibility; transform-translateY transition. Added a `compact` prop to SearchableSelect so the pickers fit without clipping.',
-  },
-  {
-    id: 232,
-    title: 'Calc-tooltip parity',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "Two related fixes. (1) Childcare's calc tooltip was falling through to the generic specialized-source branch and getting truncated mid-sentence at the period in 'vs.' (the abbreviation). Added a Childcare special-case in calcExplanation that explains the Table 1502 reassembly — composition lookup with the actual per-composition value displayed. (2) The BLS-baseline tooltip on the strikethrough value was generic copy. Now reuses calcExplanation with `includeLifestyle=false` to show the actual numerical trace (q-anchor → smoothing → geo → size → comp = baseline) — matches the parity of the shipped-value tooltip without the lifestyle row.",
-  },
-  {
-    id: 231,
-    title: 'Childcare default → BLS Table 1502',
-    category: 'Cost of living',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "The Childcare leaf used Care.com private-market full-time center prices × kids × 0.85, which overstated by 5–10× for the typical household — most American childcare is informal (relatives, friends, churches) and CCDF subsidies cover most cost above a small co-pay for income-eligible families. Swapped to BLS CEX Table 1502 'Personal services' delta vs. married-no-kids per composition: ~$454/mo (married + oldest <6), ~$118/mo (married + oldest 6–17), ~$47/mo (single parent). Captures actual spending net of free / family / subsidized care. Care.com data stays in cityData for future re-introduction as a private-market reference column.",
-  },
-  {
-    id: 230,
-    title: 'Anchor-vs-quintile mismatch note',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      'Two definitions of "your quintile" don\'t perfectly align: the floor-based quintile (IncomePosition thermometer) puts a $60K household in q3, but the smoothing anchors at quintile MEANS, so the same $60K household anchors at q2 and interpolates up. Added a small italic note in the calc trace when the smoothing anchor differs from the household\'s floor-based quintile, so readers understand why the trace says "q2 anchor" while elsewhere the household is labeled q3.',
-  },
-  {
-    id: 229,
-    title: 'Tooltip: quintile smoothing row',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "The first row of the calc trace was labeled `q2 national` but actually showed the SMOOTHED value at the user's exact income (interpolated between adjacent quintile means in `smoothNationalQuintile`). Made the smoothing explicit: anchor row now shows the published BLS Table 1101 q-anchor value at its mean income, then a separate `× quintile-curve smoothing` row shows the interpolation factor that takes you to the user's actual income. Hidden when factor = 1 (clamped to q1/q5 or exactly at a quintile mean).",
-  },
-  {
-    id: 228,
-    title: 'HoverGloss flips on overflow',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "HoverGloss tooltips were always left-anchored and clipped off the right edge of the viewport for triggers near the right side of the page (dollar values in the detail panel's right column, etc.). Added overflow detection via `getBoundingClientRect()` on open — when left-anchoring would push the 320px-wide tooltip past the viewport's right edge, switch to right-anchor (`right: 0` instead of `left: 0`).",
-  },
-  {
-    id: 227,
-    title: 'Consolidate calc tooltip',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      'The calc tooltip had three redundant chunks: a top "BLS baseline at your region · quintile · CU size · family-comp blend" line, a separate cell-context block (Region: Midwest, etc.), and a numerical trace. Merged into a single trace where each row names its axis cell inline (e.g. "× geo (Midwest, division) 0.97×") — same info, half the height.',
-  },
-  {
-    id: 226,
-    title: 'Calc tooltip: blend trace',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "The previous tooltip showed which axis cell the household landed in but didn't show the actual numbers each axis contributed. Added a per-step numerical trace inside the tooltip — q-quintile baseline (monthly), × geo factor, × CU-size factor, × family-comp factor, = BLS baseline. Backed by a new `blendCexSpendingTrace` helper in cex.ts that exposes every intermediate value of the synthetic blend. 3 new tests assert the trace product matches the production blend, that finalAnnual matches `cexLineItemSpendingForCity`, and that the geo cut records correctly across MSA/division/region cases.",
-  },
-  {
-    id: 225,
-    title: 'Calc tooltip: blend axis values',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "The calc tooltip used to say 'BLS baseline at your region · quintile · CU size · family-comp blend' but never told the reader WHICH region, WHICH quintile, etc. Added a context block listing each axis cell explicitly: Region (Northeast/Midwest/South/West), Income quintile + national mean, CU size (1- to 5+ person), Family composition (single/married/single-parent/etc.), and the geo cut the blend resolved to (MSA/division/region). Makes the synthetic blend's per-cell context legible at a glance.",
-  },
-  {
-    id: 224,
-    title: 'Utilities tooltip: EIA context',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "Utilities is mixed-tier (BLS CEX rollup + EIA state-level electricity context — blue dot in the legend) but the calc tooltip was only surfacing the CEX side. Added an EIA addendum so the tooltip closes the loop: your state pays X¢/kWh vs national avg Y¢/kWh, ±Z%. Surfaced as editorial context only; the leaf dollar amount stays CEX-driven so the blend's regional signal isn't double-counted.",
-  },
-  {
-    id: 223,
-    title: 'Hide tenure UI + Healthcare tooltip',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "Two small fixes. (1) Removed the HOUSING TENURE picker from the Customize panel — the full tenure wiring (axis on BudgetInput, leaf gating, share-link round-trip) stays in place and tested, but the user-facing flip is hidden until #13's actual mortgage math lands so users don't drop into a $0 housing mode with nothing useful. (2) The Healthcare calc tooltip was using the generic CEX path which said `BLS baseline $81 × ±5% lifestyle = shipped $1,331` — wrong arithmetic since Healthcare is mixed source (KFF premium + CEX OOP). Special-cased so the tooltip now correctly explains the premium + OOP composition.",
-  },
-  {
-    id: 222,
-    title: 'Hide $0 leaves + calc tooltips',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "Two detail-view tweaks. (1) $0 lines now hidden by default — toggle reveals them for households that want to see what was zeroed out and override. Cleans up the panel for households where many leaves don't apply (renters in owner mode, transit-only households, etc.). (2) Each shipped value now has a hover tooltip explaining how the model arrived at it: BLS baseline → ± lifestyle elasticity → shipped, named with the dial position; or, for specialized-source leaves, the source-rule description. Suppressed when the user has set an override (the override input is its own affordance).",
-  },
-  {
-    id: 221,
-    title: 'Picker autofill suppression',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "Added `data-1p-ignore` and `data-lpignore` attributes to the SearchableSelect input, alongside the existing `autoComplete='off'`. Modern password managers (1Password, LastPass, Chrome built-in) ignore plain `autoComplete='off'` and were offering to autofill names into the State / Filing / Tenure pickers. The data-attribute opt-outs are what those managers honor.",
-  },
-  {
-    id: 220,
-    title: 'Tenure picker + filing dropdown',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "Added the missing UI control for `BudgetInput.tenure` (renter / owner-mortgage / owner-no-mortgage) — the field had landed in the model in #197 but the user had no way to flip it. Plus harmonized filing-status from native `<select>` to `SearchableSelect` to match the City/State picker family. Tenure round-trips through the share-link via `te=` URL param (omitted when default 'renter'). 2 new tests for tenure round-trip and default suppression.",
-  },
-  {
-    id: 219,
-    title: 'EIA state electricity context',
-    category: 'Cost of living',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      'First per-cell state-external data wiring — fetched all 51 jurisdictions from EIA Electric Power Monthly Table 5.6.A (Feb 2026 vintage, ¢/kWh residential prices) into a typed data file. `BudgetResult.electricityContext` now exposes the state rate / national avg / state-vs-national factor on every result. NOT applied as a multiplicative factor on the Utilities leaf — CEX division-level signal already captures partial state variation; stacking would double-count. Surfaced for editorial context only ("your state pays X% above/below average") and as the foundation for future careful per-state model adjustments. Utilities source label updated to "BLS CEX (rollup) + EIA state context" (mixed tier).',
-  },
-  {
-    id: 218,
-    title: 'Childcare BLS baseline (#208 fill)',
-    category: 'Cost of living',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "Childcare leaf now exposes a BLS baseline alongside its Care.com-derived shipped value. Pulled from Table 1502 'Personal services' subline as the delta between with-kids household composition columns and married-no-kids: ~$454/mo for households with kid <6, ~$118/mo for school-age kids, ~$47/mo for single parents. Useful contrast in the three-column comparison: BLS captures actual spending net of free/family/subsidized care; Care.com captures private-market price. The gap is the editorial reveal.",
-  },
-  {
-    id: 217,
-    title: 'Detail-view tooltips use HoverGloss',
-    category: 'UX & navigation',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      "Fixed two new detail-view tooltips (geo-granularity badges and BLS-baseline values) to use the project's `HoverGloss` primitive instead of native `title=` attributes — matches the styled hover popover the rest of the detail view already uses (SourceBadge dots, etc.). The native `title` is browser-flaky and didn't match the visual family. Override clear button keeps native `title` (button accessibility hint, not a content tooltip).",
-  },
-  {
-    id: 216,
-    title: 'Lifestyle elasticity calibration',
-    category: 'Cost of living',
-    status: 'shipped',
-    shippedAt: '2026-05-09',
-    summary:
-      'Recalibrated LIFESTYLE_ELASTICITY against CEX q5/q1 spreads per line, with volume/needs subtracted out so the dial captures only lifestyle-driven variance (q5/q1 vehicle-insurance ratio is mostly "high earners own more cars" — volume, not lifestyle). Bumped 9 lines: foodAtHome 0.05→0.08, gasoline 0.05→0.07, vehicleMaintRepair 0.05→0.07, vehicleInsurance 0→0.05, lifeInsurance 0→0.05, personalCare 0.05→0.10, furnishings/householdOperations/pets 0.15→0.20.',
+      "Use BLS demographic data we already mirror (race, age, education, occupation, composition, tenure) to show where the user's income sits (quintile + percentile), how households at the same income spend differently across cuts, and side-by-side geographic comparisons.",
   },
 ];
 

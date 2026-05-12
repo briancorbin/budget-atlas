@@ -38,11 +38,11 @@ export function IncomePosition({ result }: { result: BudgetResult }) {
   // pins to the right edge instead.
   const Q5_VISUAL_CEILING = 500_000;
   const bands = [
-    { id: 'q1', start: 0, end: t.q1Max + 1, color: '#D9C9A3' },
-    { id: 'q2', start: t.q1Max + 1, end: t.q2Max + 1, color: '#C7B57F' },
-    { id: 'q3', start: t.q2Max + 1, end: t.q3Max + 1, color: '#A89968' },
-    { id: 'q4', start: t.q3Max + 1, end: t.q4Max + 1, color: '#8A7B4F' },
-    { id: 'q5', start: t.q4Max + 1, end: Q5_VISUAL_CEILING, color: '#6B5E3A' },
+    { id: 'q1', start: 0, end: t.q1Max + 1, color: T.quintileScale.q1 },
+    { id: 'q2', start: t.q1Max + 1, end: t.q2Max + 1, color: T.quintileScale.q2 },
+    { id: 'q3', start: t.q2Max + 1, end: t.q3Max + 1, color: T.quintileScale.q3 },
+    { id: 'q4', start: t.q3Max + 1, end: t.q4Max + 1, color: T.quintileScale.q4 },
+    { id: 'q5', start: t.q4Max + 1, end: Q5_VISUAL_CEILING, color: T.quintileScale.q5 },
   ];
 
   // Map any income (or threshold value) to its 0–100% position on the

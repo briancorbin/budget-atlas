@@ -9,25 +9,6 @@ const navLinkStyle = {
   paddingBottom: 1,
 } as const;
 
-function ExternalArrow() {
-  return (
-    <svg
-      aria-hidden
-      width="0.7em"
-      height="0.7em"
-      viewBox="0 0 10 10"
-      style={{ verticalAlign: 'baseline', marginLeft: 1 }}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="square"
-    >
-      <path d="M2.5 7.5 L7.5 2.5" />
-      <path d="M3.5 2.5 L7.5 2.5 L7.5 6.5" />
-    </svg>
-  );
-}
-
 /**
  * Page footer — masthead-style sign-off with full nav. Repeats the
  * primary nav from the top of the page so a reader who scrolled all
@@ -92,6 +73,7 @@ export function Footer() {
             ['/sources', 'Sources'],
             ['/roadmap', 'Roadmap'],
             ['/privacy', 'Privacy'],
+            ['/terms', 'Terms'],
           ] as const
         ).map(([href, label]) => (
           <a
@@ -106,9 +88,6 @@ export function Footer() {
             {label}
           </a>
         ))}
-        <a href="https://marginalia.thebudgetatlas.com" style={navLinkStyle}>
-          Marginalia <ExternalArrow />
-        </a>
       </nav>
       <div
         style={{

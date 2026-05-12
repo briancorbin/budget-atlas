@@ -4,10 +4,11 @@ import { Roadmap } from '@/pages/roadmap/Roadmap';
 import { About } from '@/pages/about/About';
 import { Sources } from '@/pages/sources/Sources';
 import { Privacy } from '@/pages/privacy/Privacy';
+import { Terms } from '@/pages/terms/Terms';
 import { DesignLab } from '@/pages/design-lab/DesignLab';
 import { NAV_EVENT, navigate } from '@/lib/nav';
 
-type Route = 'atlas' | 'roadmap' | 'about' | 'sources' | 'privacy' | 'design-lab';
+type Route = 'atlas' | 'roadmap' | 'about' | 'sources' | 'privacy' | 'terms' | 'design-lab';
 
 function routeFromPath(pathname: string): Route {
   const trimmed = pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
@@ -15,6 +16,7 @@ function routeFromPath(pathname: string): Route {
   if (trimmed === 'about') return 'about';
   if (trimmed === 'sources') return 'sources';
   if (trimmed === 'privacy') return 'privacy';
+  if (trimmed === 'terms') return 'terms';
   if (trimmed === 'design-lab') return 'design-lab';
   return 'atlas';
 }
@@ -61,6 +63,9 @@ export default function App() {
   }
   if (route === 'privacy') {
     return <Privacy onBack={() => navigate('/')} />;
+  }
+  if (route === 'terms') {
+    return <Terms onBack={() => navigate('/')} />;
   }
   if (route === 'design-lab') {
     return <DesignLab onBack={() => navigate('/')} />;

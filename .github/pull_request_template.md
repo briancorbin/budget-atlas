@@ -36,7 +36,7 @@ If you didn't use AI, fill in the section honestly (zero AI time is a valid datu
 ## AI learnings
 
 <!--
-Anything notable about working with AI on this PR — patterns that worked, traps to avoid, instincts that shifted? Jot to your private notes (the maintainer keeps these outside the repo to feed the weekly synthesis at marginalia.thebudgetatlas.com). Skip if nothing felt new.
+Anything notable about working with AI on this PR — patterns that worked, traps to avoid, instincts that shifted? Jot to your private notes (the maintainer keeps these outside the repo). Skip if nothing felt new.
 
 Human-driven section. The substance must originate from the author. AI assistants can copy-edit the author's words but must not propose, draft, or fill in observations the author didn't express. No submission required — this prompt exists to protect the in-the-moment capture ritual, not to demand a public artifact.
 -->

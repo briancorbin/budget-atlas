@@ -24,6 +24,9 @@ export interface PitZone {
 
 export function computePitZones<P extends { gross: number }>(
   points: readonly P[],
+  // Caller passes a key whose value is numeric; TS can't express that
+  // constraint without collapsing P[K] to a union, so the value is read
+  // through a cast below.
   metricKey: keyof P,
   cliffs: readonly { id: string; gross: number; color: string }[],
 ): PitZone[] {

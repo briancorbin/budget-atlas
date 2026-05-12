@@ -71,3 +71,17 @@ summary::marker {
     font-size: 16px !important;
   }
 }
+
+/* Recharts v3 puts tabIndex=0 and role="application" on its <Surface> SVG
+ * (and on chart wrappers) for keyboard a11y. Mobile Safari + desktop both
+ * paint the browser's default blue focus ring around the chart on tap/click,
+ * which reads as a stray selection box because none of the charts here are
+ * keyboard-interactive — no per-slice nav, tooltips are hover-only. Suppress
+ * the ring; screen readers still get the role announcement. Revisit if any
+ * chart ever gets real keyboard handlers. */
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+.recharts-wrapper *:focus,
+.recharts-surface *:focus {
+  outline: none;
+}

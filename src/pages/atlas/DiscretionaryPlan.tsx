@@ -43,7 +43,7 @@ export function DiscretionaryPlan({ result }: { result: BudgetResult }) {
     {
       label: 'SPLURGE / DINING',
       value: result.suggestedSplurge,
-      color: '#8A4A6E',
+      color: T.splurge,
       sub: <>Restaurants, hobbies, gifts, gear, the occasional indulgence.</>,
     },
     {

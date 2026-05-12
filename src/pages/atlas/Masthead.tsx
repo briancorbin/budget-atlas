@@ -11,34 +11,12 @@ const navLinkStyle = {
 } as const;
 
 const NAV_ITEMS = [
-  ['/about', 'About', false],
-  ['/sources', 'Sources', false],
-  ['/roadmap', 'Roadmap', false],
-  ['/privacy', 'Privacy', false],
-  ['https://marginalia.thebudgetatlas.com', 'Marginalia', true],
+  ['/about', 'About'],
+  ['/sources', 'Sources'],
+  ['/roadmap', 'Roadmap'],
+  ['/privacy', 'Privacy'],
+  ['/terms', 'Terms'],
 ] as const;
-
-// Unicode ↗ (U+2197) renders as a color emoji on iOS Safari, which clashes
-// with the editorial typography. Inline SVG forces a glyph-style arrow that
-// inherits currentColor.
-function ExternalArrow() {
-  return (
-    <svg
-      aria-hidden
-      width="0.7em"
-      height="0.7em"
-      viewBox="0 0 10 10"
-      style={{ verticalAlign: 'baseline', marginLeft: 1 }}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="square"
-    >
-      <path d="M2.5 7.5 L7.5 2.5" />
-      <path d="M3.5 2.5 L7.5 2.5 L7.5 6.5" />
-    </svg>
-  );
-}
 
 export function Masthead() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -69,8 +47,8 @@ export function Masthead() {
     >
       {/* Title-and-nav header row. Desktop shows the full inline nav to
           the right of the title block; mobile hides that nav and shows a
-          MENU trigger that opens a full-screen overlay sheet — five nav
-          items don't fit cleanly on a phone width without wrapping
+          MENU trigger that opens a full-screen overlay sheet — the full
+          nav doesn't fit cleanly on a phone width without wrapping
           unpredictably. */}
       <style>{`
         .masthead-header { display: flex; justify-content: space-between;
@@ -118,25 +96,19 @@ export function Masthead() {
             color: T.inkMuted,
           }}
         >
-          {NAV_ITEMS.map(([href, label, external]) =>
-            external ? (
-              <a key={href} href={href} style={navLinkStyle}>
-                {label} <ExternalArrow />
-              </a>
-            ) : (
-              <a
-                key={href}
-                href={href}
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate(href);
-                }}
-                style={navLinkStyle}
-              >
-                {label} →
-              </a>
-            ),
-          )}
+          {NAV_ITEMS.map(([href, label]) => (
+            <a
+              key={href}
+              href={href}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(href);
+              }}
+              style={navLinkStyle}
+            >
+              {label} →
+            </a>
+          ))}
         </nav>
         <button
           type="button"
@@ -352,47 +324,27 @@ function MenuSheet({ onClose }: { onClose: () => void }) {
           gap: 4,
         }}
       >
-        {NAV_ITEMS.map(([href, label, external]) =>
-          external ? (
-            <a
-              key={href}
-              href={href}
-              style={{
-                fontFamily: fonts.display,
-                fontSize: rem(28),
-                color: T.accent,
-                textDecoration: 'none',
-                fontStyle: 'italic',
-                padding: '10px 0',
-                display: 'inline-flex',
-                alignItems: 'baseline',
-                gap: 6,
-              }}
-            >
-              {label} <ExternalArrow />
-            </a>
-          ) : (
-            <a
-              key={href}
-              href={href}
-              onClick={(e) => {
-                e.preventDefault();
-                onClose();
-                navigate(href);
-              }}
-              style={{
-                fontFamily: fonts.display,
-                fontSize: rem(28),
-                color: T.accent,
-                textDecoration: 'none',
-                fontStyle: 'italic',
-                padding: '10px 0',
-              }}
-            >
-              {label}
-            </a>
-          ),
-        )}
+        {NAV_ITEMS.map(([href, label]) => (
+          <a
+            key={href}
+            href={href}
+            onClick={(e) => {
+              e.preventDefault();
+              onClose();
+              navigate(href);
+            }}
+            style={{
+              fontFamily: fonts.display,
+              fontSize: rem(28),
+              color: T.accent,
+              textDecoration: 'none',
+              fontStyle: 'italic',
+              padding: '10px 0',
+            }}
+          >
+            {label}
+          </a>
+        ))}
       </nav>
     </div>
   );
