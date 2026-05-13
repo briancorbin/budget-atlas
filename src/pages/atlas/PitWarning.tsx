@@ -73,11 +73,11 @@ export function PitWarning({
         ⚠ You're in a benefits cliff
       </div>
       <div style={{ fontFamily: fonts.body, fontSize: rem(14), color: T.ink, lineHeight: 1.5 }}>
-        At {fmt(incomeA + incomeB)}/yr, this household is left with{' '}
-        <strong>{fmt(pit.currentDiscretionary)}/yr</strong> after taxes and expenses. At{' '}
+        At {fmt(incomeA + incomeB)}/yr, this household has{' '}
+        <strong>{fmt(pit.currentResources)}/yr</strong> in take-home + benefit value. At{' '}
         <strong>{fmt(pit.optimalGross)}/yr</strong> — earning roughly{' '}
         {fmt(incomeA + incomeB - pit.optimalGross)} less — they'd have{' '}
-        <strong>{fmt(pit.optimalDiscretionary)}/yr</strong>, a gain of{' '}
+        <strong>{fmt(pit.optimalResources)}/yr</strong>, a gain of{' '}
         <strong style={{ color: T.warning }}>{fmt(pit.delta)}/yr</strong>.
       </div>
       {programs && (

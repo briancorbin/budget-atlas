@@ -40,6 +40,7 @@ import {
   snapIncomeLimitFpl,
 } from '@/data/benefits';
 import { getCityData } from '@/data/cities';
+import { SCENARIOS } from '@/data/scenarios';
 
 /**
  * Each lab section gets an entry here. The sidebar reads this list to
@@ -63,6 +64,16 @@ interface LabSection {
   readonly decidedNote?: string;
 }
 const LAB_SECTIONS: ReadonlyArray<LabSection> = [
+  {
+    id: 'discretionary-overlay',
+    nav: 'Discretionary overlay',
+    count: 4,
+    Component: SectionDiscretionaryOverlay,
+    status: 'decided',
+    decidedAs: 'V1 — dual-line overlay on the same axes',
+    decidedNote:
+      "Sweeping the scenario picker across rural Wyoming / Columbus / SF told the story: the discretionary line behaves correctly across household shapes — flat-then-plateau where the safety net does the work plus lifestyle inflation absorbs the rest, slope-up where it doesn't. V3 (filled diff-band) overclaimed the lifestyle-inflation gap visually for the average case; V2 (small-multiple) spent too much vertical real estate; V4 (toggle revival) is the right answer if we ever decide one line is enough but didn't beat seeing both at once. Shipped to production CliffCurve as the second line.",
+  },
   {
     id: 'blend-ladder',
     nav: 'Blend-trace ladder',
@@ -2840,6 +2851,10 @@ const CLIFF_COLORS: Record<string, string> = {
 interface CliffPoint {
   gross: number;
   discretionary: number;
+  /** Annual take-home + benefit value. Same formula CliffCurve plots in
+   *  production. Carried alongside `discretionary` so variations can plot
+   *  either metric — or both layered — without re-doing the sweep. */
+  takeHomePlusBenefits: number;
 }
 
 interface CliffMark {
@@ -2870,12 +2885,21 @@ function useCliffScenario(scenario: CliffScenario): {
     const maxGross = Math.max(120_000, Math.ceil((currentGross * 1.5) / 1000) * 1000);
     const stepSize = 500;
 
+    // Scale both earners proportionally to current ratio so the sweep
+    // represents the household actually earning $g, not just earner A
+    // varying while earner B sits frozen. Without this, every g below
+    // `incomeB` computes the same household income and the curve is flat
+    // until g passes incomeB. Mirrors production CliffCurve.
+    const totalCurrent = scenario.incomeA + scenario.incomeB;
+    const ratioB = totalCurrent > 0 ? scenario.incomeB / totalCurrent : 0;
+
     const points: CliffPoint[] = [];
     for (let g = 0; g <= maxGross; g += stepSize) {
-      const sweepIncomeA = Math.max(0, g - scenario.incomeB);
+      const sweepIncomeB = Math.round(g * ratioB);
+      const sweepIncomeA = g - sweepIncomeB;
       const r = computeBudget({
         incomeA: sweepIncomeA,
-        incomeB: scenario.incomeB,
+        incomeB: sweepIncomeB,
         hasPartner: scenario.hasPartner,
         filing: scenario.filing,
         city: scenario.city,
@@ -2883,7 +2907,11 @@ function useCliffScenario(scenario: CliffScenario): {
         lifestyle: scenario.lifestyle,
         claimedBenefits: allBenefits,
       });
-      points.push({ gross: g, discretionary: Math.round(r.annualDiscretionary) });
+      points.push({
+        gross: g,
+        discretionary: Math.round(r.annualDiscretionary),
+        takeHomePlusBenefits: Math.round(r.netIncome + r.totalBenefits * 12),
+      });
     }
 
     const fplBase = fpl(householdSize);
@@ -3937,7 +3965,14 @@ function useCompoundDemoData(config: CompoundConfig): {
     for (let g = 0; g <= maxGross; g += stepSize) {
       let disc = slope * g + intercept;
       for (const c of sortedPrograms) if (g >= c.gross) disc -= c.drop;
-      points.push({ gross: g, discretionary: Math.round(disc) });
+      // Compound-pit demo has no take-home/benefit decomposition — it's a
+      // synthetic curve to compare attribution styles. Stub the metric so
+      // CliffPoint stays satisfied; nothing in this section reads it.
+      points.push({
+        gross: g,
+        discretionary: Math.round(disc),
+        takeHomePlusBenefits: Math.round(disc),
+      });
     }
 
     const cliffs: CliffMark[] = sortedPrograms.map((c) => ({
@@ -6520,5 +6555,649 @@ function LadderV2() {
         ))}
       </div>
     </div>
+  );
+}
+
+// ── Discretionary overlay variations ──────────────────────────────────────
+//
+// CliffCurve in production only plots take-home + benefit value. A
+// discretionary line used to live alongside it but was stripped when
+// discretionary was a noisier proxy. The four-axis CEX blend has since
+// made discretionary a real signal — the "lifestyle-inflation tail" of a
+// cliff lives entirely in the gap between the two metrics. This section
+// scaffolds four ways to bring discretionary back without re-introducing
+// the chrome that earned the original removal.
+//
+// Scenario: Columbus two-teachers, $110K combined, 2 kids — the same
+// configuration that surfaced the pit-warning bug. The CHIP cliff at
+// $69,630 produces a clear two-line divergence: take-home+benefits
+// recovers by ~$78K; discretionary doesn't recover until ~$110K because
+// income-elastic expenses keep eating the marginal paycheck.
+
+/** Curated subset of production scenarios that span the income spectrum
+ *  and household shapes useful for comparing dual-line behavior. The full
+ *  SCENARIOS list is overkill for a picker; these are the ones that produce
+ *  meaningfully different chart shapes. */
+const DISCRETIONARY_OVERLAY_SCENARIO_IDS = [
+  'retail_phx',
+  'teacher_oh',
+  'family_squeeze_nyc',
+  'median_cmh',
+  'tradesman_wy',
+  'tech_sf_family',
+  'exec_nyc',
+] as const;
+
+function scenarioToCliffScenario(s: (typeof SCENARIOS)[number]): CliffScenario {
+  const incomeB = s.incomeB ?? 0;
+  return {
+    city: s.city,
+    kids: s.kids,
+    filing: s.filing,
+    lifestyle: s.lifestyle,
+    // Married = always partnered. Cohabitating singles with a second income
+    // also count as partnered for the budget model.
+    hasPartner: s.filing === 'married' || incomeB > 0,
+    incomeA: s.income,
+    incomeB,
+  };
+}
+
+function SectionDiscretionaryOverlay() {
+  const scenarioOptions = React.useMemo(
+    () =>
+      DISCRETIONARY_OVERLAY_SCENARIO_IDS.map((id) => {
+        const s = SCENARIOS.find((x) => x.id === id);
+        if (!s) throw new Error(`Scenario ${id} missing from SCENARIOS`);
+        return s;
+      }),
+    [],
+  );
+  const [scenarioId, setScenarioId] = React.useState<string>(scenarioOptions[1].id);
+  const activeScenario = scenarioOptions.find((s) => s.id === scenarioId) ?? scenarioOptions[1];
+  const cliffScenario = React.useMemo(
+    () => scenarioToCliffScenario(activeScenario),
+    [activeScenario],
+  );
+  const scenarioLabel = `${activeScenario.label} · ${fmtMoney(
+    activeScenario.income + (activeScenario.incomeB ?? 0),
+  )} combined`;
+
+  return (
+    <Section
+      columns={1}
+      heading="Discretionary alongside take-home + benefits"
+      subhead="The cliff curve currently plots only take-home + benefit value. With CEX-indexed spending now in the model, the gap between that line and discretionary tells its own story — the lifestyle-inflation tail that lingers after a cliff. Four ways to surface both metrics without re-introducing the chrome that got the original toggle stripped. Picker below applies to every variation so you can compare them on the same household."
+    >
+      <ScenarioPicker scenarios={scenarioOptions} selected={scenarioId} onSelect={setScenarioId} />
+      <Variation
+        title="V1 — Dual-line overlay, same axes"
+        description="Both curves on one Y axis. Take-home + benefits in ink (the primary editorial line); discretionary in a softer warning tone, dashed. Single legend, no toggle. Reads as 'here's what you take in; here's what's actually free to spend.' Risk: two lines on the same axes can crowd at low incomes where they're far apart."
+      >
+        <DiscretionaryChartDualLine scenario={cliffScenario} label={scenarioLabel} />
+      </Variation>
+      <Variation
+        title="V2 — Small-multiple stack"
+        description="Two LineCharts stacked, sharing the X axis. Each owns its own Y so neither line gets crushed by the other's range. More chart real estate spent on this view, but every cliff fires in both panels and you can scan vertically to see the lifestyle-inflation gap."
+      >
+        <DiscretionaryChartSmallMultiple scenario={cliffScenario} label={scenarioLabel} />
+      </Variation>
+      <Variation
+        title="V3 — Filled diff-band between the lines"
+        description="Take-home + benefits as the top line. Discretionary as the bottom line. Tinted band fills the gap — the band IS lifestyle-driven spending. The wider the band, the more of every marginal dollar gets eaten before it becomes discretionary. Best for the editorial story we just uncovered; strongest visual claim on the page."
+      >
+        <DiscretionaryChartDiffBand scenario={cliffScenario} label={scenarioLabel} />
+      </Variation>
+      <Variation
+        title="V4 — Metric toggle (revival of the original)"
+        description="A chip-style toggle in the chart chrome swaps the rendered line between the two metrics. Single-line view stays calm; switching is a deliberate action. This is what production had before the strip; the question is whether the model's improvements justify bringing it back rather than picking a richer overlay."
+      >
+        <DiscretionaryChartToggle scenario={cliffScenario} label={scenarioLabel} />
+      </Variation>
+    </Section>
+  );
+}
+
+const fmtMoney = (n: number) =>
+  n >= 1000 ? `$${Math.round(n / 1000)}K` : `$${n.toLocaleString()}`;
+
+function ScenarioPicker({
+  scenarios,
+  selected,
+  onSelect,
+}: {
+  scenarios: ReadonlyArray<(typeof SCENARIOS)[number]>;
+  selected: string;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '12px 14px',
+        border: `1px solid ${T.border}`,
+        background: T.surface,
+        marginBottom: 12,
+      }}
+    >
+      <label
+        htmlFor="discretionary-overlay-scenario"
+        style={{
+          fontSize: rem(10),
+          letterSpacing: '0.16em',
+          textTransform: 'uppercase',
+          color: T.inkMuted,
+          fontWeight: 600,
+        }}
+      >
+        Scenario
+      </label>
+      <select
+        id="discretionary-overlay-scenario"
+        value={selected}
+        onChange={(e) => onSelect(e.target.value)}
+        style={{
+          fontFamily: fonts.body,
+          fontSize: rem(13),
+          color: T.ink,
+          background: T.bg,
+          border: `1px solid ${T.border}`,
+          padding: '6px 10px',
+          flex: 1,
+          minWidth: 0,
+        }}
+      >
+        {scenarios.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.label} · {fmtMoney(s.income + (s.incomeB ?? 0))} combined
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function DiscretionaryChartDualLine({
+  scenario,
+  label,
+}: {
+  scenario: CliffScenario;
+  label: string;
+}) {
+  const { points, cliffs, maxGross, currentGross } = useCliffScenario(scenario);
+  return (
+    <ScenarioFrame label={label}>
+      <ResponsiveContainer width="100%" height={280}>
+        <LineChart data={points} margin={{ top: 12, right: 16, left: 0, bottom: 8 }}>
+          <CartesianGrid stroke={T.border} strokeDasharray="2 4" vertical={false} />
+          <XAxis
+            dataKey="gross"
+            type="number"
+            domain={[0, maxGross]}
+            tickFormatter={fmtK}
+            stroke={T.inkMuted}
+            tick={{ fontSize: 10, fill: T.inkSoft }}
+          />
+          <YAxis
+            tickFormatter={fmtK}
+            stroke={T.inkMuted}
+            tick={{ fontSize: 10, fill: T.inkSoft }}
+            width={56}
+          />
+          <ReferenceLine y={0} stroke={T.inkMuted} />
+          {cliffs.map((c) => (
+            <ReferenceLine
+              key={c.id}
+              x={c.gross}
+              stroke={c.color}
+              strokeDasharray="3 3"
+              strokeOpacity={0.5}
+            />
+          ))}
+          <Line
+            type="monotone"
+            dataKey="takeHomePlusBenefits"
+            stroke={T.ink}
+            strokeWidth={2}
+            dot={false}
+            isAnimationActive={false}
+          />
+          <Line
+            type="monotone"
+            dataKey="discretionary"
+            stroke={T.warning}
+            strokeWidth={1.5}
+            strokeDasharray="4 3"
+            dot={false}
+            isAnimationActive={false}
+          />
+          <ReferenceDot
+            x={currentGross}
+            y={
+              points.find((p) => p.gross >= currentGross)?.takeHomePlusBenefits ??
+              points[0].takeHomePlusBenefits
+            }
+            r={4}
+            fill={T.positive}
+            stroke={T.bg}
+            strokeWidth={2}
+            ifOverflow="visible"
+          />
+        </LineChart>
+      </ResponsiveContainer>
+      <DualLegend />
+    </ScenarioFrame>
+  );
+}
+
+function DiscretionaryChartSmallMultiple({
+  scenario,
+  label,
+}: {
+  scenario: CliffScenario;
+  label: string;
+}) {
+  const { points, cliffs, maxGross, currentGross } = useCliffScenario(scenario);
+  const sharedX = (
+    <XAxis
+      dataKey="gross"
+      type="number"
+      domain={[0, maxGross]}
+      tickFormatter={fmtK}
+      stroke={T.inkMuted}
+      tick={{ fontSize: 10, fill: T.inkSoft }}
+    />
+  );
+  const cliffLines = cliffs.map((c) => (
+    <ReferenceLine
+      key={c.id}
+      x={c.gross}
+      stroke={c.color}
+      strokeDasharray="3 3"
+      strokeOpacity={0.5}
+    />
+  ));
+  return (
+    <ScenarioFrame label={label}>
+      <div
+        style={{
+          fontSize: rem(10),
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: T.inkSoft,
+          marginBottom: 4,
+        }}
+      >
+        Take-home + benefit value
+      </div>
+      <ResponsiveContainer width="100%" height={150}>
+        <LineChart data={points} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+          <CartesianGrid stroke={T.border} strokeDasharray="2 4" vertical={false} />
+          {sharedX}
+          <YAxis
+            tickFormatter={fmtK}
+            stroke={T.inkMuted}
+            tick={{ fontSize: 10, fill: T.inkSoft }}
+            width={56}
+          />
+          {cliffLines}
+          <Line
+            type="monotone"
+            dataKey="takeHomePlusBenefits"
+            stroke={T.ink}
+            strokeWidth={2}
+            dot={false}
+            isAnimationActive={false}
+          />
+          <ReferenceDot
+            x={currentGross}
+            y={
+              points.find((p) => p.gross >= currentGross)?.takeHomePlusBenefits ??
+              points[0].takeHomePlusBenefits
+            }
+            r={3.5}
+            fill={T.positive}
+            stroke={T.bg}
+            strokeWidth={2}
+            ifOverflow="visible"
+          />
+        </LineChart>
+      </ResponsiveContainer>
+      <div
+        style={{
+          fontSize: rem(10),
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: T.inkSoft,
+          margin: '10px 0 4px',
+        }}
+      >
+        Discretionary (after expenses)
+      </div>
+      <ResponsiveContainer width="100%" height={150}>
+        <LineChart data={points} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+          <CartesianGrid stroke={T.border} strokeDasharray="2 4" vertical={false} />
+          {sharedX}
+          <YAxis
+            tickFormatter={fmtK}
+            stroke={T.inkMuted}
+            tick={{ fontSize: 10, fill: T.inkSoft }}
+            width={56}
+          />
+          <ReferenceLine y={0} stroke={T.inkMuted} />
+          {cliffLines}
+          <Line
+            type="monotone"
+            dataKey="discretionary"
+            stroke={T.warning}
+            strokeWidth={2}
+            dot={false}
+            isAnimationActive={false}
+          />
+          <ReferenceDot
+            x={currentGross}
+            y={
+              points.find((p) => p.gross >= currentGross)?.discretionary ?? points[0].discretionary
+            }
+            r={3.5}
+            fill={T.positive}
+            stroke={T.bg}
+            strokeWidth={2}
+            ifOverflow="visible"
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </ScenarioFrame>
+  );
+}
+
+function DiscretionaryChartDiffBand({
+  scenario,
+  label,
+}: {
+  scenario: CliffScenario;
+  label: string;
+}) {
+  const { points, cliffs, maxGross, currentGross } = useCliffScenario(scenario);
+  // Render the band as a stacked area: bottom = discretionary, fill on
+  // top = (takeHomePlusBenefits - discretionary). The visible band is the
+  // expense burden between the two lines.
+  const banded = points.map((p) => ({
+    gross: p.gross,
+    discretionary: p.discretionary,
+    expenseBurden: Math.max(0, p.takeHomePlusBenefits - p.discretionary),
+    takeHomePlusBenefits: p.takeHomePlusBenefits,
+  }));
+  return (
+    <ScenarioFrame label={label}>
+      <ResponsiveContainer width="100%" height={280}>
+        <ComposedAreaChart data={banded} cliffs={cliffs} maxGross={maxGross} />
+      </ResponsiveContainer>
+      <div
+        style={{
+          fontSize: rem(11),
+          color: T.inkSoft,
+          marginTop: 6,
+          lineHeight: 1.4,
+        }}
+      >
+        Black line: take-home + benefits. Warning line: discretionary. The tinted band between them
+        is income-elastic spending — what gets eaten before the marginal dollar lands in
+        discretionary.
+      </div>
+      <ReferenceDotOverlay points={banded} currentGross={currentGross} />
+    </ScenarioFrame>
+  );
+}
+
+/** Stacked-area + line composite. Recharts doesn't allow stacked Areas
+ *  with a non-zero baseline directly, so we render the band as a single
+ *  Area whose data points are pre-computed as [discretionary, takeHome+ben].
+ *  See `banded` above for the shape. */
+function ComposedAreaChart({
+  data,
+  cliffs,
+  maxGross,
+}: {
+  data: { gross: number; discretionary: number; takeHomePlusBenefits: number }[];
+  cliffs: CliffMark[];
+  maxGross: number;
+}) {
+  // Convert each row to a "band" range using the [low, high] array form
+  // Recharts supports for Area baselines via `dataKey` returning a tuple.
+  const bandData = data.map((p) => ({
+    gross: p.gross,
+    band: [p.discretionary, p.takeHomePlusBenefits] as [number, number],
+    discretionary: p.discretionary,
+    takeHomePlusBenefits: p.takeHomePlusBenefits,
+  }));
+  return (
+    <LineChart data={bandData} margin={{ top: 12, right: 16, left: 0, bottom: 8 }}>
+      <CartesianGrid stroke={T.border} strokeDasharray="2 4" vertical={false} />
+      <XAxis
+        dataKey="gross"
+        type="number"
+        domain={[0, maxGross]}
+        tickFormatter={fmtK}
+        stroke={T.inkMuted}
+        tick={{ fontSize: 10, fill: T.inkSoft }}
+      />
+      <YAxis
+        tickFormatter={fmtK}
+        stroke={T.inkMuted}
+        tick={{ fontSize: 10, fill: T.inkSoft }}
+        width={56}
+      />
+      <ReferenceLine y={0} stroke={T.inkMuted} />
+      {cliffs.map((c) => (
+        <ReferenceLine
+          key={c.id}
+          x={c.gross}
+          stroke={c.color}
+          strokeDasharray="3 3"
+          strokeOpacity={0.5}
+        />
+      ))}
+      {/* Band drawn as two stroke-less area lines using a custom fill.
+          Recharts Area with `dataKey` of tuple gives the band shape, but
+          we're inside a LineChart for consistency with siblings — fall
+          back to per-segment vertical reference areas to draw the band. */}
+      {bandData.map((p, i) => {
+        if (i === 0) return null;
+        const prev = bandData[i - 1];
+        const x1 = prev.gross;
+        const x2 = p.gross;
+        return (
+          <ReferenceArea
+            key={i}
+            x1={x1}
+            x2={x2}
+            y1={Math.min(prev.discretionary, p.discretionary)}
+            y2={Math.max(prev.takeHomePlusBenefits, p.takeHomePlusBenefits)}
+            fill={T.warning}
+            fillOpacity={0.07}
+            stroke="none"
+          />
+        );
+      })}
+      <Line
+        type="monotone"
+        dataKey="discretionary"
+        stroke={T.warning}
+        strokeWidth={1.5}
+        dot={false}
+        isAnimationActive={false}
+      />
+      <Line
+        type="monotone"
+        dataKey="takeHomePlusBenefits"
+        stroke={T.ink}
+        strokeWidth={2}
+        dot={false}
+        isAnimationActive={false}
+      />
+    </LineChart>
+  );
+}
+
+/** Overlay-only "current income" dot — kept outside the chart so each
+ *  variation can drop one in without re-deriving the y position. */
+function ReferenceDotOverlay({
+  points,
+  currentGross,
+}: {
+  points: { gross: number; takeHomePlusBenefits: number; discretionary: number }[];
+  currentGross: number;
+}) {
+  const p = points.find((q) => q.gross >= currentGross) ?? points[0];
+  return (
+    <div style={{ fontSize: rem(11), color: T.inkSoft, marginTop: 2 }}>
+      At {fmtK(currentGross)} the household has{' '}
+      <strong style={{ color: T.ink }}>{fmtK(p.takeHomePlusBenefits)}</strong> in take-home +
+      benefits and <strong style={{ color: T.warning }}>{fmtK(p.discretionary)}</strong> in
+      discretionary — a {fmtK(p.takeHomePlusBenefits - p.discretionary)} expense burden.
+    </div>
+  );
+}
+
+function DiscretionaryChartToggle({ scenario, label }: { scenario: CliffScenario; label: string }) {
+  const [metric, setMetric] = React.useState<'takeHomePlusBenefits' | 'discretionary'>(
+    'takeHomePlusBenefits',
+  );
+  const { points, cliffs, maxGross, currentGross } = useCliffScenario(scenario);
+  const lineColor = metric === 'takeHomePlusBenefits' ? T.ink : T.warning;
+  return (
+    <ScenarioFrame label={label}>
+      <div
+        style={{
+          display: 'flex',
+          gap: 6,
+          marginBottom: 8,
+          fontSize: rem(11),
+        }}
+      >
+        <ToggleChip
+          label="Take-home + benefits"
+          active={metric === 'takeHomePlusBenefits'}
+          onClick={() => setMetric('takeHomePlusBenefits')}
+        />
+        <ToggleChip
+          label="Discretionary"
+          active={metric === 'discretionary'}
+          onClick={() => setMetric('discretionary')}
+        />
+      </div>
+      <ResponsiveContainer width="100%" height={260}>
+        <LineChart data={points} margin={{ top: 12, right: 16, left: 0, bottom: 8 }}>
+          <CartesianGrid stroke={T.border} strokeDasharray="2 4" vertical={false} />
+          <XAxis
+            dataKey="gross"
+            type="number"
+            domain={[0, maxGross]}
+            tickFormatter={fmtK}
+            stroke={T.inkMuted}
+            tick={{ fontSize: 10, fill: T.inkSoft }}
+          />
+          <YAxis
+            tickFormatter={fmtK}
+            stroke={T.inkMuted}
+            tick={{ fontSize: 10, fill: T.inkSoft }}
+            width={56}
+          />
+          <ReferenceLine y={0} stroke={T.inkMuted} />
+          {cliffs.map((c) => (
+            <ReferenceLine
+              key={c.id}
+              x={c.gross}
+              stroke={c.color}
+              strokeDasharray="3 3"
+              strokeOpacity={0.5}
+            />
+          ))}
+          <Line
+            type="monotone"
+            dataKey={metric}
+            stroke={lineColor}
+            strokeWidth={2}
+            dot={false}
+            isAnimationActive={false}
+          />
+          <ReferenceDot
+            x={currentGross}
+            y={(points.find((p) => p.gross >= currentGross) ?? points[0])[metric]}
+            r={4}
+            fill={T.positive}
+            stroke={T.bg}
+            strokeWidth={2}
+            ifOverflow="visible"
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </ScenarioFrame>
+  );
+}
+
+function ToggleChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        fontSize: rem(11),
+        letterSpacing: '0.06em',
+        padding: '4px 10px',
+        border: `1px solid ${active ? T.ink : T.border}`,
+        background: active ? T.ink : 'transparent',
+        color: active ? T.bg : T.inkSoft,
+        cursor: 'pointer',
+        borderRadius: 2,
+        fontFamily: fonts.body,
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function DualLegend() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        gap: 16,
+        marginTop: 6,
+        fontSize: rem(11),
+        color: T.inkSoft,
+      }}
+    >
+      <LegendSwatch color={T.ink} dashed={false} label="Take-home + benefits" />
+      <LegendSwatch color={T.warning} dashed label="Discretionary (after expenses)" />
+    </div>
+  );
+}
+
+function LegendSwatch({ color, dashed, label }: { color: string; dashed: boolean; label: string }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+      <span
+        style={{
+          display: 'inline-block',
+          width: 22,
+          height: 0,
+          borderTop: `2px ${dashed ? 'dashed' : 'solid'} ${color}`,
+        }}
+      />
+      {label}
+    </span>
   );
 }

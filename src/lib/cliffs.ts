@@ -75,10 +75,19 @@ export function computePitZones<P extends { gross: number }>(
 
 /**
  * "Pit" detection: at the current scenario, is there an income *below* the
- * current one where the household would end up with *more* annual
- * discretionary income? That happens when raising income across a benefit
- * eligibility cutoff costs more in lost benefits than it gained in
- * paycheck — the cliff trap.
+ * current one where the household would end up with *more* annual total
+ * resources (take-home + benefit value)? That happens when raising income
+ * across a benefit eligibility cutoff costs more in lost benefits than it
+ * gained in paycheck — the cliff trap.
+ *
+ * Why total resources, not discretionary: discretionary subtracts modeled
+ * expenses, and modeled expenses scale with income (lifestyle elasticity,
+ * CEX quintile steps). Using discretionary as the pit metric conflates two
+ * different stories — the genuine benefits cliff (a one-time hit at the
+ * threshold) and the lifestyle-inflation tail that lingers after it — and
+ * makes the "pit" look much wider than the policy reality. Take-home +
+ * benefits matches the metric the cliff curve plots, so the warning and
+ * the chart agree.
  *
  * The sweep auto-claims every benefit at every income point so we measure
  * the genuinely optimal outcome at each income level (not whatever the user
@@ -86,17 +95,17 @@ export function computePitZones<P extends { gross: number }>(
  * already claiming everything available, no pit can exist by definition.
  *
  * Returns null when there is no pit; otherwise returns the optimal lower
- * income, the discretionary delta it would create, and the list of benefit
+ * income, the resources delta it would create, and the list of benefit
  * programs the optimal income qualifies for that the current income does
  * not.
  */
 export interface IncomePit {
-  /** Annual gross income at which discretionary peaks below current. */
+  /** Annual gross income at which total resources peaks below current. */
   optimalGross: number;
-  /** Annual discretionary at the optimal lower income. */
-  optimalDiscretionary: number;
-  /** Annual discretionary at the current income. */
-  currentDiscretionary: number;
+  /** Annual take-home + benefit value at the optimal lower income. */
+  optimalResources: number;
+  /** Annual take-home + benefit value at the current income. */
+  currentResources: number;
   /**
    * The annual delta — how much more (in $/yr) the household would have
    * at the optimal lower income vs. now. Always positive.
@@ -109,36 +118,60 @@ export interface IncomePit {
   programsGained: BenefitId[];
 }
 
+/**
+ * Minimum annual delta required to surface a pit. Below this floor the
+ * "pit" is a wash — the lost paycheck and the kept benefits cancel out to
+ * within modeling noise (premium rounding, FICA per-earner edges, etc.),
+ * and the warning's "more than offsetting the lost paycheck" copy oversells
+ * a trivial difference. $500/yr is roughly $40/mo — a small but real gap.
+ */
+export const PIT_MIN_DELTA = 500;
+
+/** Total resources = take-home + annualized benefit value. Matches the
+ *  metric the cliff curve plots, so warning + chart can't drift. */
+function totalResources(r: { netIncome: number; totalBenefits: number }): number {
+  return r.netIncome + r.totalBenefits * 12;
+}
+
 export function findIncomePit(
-  input: Omit<BudgetInput, 'claimedBenefits'> & { stepSize?: number },
+  input: Omit<BudgetInput, 'claimedBenefits'> & { stepSize?: number; minDelta?: number },
 ): IncomePit | null {
   const stepSize = input.stepSize ?? 500;
+  const minDelta = input.minDelta ?? PIT_MIN_DELTA;
   const allBenefits = new Set<string>(BENEFIT_IDS);
   const totalIncome = input.incomeA + (input.incomeB ?? 0);
   if (totalIncome <= 0) return null;
 
-  // Compute current discretionary with everything claimed.
+  // Compute current total resources with everything claimed.
   const current = computeBudget({ ...input, claimedBenefits: allBenefits });
-  const currentDisc = current.annualDiscretionary;
+  const currentRes = totalResources(current);
 
-  // Sweep $0 → currentGross at stepSize granularity, varying incomeA.
-  // Holding incomeB fixed mirrors how CliffCurve presents the sweep.
+  // Sweep $0 → currentGross at stepSize granularity, scaling both earners
+  // proportionally to their current ratio. Mirrors how CliffCurve presents
+  // the sweep — and matters more than it looks: holding incomeB fixed
+  // collapses every g < incomeB onto the same household income, making the
+  // sweep blind to actual low-income behavior in dual-earner scenarios.
+  const ratioB = totalIncome > 0 ? (input.incomeB ?? 0) / totalIncome : 0;
   let bestGross = totalIncome;
-  let bestDisc = currentDisc;
+  let bestRes = currentRes;
   for (let g = 0; g < totalIncome; g += stepSize) {
-    const sweepIncomeA = Math.max(0, g - (input.incomeB ?? 0));
+    const sweepIncomeB = Math.round(g * ratioB);
+    const sweepIncomeA = g - sweepIncomeB;
     const r = computeBudget({
       ...input,
       incomeA: sweepIncomeA,
+      incomeB: sweepIncomeB,
       claimedBenefits: allBenefits,
     });
-    if (r.annualDiscretionary > bestDisc) {
-      bestDisc = r.annualDiscretionary;
+    const res = totalResources(r);
+    if (res > bestRes) {
+      bestRes = res;
       bestGross = g;
     }
   }
 
-  if (bestGross >= totalIncome || bestDisc <= currentDisc) return null;
+  if (bestGross >= totalIncome || bestRes <= currentRes) return null;
+  if (bestRes - currentRes < minDelta) return null;
 
   // Identify which programs the optimal income qualifies for that the
   // current does not. Re-check eligibility at both points using the
@@ -166,9 +199,9 @@ export function findIncomePit(
 
   return {
     optimalGross: bestGross,
-    optimalDiscretionary: bestDisc,
-    currentDiscretionary: currentDisc,
-    delta: bestDisc - currentDisc,
+    optimalResources: bestRes,
+    currentResources: currentRes,
+    delta: bestRes - currentRes,
     programsGained,
   };
 }

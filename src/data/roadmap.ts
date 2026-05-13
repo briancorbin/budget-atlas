@@ -335,6 +335,38 @@ export const ROADMAP: readonly RoadmapItem[] = [
     summary:
       "Use BLS demographic data we already mirror (race, age, education, occupation, composition, tenure) to show where the user's income sits (quintile + percentile), how households at the same income spend differently across cuts, and side-by-side geographic comparisons.",
   },
+  {
+    id: 257,
+    title: 'Section 8 housing vouchers',
+    category: 'Benefits & safety net',
+    status: 'planned',
+    summary:
+      'Section 8 vouchers cap rent at 30% of income for eligible low-income households — the largest line missing from the model. Add as a togglable benefit and surface the discretionary-line shift it produces when the housing safety net actually works as designed.',
+  },
+  {
+    id: 258,
+    title: 'ACA premium tax credits',
+    category: 'Benefits & safety net',
+    status: 'planned',
+    summary:
+      "ACA premium tax credits subsidize marketplace coverage for households 138–400% FPL without employer insurance — omitted by today's universal-ESI assumption. Adding it smooths the Medicaid cliff: post-eligibility households land on subsidized coverage, not full-cost ESI.",
+  },
+  {
+    id: 259,
+    title: 'Child & Dependent Care Credit',
+    category: 'Tax modeling',
+    status: 'planned',
+    summary:
+      'The Child & Dependent Care Credit refunds 20–35% of childcare expenses (capped at $3K/$6K for one/two+ kids) for working parents. Currently unmodeled — childcare is treated as full out-of-pocket. Most meaningful at lower-middle incomes where childcare is biting hardest.',
+  },
+  {
+    id: 260,
+    title: 'Industry compensation profile',
+    category: 'Household detail',
+    status: 'planned',
+    summary:
+      'BLS Employee Benefits Survey by industry loads sector-typical ESI access (~50% restaurants, ~90% tech), employer premium share, 401(k) availability, paid leave, and tipped-income defaults — overridable hints, not gates. Same income looks very different across industries.',
+  },
 ];
 
 /**

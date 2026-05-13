@@ -32,20 +32,41 @@ import { SectionTitle } from '@/components/ui';
 interface SweepPoint {
   gross: number;
   takeHomePlusBenefits: number;
+  /** Annual discretionary — take-home + benefits − modeled CEX-blended
+   *  expenses. Plotted as a secondary line beneath the primary metric. The
+   *  gap between the two lines IS the household's expense burden at every
+   *  income; widening of the gap as income grows IS lifestyle inflation. */
+  discretionary: number;
   benefits: number;
 }
 
-// Only one view now: take-home pay plus the dollar value of every safety-net
-// benefit the household qualifies for (Medicaid, CHIP, SNAP). The total cash
-// + in-kind resources reaching the household. We previously offered
-// Discretionary and Take-home toggles too, but they cluttered the chrome and
-// the cliff story reads cleanly off this single measure: drops are the
-// dollar value of programs the household just lost.
+// Primary metric: take-home pay plus the dollar value of every safety-net
+// benefit the household qualifies for (Medicaid, CHIP, SNAP). Drives the
+// y-axis, the pit-zone math, the cliff-drop captions, and the user-point
+// dot — every "where do you land?" question reads off this line.
+//
+// Why two lines now: the chart originally had toggles between take-home,
+// discretionary, and take-home+benefits, which were stripped because
+// discretionary was too noisy to trust against the cliff drops. The
+// four-axis CEX blend makes discretionary a real signal: the gap between
+// take-home+benefits and discretionary is income-elastic spending — what
+// gets eaten before the marginal dollar becomes free to spend. Plotting
+// both as a dual-line overlay (decided in /design-lab#discretionary-overlay)
+// shows the lifestyle-inflation tail of each cliff without re-introducing
+// chrome toggles.
 const METRIC = {
   longLabel: 'Annual take-home pay + benefit value',
   key: 'takeHomePlusBenefits' as const,
   unitNoun: 'total resources',
 } satisfies { longLabel: string; key: keyof SweepPoint; unitNoun: string };
+
+/** Secondary metric — discretionary income, after modeled expenses. */
+const SECONDARY_METRIC = {
+  shortLabel: 'Discretionary',
+  longLabel: 'Annual discretionary (after expenses)',
+  key: 'discretionary' as const,
+  unitNoun: 'discretionary',
+} satisfies { shortLabel: string; longLabel: string; key: keyof SweepPoint; unitNoun: string };
 
 // Pixel widths the chart layout depends on. The Y-axis width includes the
 // rotated axis label; the right margin and small slop are part of the
@@ -212,6 +233,7 @@ export function CliffCurve({
       out.push({
         gross: g,
         takeHomePlusBenefits: Math.round(r.netIncome + annualBenefits),
+        discretionary: Math.round(r.annualDiscretionary),
         benefits: Math.round(annualBenefits),
       });
     }
@@ -491,6 +513,15 @@ export function CliffCurve({
               ))}
               <Line
                 type="linear"
+                dataKey={SECONDARY_METRIC.key}
+                stroke={T.warning}
+                strokeWidth={1.5}
+                strokeDasharray="4 3"
+                dot={false}
+                isAnimationActive={false}
+              />
+              <Line
+                type="linear"
                 dataKey={metricMeta.key}
                 stroke={T.ink}
                 strokeWidth={2}
@@ -536,6 +567,30 @@ export function CliffCurve({
               }}
             />
             Your current income ({fmt(currentGross)})
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span
+              style={{
+                display: 'inline-block',
+                width: 14,
+                height: 0,
+                borderTop: `2px solid ${T.ink}`,
+                verticalAlign: 'middle',
+              }}
+            />
+            Take-home + benefit value
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span
+              style={{
+                display: 'inline-block',
+                width: 14,
+                height: 0,
+                borderTop: `2px dashed ${T.warning}`,
+                verticalAlign: 'middle',
+              }}
+            />
+            Discretionary (after expenses)
           </span>
           {pitZones.length > 0 && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -720,7 +775,8 @@ function CliffTooltip({
   const gross = typeof label === 'number' ? label : Number(label);
   const point = payload[0]?.payload as SweepPoint | undefined;
   if (!point) return null;
-  const value = point.takeHomePlusBenefits;
+  const primary = point.takeHomePlusBenefits;
+  const discretionary = point.discretionary;
   const activePrograms = cliffs.filter((c) => gross <= c.gross);
   return (
     <div
@@ -732,9 +788,18 @@ function CliffTooltip({
         fontSize: rem(12),
       }}
     >
-      <div style={{ color: T.inkMuted, marginBottom: 2 }}>Gross {fmt(gross)}/yr</div>
-      <div style={{ fontFamily: fonts.mono, color: value >= 0 ? T.positive : T.accent }}>
-        {fmt(value)}/yr {metric.unitNoun}
+      <div style={{ color: T.inkMuted, marginBottom: 4 }}>Gross {fmt(gross)}/yr</div>
+      <div style={{ fontFamily: fonts.mono, color: primary >= 0 ? T.ink : T.accent }}>
+        {fmt(primary)}/yr {metric.unitNoun}
+      </div>
+      <div
+        style={{
+          fontFamily: fonts.mono,
+          color: discretionary >= 0 ? T.warning : T.accent,
+          marginTop: 2,
+        }}
+      >
+        {fmt(discretionary)}/yr discretionary
       </div>
       {activePrograms.length > 0 && (
         <div style={{ color: T.inkMuted, marginTop: 4 }}>
